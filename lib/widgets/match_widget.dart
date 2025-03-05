@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:espn_app/class/score.dart';
 import 'package:espn_app/class/team.dart';
+import 'package:espn_app/screens/match_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -44,14 +45,26 @@ class MatchWidget extends StatelessWidget {
     final matchDate = DateTime.tryParse(event.date) ?? DateTime.now();
 
     // Pour cet exemple, on considère le match comme planifié (non live)
-    return _buildScheduledLayout(
-      context,
-      awayTeam,
-      homeTeam,
-      event.isFinished,
-      event.score,
-      matchDate,
-      randomColor,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) =>
+                    MatchDetailScreen(event: event, randomColor: randomColor),
+          ),
+        );
+      },
+      child: _buildScheduledLayout(
+        context,
+        awayTeam,
+        homeTeam,
+        event.isFinished,
+        event.score,
+        matchDate,
+        randomColor,
+      ),
     );
   }
 
@@ -201,7 +214,7 @@ class MatchWidget extends StatelessWidget {
                       style: GoogleFonts.blackOpsOne(
                         height: 1.2,
                         fontSize: 16,
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(height: 16),

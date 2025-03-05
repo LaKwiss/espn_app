@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Utilisation de ref.read dans la fonction anonyme (ici nous utilisons ref.watch pour reconstruire le widget quand l'état change)
           final eventsAsync = ref.watch(leagueAsyncProvider);
 
-          final String fullTitle = ref.watch(selectedLeagueProvider);
+          final String fullTitle = ref.watch(selectedLeagueProvider).$1;
           final int spaceIndex = fullTitle.indexOf(' ');
           final String titleLine1 =
               spaceIndex > 0 ? fullTitle.substring(0, spaceIndex) : fullTitle;
@@ -33,9 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CustomAppBar(
-                  url: 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png',
-                ),
+                CustomAppBar(url: _getLinkByFullTitle(fullTitle)),
                 HomeScreenTitle(titleLine1: titleLine1, titleLine2: titleLine2),
 
                 // Affichage des matchs depuis le provider
@@ -58,5 +56,26 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
+  }
+}
+
+_getLinkByFullTitle(String fullTitle) {
+  switch (fullTitle) {
+    case 'Bundesliga':
+      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/10.png';
+    case 'LALIGA':
+      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png';
+    case 'French Ligue 1':
+      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/9.png';
+    case 'Premier League':
+      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/23.png';
+    case 'Italian Serie A':
+      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/12.png';
+    case 'UEFA Europa League':
+      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2310.png';
+    case 'Champions League':
+      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
+    default:
+      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
   }
 }

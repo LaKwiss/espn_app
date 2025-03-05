@@ -11,6 +11,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'ESPN App', home: const HomeScreen());
+    return MaterialApp(
+      title: 'ESPN App',
+      routes: {'/': (context) => const HomeScreen()},
+    );
   }
 }
