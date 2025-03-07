@@ -2,12 +2,15 @@ import 'dart:async';
 
 import 'package:espn_app/class/event.dart';
 import 'package:espn_app/class/match_event.dart';
-import 'package:espn_app/class/probability.dart';
 import 'package:espn_app/class/score.dart';
 import 'package:espn_app/class/team.dart';
 import 'package:espn_app/repositories/match_event_repository.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
-import 'package:espn_app/widgets/last_5_row_widget.dart';
+import 'package:espn_app/widgets/event_widget.dart';
+import 'package:espn_app/widgets/header_section.dart';
+import 'package:espn_app/widgets/prediction_section_screen.dart';
+import 'package:espn_app/widgets/score_display.dart';
+import 'package:espn_app/widgets/time_display.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -191,10 +194,14 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                   },
                 ),
               ),
-              SliverToBoxAdapter(child: _buildHeaderSection(widget.event)),
+              SliverToBoxAdapter(child: HeaderSection(event: widget.event)),
               if (!widget.event.isFinished)
                 SliverToBoxAdapter(
-                  child: _buildPredictionSection(_awayTeam, _homeTeam),
+                  child: PredictionSectionWidget(
+                    widget: widget,
+                    awayTeam: _awayTeam,
+                    homeTeam: _homeTeam,
+                  ),
                 ),
               if (widget.event.isFinished)
                 SliverToBoxAdapter(
@@ -228,219 +235,6 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPredictionSection(Team awayTeam, Team homeTeam) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Section "Past Games"
-          Row(
-            children: [
-              Text(
-                'Past Games',
-                style: GoogleFonts.blackOpsOne(
-                  fontSize: 28,
-                  color: Colors.black,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(width: 16),
-              const Icon(Icons.play_arrow, color: Colors.black, size: 32),
-              const Spacer(),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    homeTeam.shortName,
-                    style: GoogleFonts.blackOpsOne(
-                      fontSize: 28,
-                      color: Colors.black,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Last5RowWidget(homeTeam.id),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          // Section "Away Team Rating"
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                awayTeam.shortName,
-                style: GoogleFonts.blackOpsOne(
-                  fontSize: 28,
-                  color: Colors.black.withValues(alpha: 178),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(width: 8),
-              Last5RowWidget(awayTeam.id),
-            ],
-          ),
-          const SizedBox(height: 48),
-          // Section Probabilités (affichage en texte)
-          FutureBuilder<List<Probability>>(
-            future: Future.wait([
-              widget.event.probability.$3,
-              widget.event.probability.$2,
-              widget.event.probability.$1,
-            ]),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                );
-              } else if (snapshot.hasError) {
-                return Text(
-                  'Error loading probabilities',
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.blackOpsOne(fontSize: 24),
-                );
-              } else if (snapshot.hasData) {
-                final probs = snapshot.data!;
-                final awayPerc = (probs[0].value * 100).toStringAsFixed(0);
-                final drawPerc = (probs[1].value * 100).toStringAsFixed(0);
-                final homePerc = (probs[2].value * 100).toStringAsFixed(0);
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '$awayPerc% ${awayTeam.shortName}',
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 24,
-                        color: Colors.black.withValues(alpha: 255),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      '$drawPerc% DRAW',
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 24,
-                        color: Colors.black.withValues(alpha: 255),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      '$homePerc% ${homeTeam.shortName}',
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 24,
-                        color: Colors.black.withValues(alpha: 255),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                );
-              }
-              return const SizedBox();
-            },
-          ),
-          const SizedBox(height: 16),
-          // Section Probabilités (représentation visuelle)
-          FutureBuilder<List<Probability>>(
-            future: Future.wait([
-              widget.event.probability.$3,
-              widget.event.probability.$2,
-              widget.event.probability.$1,
-            ]),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SizedBox(height: 32);
-              } else if (snapshot.hasError) {
-                return Text(
-                  'Error loading probabilities',
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.blackOpsOne(fontSize: 24),
-                );
-              } else if (snapshot.hasData) {
-                final probs = snapshot.data!;
-                final int awayFlex = (probs[0].value * 100).round();
-                final int drawFlex = (probs[1].value * 100).round();
-                final int homeFlex = (probs[2].value * 100).round();
-                return Row(
-                  children: [
-                    Expanded(
-                      flex: awayFlex,
-                      child: Column(
-                        children: [
-                          Container(
-                            height: 32,
-                            color: Colors.black.withValues(
-                              alpha: probs[0].value,
-                            ),
-                          ),
-                          Text(
-                            '${awayTeam.shortName} $awayFlex%',
-                            style: GoogleFonts.blackOpsOne(
-                              fontSize: 12,
-                              color: Colors.black,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      flex: drawFlex,
-                      child: Column(
-                        children: [
-                          Container(
-                            height: 32,
-                            color: Colors.black.withValues(
-                              alpha: probs[1].value,
-                            ),
-                          ),
-                          Text(
-                            'DRAW $drawFlex%',
-                            style: GoogleFonts.blackOpsOne(
-                              fontSize: 12,
-                              color: Colors.black,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      flex: homeFlex,
-                      child: Column(
-                        children: [
-                          Container(
-                            height: 32,
-                            color: Colors.black.withValues(
-                              alpha: probs[2].value,
-                            ),
-                          ),
-                          Text(
-                            '${homeTeam.shortName} $homeFlex%',
-                            style: GoogleFonts.blackOpsOne(
-                              fontSize: 12,
-                              color: Colors.black,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }
-              return const SizedBox();
-            },
-          ),
-          const SizedBox(height: 16),
-        ],
       ),
     );
   }
@@ -521,9 +315,9 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                           return const Text('Error loading scores');
                         } else if (snapshot.hasData) {
                           final result = snapshot.data!;
-                          return _buildScoreDisplay(
-                            result.$1.value.toInt(),
-                            result.$2.value.toInt(),
+                          return ScoreDisplay(
+                            homeScore: result.$1.value.toInt(),
+                            awayScore: result.$2.value.toInt(),
                           );
                         }
                         return const SizedBox(height: 60);
@@ -535,7 +329,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                       builder: (context, snapshot) {
                         if (snapshot.hasError || !snapshot.hasData) {
                           // Pas encore de data ? On affiche l'heure prévue
-                          return _buildTimeDisplay(time);
+                          return TimeDisplay(time: time);
                         }
                         final events = snapshot.data!;
                         int homeGoals = 0;
@@ -549,7 +343,10 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                             }
                           }
                         }
-                        return _buildScoreDisplay(homeGoals, awayGoals);
+                        return ScoreDisplay(
+                          homeScore: homeGoals,
+                          awayScore: awayGoals,
+                        );
                       },
                     ),
           ),
@@ -621,45 +418,6 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
     );
   }
 
-  Widget _buildTimeDisplay(String time) {
-    final timeParts = time.split(':');
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          '${timeParts[0]}:',
-          style: GoogleFonts.blackOpsOne(fontSize: 60, color: Colors.black),
-        ),
-        Text(
-          timeParts[1],
-          style: GoogleFonts.blackOpsOne(
-            fontSize: 60,
-            color: const Color(0xFF5A7DF3),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildScoreDisplay(int homeScore, int awayScore) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          '$homeScore:',
-          style: GoogleFonts.blackOpsOne(
-            fontSize: 60,
-            color: const Color(0xFF5A7DF3),
-          ),
-        ),
-        Text(
-          '$awayScore',
-          style: GoogleFonts.blackOpsOne(fontSize: 60, color: Colors.black),
-        ),
-      ],
-    );
-  }
-
   Widget _buildCallToActionSection(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -669,55 +427,6 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
         'CHOOSE THE WINNER',
         textAlign: TextAlign.center,
         style: GoogleFonts.blackOpsOne(fontSize: 32, color: Colors.black),
-      ),
-    );
-  }
-
-  Widget _buildHeaderSection(Event event) {
-    final parts = event.name.split(" at ");
-    final awayTeamName = parts.isNotEmpty ? parts.first.trim() : "Away Team";
-    final homeTeamName = parts.length > 1 ? parts.last.trim() : "Home Team";
-
-    final awayTeam = Team(
-      id: event.idTeam.$1,
-      name: awayTeamName,
-      shortName: awayTeamName,
-    );
-
-    final homeTeam = Team(
-      id: event.idTeam.$2,
-      name: homeTeamName,
-      shortName: homeTeamName,
-    );
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: RichText(
-        text: TextSpan(
-          style: GoogleFonts.blackOpsOne(
-            fontSize: 44,
-            color: Colors.black,
-            height: 1.1,
-          ),
-          children: [
-            TextSpan(text: '${awayTeam.name}\n'),
-            TextSpan(
-              text: 'AT',
-              style: GoogleFonts.blackOpsOne(
-                fontSize: 44,
-                color: Colors.white.withValues(alpha: 178),
-              ),
-            ),
-            TextSpan(text: '\n${homeTeam.name}\n'),
-            TextSpan(
-              text: 'FIRST LEG',
-              style: GoogleFonts.blackOpsOne(
-                fontSize: 44,
-                color: Colors.white.withValues(alpha: 178),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -840,7 +549,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                     if (event.type == MatchEventType.goal) {
                       return _buildGoalEventItem(event, index, sortedEvents);
                     }
-                    return _buildEventItem(event);
+                    return EventWidget(event: event);
                   },
                 ),
               ],
@@ -995,87 +704,5 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
       default:
         return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
     }
-  }
-
-  Widget _buildEventItem(MatchEvent event) {
-    IconData icon;
-    Color color;
-
-    switch (event.type) {
-      case MatchEventType.yellowCard:
-        icon = Icons.square;
-        color = Colors.amber;
-        break;
-      case MatchEventType.redCard:
-        icon = Icons.square;
-        color = Colors.red;
-        break;
-      case MatchEventType.substitution:
-        icon = Icons.swap_horiz;
-        color = Colors.blue;
-        break;
-      case MatchEventType.foul:
-        icon = Icons.not_interested;
-        color = Colors.orange;
-        break;
-      case MatchEventType.kickoff:
-        icon = Icons.sports_soccer;
-        color = Colors.grey;
-        break;
-      case MatchEventType.freeKick:
-        icon = Icons.sports_soccer;
-        color = Colors.deepPurple;
-        break;
-      case MatchEventType.throwIn:
-        icon = Icons.pan_tool;
-        color = Colors.brown;
-        break;
-      case MatchEventType.shotOffTarget:
-        icon = Icons.sports_soccer;
-        color = Colors.grey;
-        break;
-      case MatchEventType.shotBlocked:
-        icon = Icons.block;
-        color = Colors.orange;
-        break;
-      default:
-        icon = Icons.sports;
-        color = Colors.grey;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            alignment: Alignment.center,
-            child: Text(
-              event.time,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 51),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              event.shortText ?? event.text,
-              style: const TextStyle(fontSize: 14),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
