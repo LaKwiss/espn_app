@@ -24,9 +24,6 @@ class NavigationDots extends ConsumerWidget {
             if (isSelected) {
               dotSize = NavigationConstants.selectedDotSize;
               // Si le point du milieu est sélectionné, il est encore plus grand
-              if (index == 1) {
-                dotSize += NavigationConstants.middleDotExtraSize;
-              }
             }
 
             return GestureDetector(

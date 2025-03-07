@@ -33,9 +33,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       body: Column(
         children: [
           // Custom AppBar
-          CustomAppBar(
-            url: _getLeagueLogoUrl(leagueName),
-            backgroundColor: Colors.white,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: CustomAppBar(
+              url: _getLeagueLogoUrl(leagueName),
+              backgroundColor: Colors.white,
+            ),
           ),
 
           // Calendar Title
