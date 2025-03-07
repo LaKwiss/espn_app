@@ -22,11 +22,11 @@ class ClubInfoWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: backgroundColor ?? Colors.black.withOpacity(0.7),
+          color: backgroundColor ?? Colors.black.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

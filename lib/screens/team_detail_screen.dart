@@ -1,3 +1,9 @@
+import 'package:espn_app/class/player_position.dart';
+import 'package:espn_app/screens/soccer_field_painter.dart';
+import 'package:espn_app/widgets/last_matches.dart';
+import 'package:espn_app/widgets/player_circle.dart';
+import 'package:espn_app/widgets/stat_row.dart';
+import 'package:espn_app/widgets/team_stat_card.dart';
 import 'package:flutter/material.dart';
 import 'package:espn_app/class/team.dart';
 import 'package:espn_app/class/athlete.dart';
@@ -5,6 +11,7 @@ import 'package:espn_app/class/stats.dart';
 import 'package:espn_app/class/club.dart';
 import 'package:espn_app/class/league.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
+import 'package:espn_app/widgets/club_info_widget.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -96,7 +103,6 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
         });
       }
     } catch (error) {
-      print('Error fetching team data: $error');
       // Default to mock data
       setState(() {
         _isLoading = false;
@@ -165,7 +171,6 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
         );
       });
     } catch (error) {
-      print('Error fetching players: $error');
       // Use empty player list
       setState(() {
         _players = [];
@@ -178,93 +183,105 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            CustomAppBar(
-              url:
-                  'https://a.espncdn.com/i/teamlogos/soccer/500/${widget.team.id}.png',
-              backgroundColor: Colors.grey[100],
-              iconOrientation: 3,
-              onArrowButtonPressed: () => Navigator.of(context).pop(),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.team.name.toUpperCase(),
-                    style: GoogleFonts.blackOpsOne(
-                      fontSize: 32,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
+            Column(
+              children: [
+                CustomAppBar(
+                  url:
+                      'https://a.espncdn.com/i/teamlogos/soccer/500/${widget.team.id}.png',
+                  backgroundColor: Colors.grey[100],
+                  iconOrientation: 3,
+                  onArrowButtonPressed: () => Navigator.of(context).pop(),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Hero(
-                        tag: 'team-logo-${widget.team.id}',
-                        child: Image.network(
-                          'https://a.espncdn.com/i/teamlogos/soccer/500/${widget.team.id}.png',
-                          width: 64,
-                          height: 64,
-                          errorBuilder:
-                              (context, error, stackTrace) =>
-                                  const Icon(Icons.sports_soccer, size: 64),
+                      Text(
+                        widget.team.name.toUpperCase(),
+                        style: GoogleFonts.blackOpsOne(
+                          fontSize: 32,
+                          color: Colors.black,
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Current Position:',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.black54,
-                              ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Hero(
+                            tag: 'team-logo-${widget.team.id}',
+                            child: Image.network(
+                              'https://a.espncdn.com/i/teamlogos/soccer/500/${widget.team.id}.png',
+                              width: 64,
+                              height: 64,
+                              errorBuilder:
+                                  (context, error, stackTrace) =>
+                                      const Icon(Icons.sports_soccer, size: 64),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _teamStats['position'] ?? '3rd in League',
-                              style: GoogleFonts.roboto(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Current Position:',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _teamStats['position'] ?? '3rd in League',
+                                  style: GoogleFonts.roboto(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            TabBar(
-              controller: _tabController,
-              labelColor: Colors.black,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: Colors.black,
-              tabs: const [
-                Tab(text: 'LINEUP'),
-                Tab(text: 'PLAYERS'),
-                Tab(text: 'STATS'),
+                ),
+                TabBar(
+                  controller: _tabController,
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Colors.black,
+                  tabs: const [
+                    Tab(text: 'LINEUP'),
+                    Tab(text: 'PLAYERS'),
+                    Tab(text: 'STATS'),
+                  ],
+                ),
+                Expanded(
+                  child:
+                      _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildLineupTab(),
+                              _buildPlayersTab(),
+                              _buildStatsTab(),
+                            ],
+                          ),
+                ),
               ],
             ),
-            Expanded(
-              child:
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildLineupTab(),
-                          _buildPlayersTab(),
-                          _buildStatsTab(),
-                        ],
-                      ),
-            ),
+
+            // Widget d'information sur le club en haut à droite
+            if (widget.team.club != null)
+              Positioned(
+                top: 80, // Position sous la barre d'apps
+                right: 16,
+                child: ClubInfoWidget(club: widget.team.club!),
+              ),
           ],
         ),
       ),
@@ -304,12 +321,13 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
                   return Positioned(
                     top: position.top,
                     left: position.left,
-                    child: _buildPlayerCircle(
-                      position.playerIndex,
-                      position.position,
+                    child: PlayerCircle(
+                      players: _players,
+                      playerIndex: position.playerIndex,
+                      position: position.position,
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
@@ -386,48 +404,6 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
         left: width - 110,
       ),
     ];
-  }
-
-  Widget _buildPlayerCircle(int playerIndex, String position) {
-    final player = playerIndex < _players.length ? _players[playerIndex] : null;
-    final playerName = player?.fullName.split(' ').last ?? 'Player';
-
-    return Column(
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-            border: Border.all(color: Colors.black, width: 2),
-          ),
-          child: Center(
-            child: Text(
-              position,
-              style: GoogleFonts.roboto(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            playerName,
-            style: GoogleFonts.roboto(
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _buildPlayersTab() {
@@ -550,42 +526,28 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              _buildStatRow('Goals', player.stats.goals.toString()),
-              _buildStatRow('Assists', player.stats.assists.toString()),
-              _buildStatRow('Appearances', player.stats.appearances.toString()),
-              _buildStatRow(
-                'Minutes Played',
-                player.stats.minutesPlayed.toString(),
+              StatRow(label: 'Goals', value: player.stats.goals.toString()),
+              StatRow(label: 'Assists', value: player.stats.assists.toString()),
+              StatRow(
+                label: 'Appearances',
+                value: player.stats.appearances.toString(),
               ),
-              _buildStatRow(
-                'Yellow Cards',
-                player.stats.yellowCards.toString(),
+              StatRow(
+                label: 'Minutes Played',
+                value: player.stats.minutesPlayed.toString(),
               ),
-              _buildStatRow('Red Cards', player.stats.redCards.toString()),
+              StatRow(
+                label: 'Yellow Cards',
+                value: player.stats.yellowCards.toString(),
+              ),
+              StatRow(
+                label: 'Red Cards',
+                value: player.stats.redCards.toString(),
+              ),
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _buildStatRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
     );
   }
 
@@ -607,20 +569,29 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
             ),
           ),
           const SizedBox(height: 16),
-          _buildTeamStatCard(
-            'Goals Scored',
-            _teamStats['goalsFor']?.toString() ?? '34',
+          TeamStatCard(
+            label: 'Goals Scored',
+            value: _teamStats['goalsFor']?.toString() ?? '34',
           ),
-          _buildTeamStatCard(
-            'Goals Conceded',
-            _teamStats['goalsAgainst']?.toString() ?? '18',
+          TeamStatCard(
+            label: 'Goals Conceded',
+            value: _teamStats['goalsAgainst']?.toString() ?? '18',
           ),
-          _buildTeamStatCard('Wins', _teamStats['wins']?.toString() ?? '10'),
-          _buildTeamStatCard('Draws', _teamStats['draws']?.toString() ?? '5'),
-          _buildTeamStatCard('Losses', _teamStats['losses']?.toString() ?? '3'),
-          _buildTeamStatCard(
-            'Points',
-            _teamStats['points']?.toString() ?? '35',
+          TeamStatCard(
+            label: 'Wins',
+            value: _teamStats['wins']?.toString() ?? '10',
+          ),
+          TeamStatCard(
+            label: 'Draws',
+            value: _teamStats['draws']?.toString() ?? '5',
+          ),
+          TeamStatCard(
+            label: 'Losses',
+            value: _teamStats['losses']?.toString() ?? '3',
+          ),
+          TeamStatCard(
+            label: 'Points',
+            value: _teamStats['points']?.toString() ?? '35',
           ),
           const SizedBox(height: 32),
           Text(
@@ -631,165 +602,9 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
             ),
           ),
           const SizedBox(height: 16),
-          _buildLastMatches(formList),
+          LastMatches(results: formList),
         ],
       ),
     );
   }
-
-  Widget _buildTeamStatCard(String label, String value) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            Text(
-              value,
-              style: GoogleFonts.roboto(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLastMatches(List<String> results) {
-    // Use actual form results or a default list
-    final formResults =
-        results.isNotEmpty ? results : ['W', 'D', 'L', 'W', 'W'];
-
-    // Map result codes to colors
-    final colors = {'W': Colors.green, 'D': Colors.orange, 'L': Colors.red};
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children:
-          formResults.take(5).map((result) {
-            return Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors[result] ?? Colors.grey,
-              ),
-              child: Center(
-                child: Text(
-                  result,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-    );
-  }
-}
-
-class PlayerPosition {
-  final int playerIndex;
-  final String position;
-  final double top;
-  final double left;
-
-  PlayerPosition({
-    required this.playerIndex,
-    required this.position,
-    required this.top,
-    required this.left,
-  });
-}
-
-class SoccerFieldPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.0;
-
-    // Draw outline
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
-
-    // Draw center line
-    canvas.drawLine(
-      Offset(0, size.height / 2),
-      Offset(size.width, size.height / 2),
-      paint,
-    );
-
-    // Draw center circle
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 30, paint);
-
-    // Draw penalty areas
-    final penaltyAreaWidth = size.width * 0.6;
-    final penaltyAreaHeight = size.height * 0.2;
-
-    // Top penalty area
-    canvas.drawRect(
-      Rect.fromLTWH(
-        (size.width - penaltyAreaWidth) / 2,
-        0,
-        penaltyAreaWidth,
-        penaltyAreaHeight,
-      ),
-      paint,
-    );
-
-    // Bottom penalty area
-    canvas.drawRect(
-      Rect.fromLTWH(
-        (size.width - penaltyAreaWidth) / 2,
-        size.height - penaltyAreaHeight,
-        penaltyAreaWidth,
-        penaltyAreaHeight,
-      ),
-      paint,
-    );
-
-    // Goal areas
-    final goalAreaWidth = size.width * 0.2;
-    final goalAreaHeight = size.height * 0.1;
-
-    // Top goal area
-    canvas.drawRect(
-      Rect.fromLTWH(
-        (size.width - goalAreaWidth) / 2,
-        0,
-        goalAreaWidth,
-        goalAreaHeight,
-      ),
-      paint,
-    );
-
-    // Bottom goal area
-    canvas.drawRect(
-      Rect.fromLTWH(
-        (size.width - goalAreaWidth) / 2,
-        size.height - goalAreaHeight,
-        goalAreaWidth,
-        goalAreaHeight,
-      ),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
