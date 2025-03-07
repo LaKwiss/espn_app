@@ -4,107 +4,71 @@ import 'package:espn_app/screens/team_detail_screen.dart';
 
 class TeamLogoWidget extends StatelessWidget {
   final Team team;
-  final double size;
-  final bool showTeamDetailOnTap;
-  final bool isHomeTeam; // Identifies if this is the home team
+  final double radius;
+  final bool isInteractive;
+  final Color? borderColor;
 
   const TeamLogoWidget({
     super.key,
     required this.team,
-    this.size = 48,
-    this.showTeamDetailOnTap = true,
-    this.isHomeTeam = false,
+    this.radius = 30,
+    this.isInteractive = true,
+    this.borderColor,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: showTeamDetailOnTap ? () => _showTeamDetail(context) : null,
-      child: Hero(
-        tag: 'team-logo-${team.id}',
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
+      onTap: isInteractive ? () => _showTeamDetails(context) : null,
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: radius,
+            backgroundColor: Colors.transparent,
+            backgroundImage: NetworkImage(
+              'https://a.espncdn.com/i/teamlogos/soccer/500/${team.id}.png',
+            ),
+            onBackgroundImageError: (exception, stackTrace) {
+              // Fallback si l'image ne charge pas
+            },
           ),
-          child: Stack(
-            children: [
-              ClipOval(
-                child: Image.network(
-                  'https://a.espncdn.com/i/teamlogos/soccer/500/${team.id}.png',
-                  width: size,
-                  height: size,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return CircleAvatar(
-                      radius: size / 2,
-                      backgroundColor: Colors.grey[300],
-                      child: Text(
-                        team.shortName.isNotEmpty
-                            ? team.shortName.substring(0, 1)
-                            : '',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: size / 2,
-                        ),
-                      ),
-                    );
-                  },
+          if (isInteractive && borderColor != null)
+            Container(
+              width: radius * 2,
+              height: radius * 2,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: borderColor!, width: 2),
+              ),
+            ),
+          if (isInteractive)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                width: radius * 0.6,
+                height: radius * 0.6,
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1),
+                ),
+                child: Icon(
+                  Icons.info_outline,
+                  color: Colors.white,
+                  size: radius * 0.4,
                 ),
               ),
-              // Pulsating effect when tappable
-              if (showTeamDetailOnTap)
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color:
-                            isHomeTeam
-                                ? Colors.blue.withOpacity(0.7)
-                                : Colors.red.withOpacity(0.7),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-              // Small info indicator
-              if (showTeamDetailOnTap)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: size / 4,
-                    height: size / 4,
-                    decoration: BoxDecoration(
-                      color: isHomeTeam ? Colors.blue : Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.info_outline,
-                      color: Colors.white,
-                      size: size / 6,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
 
-  void _showTeamDetail(BuildContext context) {
-    Navigator.of(context).push(
+  void _showTeamDetails(BuildContext context) {
+    // Navigation vers l'écran de détails de l'équipe
+    Navigator.push(
+      context,
       MaterialPageRoute(builder: (context) => TeamDetailScreen(team: team)),
     );
   }

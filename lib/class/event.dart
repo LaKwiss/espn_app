@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:equatable/equatable.dart';
+import 'package:espn_app/class/club.dart';
+import 'package:espn_app/class/league.dart';
 import 'package:espn_app/class/probability.dart';
 import 'package:espn_app/class/score.dart';
 import 'package:http/http.dart' as http;
@@ -23,6 +25,10 @@ class Event extends Equatable {
   )
   probability;
 
+  // Nouvelle propriété pour les clubs
+  final Club? homeClub;
+  final Club? awayClub;
+
   const Event({
     required this.id,
     required this.idTeam,
@@ -35,6 +41,8 @@ class Event extends Equatable {
     required this.score,
     required this.probability,
     this.isFinished = false,
+    this.homeClub,
+    this.awayClub,
   });
 
   /// Crée un Event à partir de deux JSON : l'un pour l'événement, l'autre pour les odds.
@@ -81,6 +89,56 @@ class Event extends Equatable {
       Probability(value: normDraw),
     );
 
+    // Récupération des informations des clubs si disponibles
+    Club? homeClub;
+    Club? awayClub;
+
+    try {
+      // Si les données de clubs sont disponibles dans le JSON, les extraire
+      if (competition['competitors'][0].containsKey('team') &&
+          competition['competitors'][0]['team'] != null) {
+        final homeTeamData = competition['competitors'][0]['team'];
+        final homeLeagueData = _extractLeagueData(homeTeamData);
+
+        homeClub = Club(
+          id: homeTeamData['id'] ?? 0,
+          name: homeTeamData['displayName'] ?? 'Unknown',
+          logo:
+              homeTeamData['logos'] != null &&
+                      homeTeamData['logos'] is List &&
+                      homeTeamData['logos'].isNotEmpty
+                  ? homeTeamData['logos'][0]['href']
+                  : 'https://a.espncdn.com/i/teamlogos/soccer/500/${competition['competitors'][0]['id']}.png',
+          country: homeTeamData['location'] ?? 'Unknown',
+          flag: '', // Pas disponible directement dans les données
+          league: homeLeagueData,
+        );
+      }
+
+      if (competition['competitors'][1].containsKey('team') &&
+          competition['competitors'][1]['team'] != null) {
+        final awayTeamData = competition['competitors'][1]['team'];
+        final awayLeagueData = _extractLeagueData(awayTeamData);
+
+        awayClub = Club(
+          id: awayTeamData['id'] ?? 0,
+          name: awayTeamData['displayName'] ?? 'Unknown',
+          logo:
+              awayTeamData['logos'] != null &&
+                      awayTeamData['logos'] is List &&
+                      awayTeamData['logos'].isNotEmpty
+                  ? awayTeamData['logos'][0]['href']
+                  : 'https://a.espncdn.com/i/teamlogos/soccer/500/${competition['competitors'][1]['id']}.png',
+          country: awayTeamData['location'] ?? 'Unknown',
+          flag: '', // Pas disponible directement dans les données
+          league: awayLeagueData,
+        );
+      }
+    } catch (e) {
+      print('Erreur lors de l\'extraction des données des clubs: $e');
+      // On continue sans les données de club
+    }
+
     return Event(
       id: eventJson['id'].toString(),
       idTeam: (
@@ -108,6 +166,46 @@ class Event extends Equatable {
         drawProb, // match nul
         awayProb, // victoire à l'extérieur
       ),
+      homeClub: homeClub,
+      awayClub: awayClub,
+    );
+  }
+
+  /// Extrait les données de la ligue à partir des données d'équipe
+  static League _extractLeagueData(Map<String, dynamic> teamData) {
+    if (teamData.containsKey('league') && teamData['league'] != null) {
+      final leagueData = teamData['league'];
+      return League(
+        id: leagueData['id'] ?? 0,
+        name: leagueData['name'] ?? 'Unknown',
+        displayName: leagueData['displayName'] ?? 'Unknown',
+        logo:
+            leagueData['logos'] != null &&
+                    leagueData['logos'] is List &&
+                    leagueData['logos'].isNotEmpty
+                ? leagueData['logos'][0]['href']
+                : '',
+        country:
+            leagueData.containsKey('country')
+                ? leagueData['country']['name'] ?? 'Unknown'
+                : 'Unknown',
+        flag:
+            leagueData.containsKey('country')
+                ? leagueData['country']['flag'] ?? ''
+                : '',
+        shortName: leagueData['shortName'] ?? '',
+      );
+    }
+
+    // Si pas de données de ligue, créer une ligue par défaut
+    return const League(
+      id: 0,
+      name: 'Unknown',
+      displayName: 'Unknown',
+      logo: '',
+      country: 'Unknown',
+      flag: '',
+      shortName: '',
     );
   }
 
@@ -484,6 +582,38 @@ class Event extends Equatable {
     return Event.fromJson(eventJson, oddsJson);
   }
 
+  /// Obtenir le club par défaut pour une équipe à partir de son ID
+  Club getDefaultClub(String teamId) {
+    return Club(
+      id: int.tryParse(teamId) ?? 0,
+      name: 'Team $teamId',
+      logo: 'https://a.espncdn.com/i/teamlogos/soccer/500/$teamId.png',
+      country: 'Unknown',
+      flag: '',
+      league: const League(
+        id: 0,
+        name: 'Unknown League',
+        displayName: 'Unknown League',
+        logo: '',
+        country: 'Unknown',
+        flag: '',
+        shortName: 'UNK',
+      ),
+    );
+  }
+
+  /// Getter pour accéder facilement au club domicile
+  Club get club => homeClub ?? getDefaultClub(idTeam.$2);
+
   @override
-  List<Object?> get props => [id, name, shortName, date, location, league];
+  List<Object?> get props => [
+    id,
+    name,
+    shortName,
+    date,
+    location,
+    league,
+    homeClub,
+    awayClub,
+  ];
 }

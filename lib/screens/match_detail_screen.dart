@@ -2,15 +2,16 @@ import 'dart:async';
 
 import 'package:espn_app/class/event.dart';
 import 'package:espn_app/class/match_event.dart';
-import 'package:espn_app/class/score.dart';
+import 'package:espn_app/class/club.dart';
 import 'package:espn_app/class/team.dart';
 import 'package:espn_app/repositories/match_event_repository.dart';
+import 'package:espn_app/widgets/call_to_action.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
-import 'package:espn_app/widgets/event_widget.dart';
+import 'package:espn_app/widgets/event_list_widget.dart';
 import 'package:espn_app/widgets/header_section.dart';
+import 'package:espn_app/widgets/match_info_section.dart';
 import 'package:espn_app/widgets/prediction_section_screen.dart';
-import 'package:espn_app/widgets/score_display.dart';
-import 'package:espn_app/widgets/time_display.dart';
+import 'package:espn_app/widgets/club_info_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -99,6 +100,10 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
   late Team _homeTeam;
   late Team _awayTeam;
 
+  // Pour garder une trace des clubs
+  Club? _homeClub;
+  Club? _awayClub;
+
   String _leagueName = '';
 
   @override
@@ -110,6 +115,9 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
 
     // Initialiser les équipes
     _initializeTeams();
+
+    // Initialiser les clubs
+    _initializeClubs();
 
     _leagueName = _getLeagueNameById(_leagueId);
 
@@ -140,6 +148,44 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
     );
   }
 
+  void _initializeClubs() {
+    // Dans une implémentation réelle, vous récupéreriez ces données depuis votre API
+    _homeClub = Club(
+      id: int.parse(_homeTeam.id),
+      name: _homeTeam.name,
+      logo: 'https://a.espncdn.com/i/teamlogos/soccer/500/${_homeTeam.id}.png',
+      country: 'Spain', // Ces données viendraient de l'API
+      flag:
+          'https://a.espncdn.com/i/flags/20x13/esp.gif', // Ces données viendraient de l'API
+      league: widget.event.club.league,
+    );
+
+    _awayClub = Club(
+      id: int.parse(_awayTeam.id),
+      name: _awayTeam.name,
+      logo: 'https://a.espncdn.com/i/teamlogos/soccer/500/${_awayTeam.id}.png',
+      country: 'Spain', // Ces données viendraient de l'API
+      flag:
+          'https://a.espncdn.com/i/flags/20x13/esp.gif', // Ces données viendraient de l'API
+      league: widget.event.club.league,
+    );
+
+    // Mettre à jour les équipes pour inclure leurs clubs
+    _homeTeam = Team(
+      id: _homeTeam.id,
+      name: _homeTeam.name,
+      shortName: _homeTeam.shortName,
+      club: _homeClub,
+    );
+
+    _awayTeam = Team(
+      id: _awayTeam.id,
+      name: _awayTeam.name,
+      shortName: _awayTeam.shortName,
+      club: _awayClub,
+    );
+  }
+
   Future<void> _initializeScores() async {
     try {
       // Pour un match terminé, on récupère les scores via un Future
@@ -167,7 +213,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
     final formattedDate = DateFormat('dd MMMM').format(matchDate);
     final formattedTime = DateFormat('HH:mm').format(matchDate);
 
-    // Récupération du flux des événements (Approche A)
+    // Récupération du flux des événements
     final eventsStream = ref.read(
       matchEventsStreamProvider(
         MatchParams(
@@ -182,482 +228,98 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
       body: Container(
         color: widget.randomColor,
         child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: CustomAppBar(
-                  url: _getLeagueLogoUrl(_leagueName),
-                  backgroundColor: widget.randomColor,
-                  iconOrientation: 3,
-                  onArrowButtonPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ),
-              SliverToBoxAdapter(child: HeaderSection(event: widget.event)),
-              if (!widget.event.isFinished)
-                SliverToBoxAdapter(
-                  child: PredictionSectionWidget(
-                    widget: widget,
-                    awayTeam: _awayTeam,
-                    homeTeam: _homeTeam,
-                  ),
-                ),
-              if (widget.event.isFinished)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Text(
-                      'TERMINÉ',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 32,
-                        color: Colors.black,
-                      ),
+          child: Stack(
+            children: [
+              CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: CustomAppBar(
+                      url: _getLeagueLogoUrl(_leagueName),
+                      backgroundColor: widget.randomColor,
+                      iconOrientation: 3,
+                      onArrowButtonPressed: () {
+                        Navigator.of(context).pop();
+                      },
                     ),
                   ),
-                ),
-              SliverToBoxAdapter(
-                child: _buildMatchInfoSection(
-                  formattedDate,
-                  formattedTime,
-                  _awayTeam,
-                  _homeTeam,
-                  widget.event.isFinished,
-                  widget.event.score,
-                  eventsStream, // On passe le flux ici
-                ),
-              ),
-              if (_showEvents || !widget.event.isFinished)
-                _buildEventsList(eventsStream), // On passe le flux ici
-              if (!widget.event.isFinished)
-                SliverToBoxAdapter(child: _buildCallToActionSection(context)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMatchInfoSection(
-    String date,
-    String time,
-    Team awayTeam,
-    Team homeTeam,
-    bool isFinished,
-    (Future<Score> away, Future<Score> home) scores,
-    Stream<List<MatchEvent>> eventsStream,
-  ) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          // Date avec bouton d'expansion
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                date,
-                style: GoogleFonts.blackOpsOne(
-                  fontSize: 24,
-                  color: const Color(0xFF5A7DF3),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              if (isFinished)
-                IconButton(
-                  icon: Icon(
-                    _showEvents ? Icons.expand_less : Icons.expand_more,
-                    color: const Color(0xFF5A7DF3),
-                    size: 28,
+                  SliverToBoxAdapter(child: HeaderSection(event: widget.event)),
+                  if (!widget.event.isFinished)
+                    SliverToBoxAdapter(
+                      child: PredictionSectionWidget(
+                        widget: widget,
+                        awayTeam: _awayTeam,
+                        homeTeam: _homeTeam,
+                      ),
+                    ),
+                  if (widget.event.isFinished)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Text(
+                          'TERMINÉ',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.blackOpsOne(
+                            fontSize: 32,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  SliverToBoxAdapter(
+                    child: MatchInfoSectionWidget(
+                      date: formattedDate,
+                      time: formattedTime,
+                      awayTeam: _awayTeam,
+                      homeTeam: _homeTeam,
+                      isFinished: widget.event.isFinished,
+                      scores: widget.event.score,
+                      eventsStream: eventsStream,
+                      showEvents: _showEvents,
+                      onToggleEvents: () {
+                        setState(() {
+                          _showEvents = !_showEvents;
+                        });
+                      },
+                    ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _showEvents = !_showEvents;
-                    });
-                  },
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Affichage du score
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child:
-                isFinished
-                    ? FutureBuilder<(Score, Score)>(
-                      key: const ValueKey('finished-score'),
-                      future: Future.wait([
-                        scores.$1,
-                        scores.$2,
-                      ]).then((results) => (results[0], results[1])),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const SizedBox(
-                            height: 60,
-                            child: Center(
-                              child: SizedBox(
-                                width: 30,
-                                height: 30,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
+                  if (_showEvents || !widget.event.isFinished)
+                    SliverToBoxAdapter(
+                      child: EventsListWidget(
+                        eventsStream: eventsStream,
+                        homeTeam: _homeTeam,
+                        awayTeam: _awayTeam,
+                      ),
+                    ),
+                  if (!widget.event.isFinished)
+                    SliverToBoxAdapter(
+                      child: CallToActionWidget(
+                        text: 'CHOISIR LE GAGNANT',
+                        onTap: () {
+                          // Action à effectuer lors du clic
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Fonctionnalité à venir...'),
+                              duration: Duration(seconds: 2),
                             ),
                           );
-                        } else if (snapshot.hasError) {
-                          return const Text('Error loading scores');
-                        } else if (snapshot.hasData) {
-                          final result = snapshot.data!;
-                          return ScoreDisplay(
-                            homeScore: result.$1.value.toInt(),
-                            awayScore: result.$2.value.toInt(),
-                          );
-                        }
-                        return const SizedBox(height: 60);
-                      },
-                    )
-                    : StreamBuilder<List<MatchEvent>>(
-                      key: const ValueKey('live-score'),
-                      stream: eventsStream,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasError || !snapshot.hasData) {
-                          // Pas encore de data ? On affiche l'heure prévue
-                          return TimeDisplay(time: time);
-                        }
-                        final events = snapshot.data!;
-                        int homeGoals = 0;
-                        int awayGoals = 0;
-                        for (final event in events) {
-                          if (event.type == MatchEventType.goal) {
-                            if (event.teamId == _homeTeam.id.toString()) {
-                              homeGoals++;
-                            } else {
-                              awayGoals++;
-                            }
-                          }
-                        }
-                        return ScoreDisplay(
-                          homeScore: homeGoals,
-                          awayScore: awayGoals,
-                        );
-                      },
-                    ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.transparent,
-                      backgroundImage: NetworkImage(
-                        'https://a.espncdn.com/i/teamlogos/soccer/500/${awayTeam.id}.png',
+                        },
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      awayTeam.firstName,
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 20,
-                        color: const Color(0xFF5A7DF3),
-                      ),
-                    ),
-                    if (awayTeam.secondName.isNotEmpty)
-                      Text(
-                        awayTeam.secondName,
-                        style: GoogleFonts.blackOpsOne(
-                          fontSize: 20,
-                          color: Colors.black,
-                        ),
-                      ),
-                  ],
-                ),
+                  // Ajouter un espace en bas pour éviter que le widget de club ne cache du contenu
+                  SliverToBoxAdapter(child: const SizedBox(height: 80)),
+                ],
               ),
-              Expanded(
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.transparent,
-                      backgroundImage: NetworkImage(
-                        'https://a.espncdn.com/i/teamlogos/soccer/500/${homeTeam.id}.png',
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      homeTeam.firstName,
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 20,
-                        color: Colors.black,
-                      ),
-                    ),
-                    if (homeTeam.secondName.isNotEmpty)
-                      Text(
-                        homeTeam.secondName,
-                        style: GoogleFonts.blackOpsOne(
-                          fontSize: 20,
-                          color: const Color(0xFF5A7DF3),
-                        ),
-                      ),
-                  ],
+
+              // Ajouter le widget ClubInfo pour le club domicile en haut à droite
+              if (_homeClub != null)
+                Positioned(
+                  top: 80, // Position sous la barre d'apps
+                  right: 16,
+                  child: ClubInfoWidget(club: _homeClub!),
                 ),
-              ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCallToActionSection(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      color: const Color(0xFFF55E42),
-      child: Text(
-        'CHOOSE THE WINNER',
-        textAlign: TextAlign.center,
-        style: GoogleFonts.blackOpsOne(fontSize: 32, color: Colors.black),
-      ),
-    );
-  }
-
-  Widget _buildEventsList(Stream<List<MatchEvent>> eventsStream) {
-    return SliverToBoxAdapter(
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
         ),
-        child: StreamBuilder<List<MatchEvent>>(
-          stream: eventsStream,
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text('Erreur lors du chargement des événements'),
-                ),
-              );
-            }
-            if (!snapshot.hasData) {
-              return Center(
-                child: Text(
-                  'Le match n\'a pas encore commencé',
-                  style: TextStyle(fontSize: 16),
-                ),
-              );
-            }
-            final events = snapshot.data!;
-            if (events.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('Aucun événement trouvé pour ce match'),
-                ),
-              );
-            }
-
-            // Tri par "logique de match"
-            int calculateMatchTimeWeight(String timeString) {
-              if (timeString.contains("First Half ends") ||
-                  timeString == "45'") {
-                return 4500;
-              }
-              if (timeString.contains("Second Half begins") ||
-                  timeString.contains("start")) {
-                return 4501;
-              }
-              if (timeString.contains("Half-time") ||
-                  timeString.contains("HT")) {
-                return 4550;
-              }
-              if (timeString.contains("Full Time") ||
-                  timeString.contains("FT")) {
-                return 9900;
-              }
-
-              bool isSecondHalf = false;
-              int minute = 0;
-              int additionalTime = 0;
-
-              if (timeString.contains("+")) {
-                final parts = timeString.split("+");
-                String minuteStr = parts[0].replaceAll(RegExp(r'[^\d]'), '');
-                minute = int.tryParse(minuteStr) ?? 0;
-                if (parts.length > 1) {
-                  String extraTimeStr = parts[1].replaceAll(
-                    RegExp(r'[^\d]'),
-                    '',
-                  );
-                  additionalTime = int.tryParse(extraTimeStr) ?? 0;
-                }
-                if (minute == 45) {
-                  isSecondHalf = false;
-                } else if (minute == 90) {
-                  isSecondHalf = true;
-                }
-              } else {
-                String minuteStr = timeString.replaceAll(RegExp(r'[^\d]'), '');
-                minute = int.tryParse(minuteStr) ?? 0;
-                isSecondHalf = minute > 45;
-              }
-
-              if (isSecondHalf) {
-                return 5000 + (minute * 100) + additionalTime;
-              } else {
-                return (minute * 100) + additionalTime;
-              }
-            }
-
-            final sortedEvents = List<MatchEvent>.from(events)..sort((a, b) {
-              int weightA = calculateMatchTimeWeight(a.time);
-              int weightB = calculateMatchTimeWeight(b.time);
-              return weightA.compareTo(weightB);
-            });
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    'MATCHS EVENTS',
-                    style: GoogleFonts.blackOpsOne(
-                      fontSize: 24,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: sortedEvents.length,
-                  itemBuilder: (context, index) {
-                    final event = sortedEvents[index];
-                    if (event.type == MatchEventType.goal) {
-                      return _buildGoalEventItem(event, index, sortedEvents);
-                    }
-                    return EventWidget(event: event);
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGoalEventItem(
-    MatchEvent event,
-    int index,
-    List<MatchEvent> allEvents,
-  ) {
-    final isHomeTeamGoal = event.teamId == _homeTeam.id.toString();
-    int homeGoals = 0;
-    int awayGoals = 0;
-    for (int i = 0; i <= index; i++) {
-      final currentEvent = allEvents[i];
-      if (currentEvent.type == MatchEventType.goal) {
-        if (currentEvent.teamId == _homeTeam.id.toString()) {
-          homeGoals++;
-        } else {
-          awayGoals++;
-        }
-      }
-    }
-    String playerName = "Joueur";
-    if (event.shortText != null && event.shortText!.isNotEmpty) {
-      final nameParts = event.shortText!.split(" ");
-      if (nameParts.isNotEmpty) {
-        playerName = nameParts.first;
-      }
-    } else if (event.text.contains("(")) {
-      final startIndex = event.text.indexOf("!");
-      final endIndex = event.text.indexOf("(");
-      if (startIndex != -1 && endIndex != -1 && startIndex < endIndex) {
-        playerName = event.text.substring(startIndex + 1, endIndex).trim();
-      }
-    }
-    final teamScore =
-        isHomeTeamGoal
-            ? '$homeGoals-$awayGoals pour ${_homeTeam.shortName}'
-            : '$homeGoals-$awayGoals pour ${_awayTeam.shortName}';
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 26),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.green.withValues(alpha: 51)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            alignment: Alignment.center,
-            child: Text(
-              event.time,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Colors.green,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 51),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.sports_soccer,
-              color: Colors.green,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'BUT! $playerName a marqué',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  teamScore,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black.withValues(alpha: 178),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
