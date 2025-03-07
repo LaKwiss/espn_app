@@ -1,9 +1,10 @@
 import 'package:espn_app/screens/home_screen.dart';
+import 'package:espn_app/screens/main_navigation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  runApp(ProviderScope(child: const MyApp()));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -13,7 +14,18 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ESPN App',
-      routes: {'/': (context) => const HomeScreen()},
+      theme: ThemeData(
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          color: Colors.white,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Colors.black),
+        ),
+      ),
+      routes: {
+        '/': (context) => const MainNavigationScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }

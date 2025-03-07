@@ -1,12 +1,14 @@
 import 'package:espn_app/widgets/league_selector.dart';
+import 'package:espn_app/widgets/navigation_dots.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CustomAppBar extends StatefulWidget {
+class CustomAppBar extends ConsumerStatefulWidget {
   const CustomAppBar({
     required this.url,
     this.backgroundColor,
     this.onArrowButtonPressed,
-    this.iconOrientation = 0, // New parameter for icon orientation
+    this.iconOrientation = 0, // Parameter for icon orientation
     super.key,
   });
 
@@ -16,10 +18,10 @@ class CustomAppBar extends StatefulWidget {
   final int iconOrientation; // 0: up, 1: right, 2: down, 3: left
 
   @override
-  State<CustomAppBar> createState() => _CustomAppBarState();
+  ConsumerState<CustomAppBar> createState() => _CustomAppBarState();
 }
 
-class _CustomAppBarState extends State<CustomAppBar>
+class _CustomAppBarState extends ConsumerState<CustomAppBar>
     with SingleTickerProviderStateMixin {
   bool isExpanded = false;
   late AnimationController _animationController;
@@ -34,8 +36,8 @@ class _CustomAppBarState extends State<CustomAppBar>
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -1), // Commence caché au-dessus
-      end: const Offset(0, 0), // Arrive à sa position normale
+      begin: const Offset(0, -1), // Start hidden above
+      end: const Offset(0, 0), // End at normal position
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
@@ -130,7 +132,8 @@ class _CustomAppBarState extends State<CustomAppBar>
               ),
             ),
           ),
-          title: const NavigationDot(),
+          // Utilisation du widget NavigationDots isolé
+          title: const NavigationDots(),
           actions: [
             IconButton(
               icon: AnimatedRotation(
@@ -158,43 +161,6 @@ class _CustomAppBarState extends State<CustomAppBar>
             ),
           ),
       ],
-    );
-  }
-}
-
-class NavigationDot extends StatefulWidget {
-  const NavigationDot({super.key});
-
-  @override
-  State<NavigationDot> createState() => _NavigationDotState();
-}
-
-class _NavigationDotState extends State<NavigationDot> {
-  int selectedIndex = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(3, (index) {
-        bool isSelected = index == selectedIndex;
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              selectedIndex = index;
-            });
-          },
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            width: isSelected ? 7 : 5,
-            height: isSelected ? 7 : 5,
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: isSelected ? 255 : 128),
-              shape: BoxShape.circle,
-            ),
-          ),
-        );
-      }),
     );
   }
 }
