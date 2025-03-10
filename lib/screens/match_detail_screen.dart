@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:espn_app/class/event.dart';
-import 'package:espn_app/class/match_event.dart';
 import 'package:espn_app/class/club.dart';
 import 'package:espn_app/class/team.dart';
-import 'package:espn_app/repositories/match_event_repository.dart';
+import 'package:espn_app/providers/match_events_stream_notifier.dart';
 import 'package:espn_app/widgets/call_to_action.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
 import 'package:espn_app/widgets/event_list_widget.dart';
@@ -15,65 +14,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-
-/// Paramètres nécessaires pour charger les événements d'un match.
-class MatchParams {
-  final String matchId;
-  final String leagueId;
-  final bool isFinished;
-
-  MatchParams({
-    required this.matchId,
-    required this.leagueId,
-    required this.isFinished,
-  });
-}
-
-/// Un StreamProvider qui émet des listes de MatchEvent.
-/// - Si `isFinished` est `false`, il rafraîchit toutes les 2s.
-/// - Sinon, il ne charge qu'une seule fois.
-final matchEventsStreamProvider = StreamProvider.autoDispose
-    .family<List<MatchEvent>, MatchParams>((ref, params) {
-      final controller = StreamController<List<MatchEvent>>.broadcast();
-      bool isActive = true;
-      Timer? timer;
-
-      // Fonction pour charger les événements depuis l'API
-      Future<void> loadEvents() async {
-        try {
-          final events = await MatchEventRepository.fetchMatchEvents(
-            matchId: params.matchId,
-            leagueId: params.leagueId,
-          );
-          if (isActive) {
-            controller.add(events);
-          }
-        } catch (error, stackTrace) {
-          if (isActive) {
-            controller.addError(error, stackTrace);
-          }
-        }
-      }
-
-      // Charge une première fois immédiatement
-      loadEvents();
-
-      // Si le match n'est pas fini, on programme un refresh régulier
-      if (!params.isFinished) {
-        timer = Timer.periodic(const Duration(seconds: 2), (_) {
-          loadEvents();
-        });
-      }
-
-      // Lorsque personne n'écoute plus ce provider, on arrête tout
-      ref.onDispose(() {
-        isActive = false;
-        timer?.cancel();
-        controller.close();
-      });
-
-      return controller.stream;
-    });
 
 class MatchDetailScreen extends ConsumerStatefulWidget {
   static const route = '/match-detail';

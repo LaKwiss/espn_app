@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:espn_app/providers/league_async_notifier.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
@@ -19,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Consumer(
         builder: (context, ref, child) {
-          // Utilisation de ref.read dans la fonction anonyme (ici nous utilisons ref.watch pour reconstruire le widget quand l'état change)
+          // Watch the provider to react to changes
           final eventsAsync = ref.watch(leagueAsyncProvider);
 
           final String fullTitle = ref.watch(selectedLeagueProvider).$1;
@@ -28,6 +29,10 @@ class _HomeScreenState extends State<HomeScreen> {
               spaceIndex > 0 ? fullTitle.substring(0, spaceIndex) : fullTitle;
           final String? titleLine2 =
               spaceIndex > 0 ? fullTitle.substring(spaceIndex + 1) : null;
+
+          // Log provider state for debugging
+          dev.log('LeagueAsyncProvider state: ${eventsAsync.toString()}');
+
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Column(
@@ -36,19 +41,72 @@ class _HomeScreenState extends State<HomeScreen> {
                 CustomAppBar(url: _getLinkByFullTitle(fullTitle)),
                 HomeScreenTitle(titleLine1: titleLine1, titleLine2: titleLine2),
 
-                // Affichage des matchs depuis le provider
+                // Debug info
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  color: Colors.grey[200],
+                  child: Text(
+                    'Provider state: ${eventsAsync.toString().substring(0, eventsAsync.toString().length > 100 ? 100 : eventsAsync.toString().length)}...',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+
+                // Detailed events display with error handling
                 eventsAsync.when(
-                  data:
-                      (events) => Column(
-                        children:
-                            events.map((event) {
-                              return MatchWidget(event: event);
-                            }).toList(),
+                  data: (events) {
+                    if (events.isEmpty) {
+                      dev.log('Events list is empty in UI');
+                      return const Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Center(
+                          child: Text('No events available for this league'),
+                        ),
+                      );
+                    }
+
+                    dev.log('Displaying ${events.length} events in UI');
+                    return Column(
+                      children:
+                          events.map((event) {
+                            dev.log('Rendering event: ${event.name}');
+                            return MatchWidget(event: event);
+                          }).toList(),
+                    );
+                  },
+                  loading: () {
+                    dev.log('UI shows loading state');
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CircularProgressIndicator(),
                       ),
-                  loading:
-                      () => const Center(child: CircularProgressIndicator()),
-                  error:
-                      (error, stack) => Center(child: Text('Erreur: $error')),
+                    );
+                  },
+                  error: (error, stack) {
+                    dev.log('UI shows error: $error');
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.error,
+                              color: Colors.red,
+                              size: 40,
+                            ),
+                            const SizedBox(height: 16),
+                            Text('Error: $error'),
+                            TextButton(
+                              onPressed: () {
+                                ref.refresh(leagueAsyncProvider);
+                              },
+                              child: const Text('Try Again'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),

@@ -1,83 +1,163 @@
 import 'dart:convert';
-import 'dart:developer';
+import 'dart:developer' as dev;
 import 'package:http/http.dart' as http;
 import 'package:espn_app/class/event.dart';
 
 class EventRepository {
-  /// Récupère la liste des événements pour une ligue donnée et
-  /// pour chaque événement, charge également les odds pour récupérer les probabilités.
+  /// Fetches events for a specific league with enhanced debugging
   static Future<List<Event>> fetchEventsFromLeague(String league) async {
-    final response = await http.get(
-      Uri.parse(
-        'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$league/events',
-      ),
-    );
+    dev.log('Starting fetchEventsFromLeague for: $league');
 
-    if (response.statusCode == 200) {
-      // Décoder le corps de la réponse
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      // Extraction des URLs depuis le champ "$ref" de chaque événement
-      final List<dynamic> items = data['items'];
-      final List<String> eventUrls =
-          items.map<String>((item) => item['\$ref'] as String).toList();
+    final url =
+        'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$league/events';
+    dev.log('Fetching from URL: $url');
 
-      // Pour chaque URL d'événement, on récupère d'abord l'event, puis les odds associées
-      final futures =
-          eventUrls.map<Future<Event>>((url) async {
-            // Charger l'événement
-            final eventResponse = await http.get(Uri.parse(url));
-            if (eventResponse.statusCode != 200) {
-              throw Exception(
-                "Erreur lors du chargement de l'événement depuis $url",
-              );
-            }
-            final Map<String, dynamic> eventJson = jsonDecode(
-              eventResponse.body,
-            );
-            // Récupérer l'URL des odds depuis la compétition de l'événement
-            final competition = eventJson['competitions'][0];
-            final oddsRef = competition['odds'];
-            if (oddsRef == null || oddsRef['\$ref'] == null) {
-              throw Exception("URL des odds introuvable pour l'événement $url");
-            }
-            final String oddsUrl = oddsRef['\$ref'] as String;
-            // Charger les odds (contenant les cotes et donc les probabilités)
-            final oddsResponse = await http.get(Uri.parse(oddsUrl));
-            if (oddsResponse.statusCode != 200) {
-              throw Exception(
-                "Erreur lors du chargement des odds depuis $oddsUrl",
-              );
-            }
-            final Map<String, dynamic> oddsJson = jsonDecode(oddsResponse.body);
-            // Construire l'Event en combinant l'eventJson et les oddsJson
-            return Event.fromJson(eventJson, oddsJson);
-          }).toList();
+    try {
+      final response = await http.get(Uri.parse(url));
 
-      final result = await Future.wait(futures);
-      log('Récupération de ${result.length} événements pour la ligue: $league');
-      return result;
-    } else {
-      throw Exception(
-        'Erreur lors du chargement des événements pour la ligue: $league',
-      );
+      dev.log('Response status code: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        // Log response body length for debugging
+        dev.log('Response body length: ${response.body.length} characters');
+
+        // Decode response body
+        final Map<String, dynamic> data = jsonDecode(response.body);
+
+        // Extract event URLs
+        final List<dynamic> items = data['items'];
+        dev.log('Found ${items.length} event items in response');
+
+        if (items.isEmpty) {
+          dev.log('WARNING: No events found for league: $league');
+          return [];
+        }
+
+        final List<String> eventUrls =
+            items.map<String>((item) => item['\$ref'] as String).toList();
+
+        // Fetch details for each event
+        final futures =
+            eventUrls.map<Future<Event>>((url) async {
+              dev.log('Fetching event details from: $url');
+
+              try {
+                // Fetch event data
+                final eventResponse = await http.get(Uri.parse(url));
+                if (eventResponse.statusCode != 200) {
+                  throw Exception(
+                    'Failed to load event from $url, status: ${eventResponse.statusCode}',
+                  );
+                }
+
+                final Map<String, dynamic> eventJson = jsonDecode(
+                  eventResponse.body,
+                );
+
+                // Get competition data
+                if (!eventJson.containsKey('competitions') ||
+                    eventJson['competitions'].isEmpty) {
+                  throw Exception(
+                    'No competition data found for event at $url',
+                  );
+                }
+
+                final competition = eventJson['competitions'][0];
+
+                // Get odds URL
+                if (!competition.containsKey('odds') ||
+                    competition['odds'] == null ||
+                    !competition['odds'].containsKey('\$ref')) {
+                  dev.log('No odds data found for event, using default values');
+                  // Create mock odds data with default probabilities
+                  final mockOddsJson = {
+                    'items': [
+                      {
+                        'provider': {'id': '2000'},
+                        'awayTeamOdds': {
+                          'odds': {'value': 3.0},
+                        },
+                        'homeTeamOdds': {
+                          'odds': {'value': 2.1},
+                        },
+                        'drawOdds': {'value': 3.4},
+                      },
+                    ],
+                  };
+                  return Event.fromJson(eventJson, mockOddsJson);
+                }
+
+                final String oddsUrl = competition['odds']['\$ref'] as String;
+                dev.log('Fetching odds from: $oddsUrl');
+
+                // Fetch odds data
+                final oddsResponse = await http.get(Uri.parse(oddsUrl));
+                if (oddsResponse.statusCode != 200) {
+                  throw Exception(
+                    'Failed to load odds from $oddsUrl, status: ${oddsResponse.statusCode}',
+                  );
+                }
+
+                final Map<String, dynamic> oddsJson = jsonDecode(
+                  oddsResponse.body,
+                );
+
+                // Create Event object
+                return Event.fromJson(eventJson, oddsJson);
+              } catch (e, stack) {
+                dev.log('Error processing event $url: $e');
+                dev.log('Stack trace: $stack');
+                rethrow; // Allow the caller to handle this
+              }
+            }).toList();
+
+        try {
+          final result = await Future.wait(futures);
+          dev.log(
+            'Successfully fetched ${result.length} events for league: $league',
+          );
+          return result;
+        } catch (e) {
+          dev.log('Error during Future.wait: $e');
+          rethrow;
+        }
+      } else {
+        throw Exception(
+          'Failed to load events for league: $league, status: ${response.statusCode}',
+        );
+      }
+    } catch (e, stack) {
+      dev.log('Error in fetchEventsFromLeague: $e');
+      dev.log('Stack trace: $stack');
+      throw Exception('Failed to fetch events: $e');
     }
   }
 
-  /// Récupère le nom complet de la ligue à partir de son endpoint.
+  /// Fetches the league name from its endpoint
   static Future<String> fetchLeagueName(String leagueName) async {
-    final response = await http.get(
-      Uri.parse(
-        'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueName',
-      ),
-    );
+    dev.log('Fetching league name for: $leagueName');
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      final String name = data['displayName'] as String;
-      log('Nom de la ligue récupéré: $name');
-      return name;
-    } else {
-      throw Exception('Erreur lors du chargement de la ligue: $leagueName');
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueName',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final String name = data['displayName'] as String;
+        dev.log('League name fetched: $name');
+        return name;
+      } else {
+        dev.log('Error fetching league name: ${response.statusCode}');
+        throw Exception(
+          'Failed to load league: $leagueName, status: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      dev.log('Exception fetching league name: $e');
+      throw Exception('Failed to fetch league name: $e');
     }
   }
 }
