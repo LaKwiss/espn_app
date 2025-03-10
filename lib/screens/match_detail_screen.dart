@@ -267,7 +267,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                   },
                 ),
               ),
-              if (_showEvents || !widget.event.isFinished)
+              if (true)
                 SliverToBoxAdapter(
                   child: EventsListWidget(
                     eventsStream: eventsStream,

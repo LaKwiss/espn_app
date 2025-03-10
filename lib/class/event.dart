@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:equatable/equatable.dart';
 import 'package:espn_app/class/club.dart';
 import 'package:espn_app/class/league.dart';
@@ -139,6 +140,8 @@ class Event extends Equatable {
       // On continue sans les données de club
     }
 
+    log('le match est fini : ${competition['status']?['type']?['name']}');
+
     return Event(
       id: eventJson['id'].toString(),
       idTeam: (
@@ -155,8 +158,8 @@ class Event extends Equatable {
       isFinished:
           competition['status']?['type']?['name'] == "STATUS_FINAL" ||
           competition['status']?['type']?['state'] == "post" ||
-          (competition['recapAvailable'] == true &&
-              competition['liveAvailable'] == false &&
+          (competition['recapAvailable'] == true ||
+              competition['liveAvailable'] == false ||
               DateTime.parse(
                 eventJson['date'],
               ).isBefore(DateTime.now().subtract(Duration(hours: 3)))),
