@@ -19,8 +19,6 @@ class EventsListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    dev.log('Building EventsListWidget');
-
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(16),
@@ -31,17 +29,19 @@ class EventsListWidget extends StatelessWidget {
       child: StreamBuilder<List<MatchEvent>>(
         stream: eventsStream,
         builder: (context, snapshot) {
-          // Debug the snapshot state
-          dev.log('StreamBuilder state: ${snapshot.connectionState}');
-          if (snapshot.hasData) {
-            dev.log('Events count: ${snapshot.data!.length}');
-          }
-          if (snapshot.hasError) {
-            dev.log('StreamBuilder error: ${snapshot.error}');
+          // Case 1: Loading state
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: CircularProgressIndicator(),
+              ),
+            );
           }
 
-          // Case 1: Error occurred
+          // Case 2: Error occurred
           if (snapshot.hasError) {
+            dev.log('StreamBuilder error: ${snapshot.error}');
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -60,26 +60,8 @@ class EventsListWidget extends StatelessWidget {
             );
           }
 
-          // Case 2: Loading state (or waiting for first event)
-          if (!snapshot.hasData) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Loading match events... : ${snapshot.data?.first.toString() ?? "none"}',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          // Case 3: Empty events list
-          final events = snapshot.data!;
-          if (events.isEmpty) {
+          // Case 3: Empty events list or no data
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -110,6 +92,9 @@ class EventsListWidget extends StatelessWidget {
           }
 
           // Case 4: We have events to display
+          final events = snapshot.data!;
+          dev.log('Events count: ${events.length}');
+
           final sortedEvents = _sortEventsByMatchTime(events);
           dev.log('Sorted events count: ${sortedEvents.length}');
 
@@ -124,23 +109,6 @@ class EventsListWidget extends StatelessWidget {
                     fontSize: 24,
                     color: Colors.black,
                   ),
-                ),
-              ),
-              // Display debugging info
-              Container(
-                padding: const EdgeInsets.all(8),
-                margin: const EdgeInsets.only(bottom: 16),
-                color: Colors.grey[200],
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Events count: ${sortedEvents.length}'),
-                    Text(
-                      'First event: ${sortedEvents.first.type.name} at ${sortedEvents.first.time}',
-                    ),
-                    Text('Home team: ${homeTeam.name} (ID: ${homeTeam.id})'),
-                    Text('Away team: ${awayTeam.name} (ID: ${awayTeam.id})'),
-                  ],
                 ),
               ),
 
@@ -235,7 +203,17 @@ class EventsListWidget extends StatelessWidget {
     List<MatchEvent> allEvents,
   ) {
     try {
-      final isHomeTeamGoal = event.teamId == homeTeam.id.toString();
+      // Compare with String or int based on what's available
+      final homeTeamId = homeTeam.id.toString();
+      final awayTeamId = awayTeam.id.toString();
+
+      // Check if the event's teamId matches either home or away team
+      final isHomeTeamGoal = event.teamId == homeTeamId;
+      final isAwayTeamGoal = event.teamId == awayTeamId;
+
+      // If we can't determine the team, default to home team
+      final effectiveTeamGoal = isHomeTeamGoal || !isAwayTeamGoal;
+
       int homeGoals = 0;
       int awayGoals = 0;
 
@@ -243,7 +221,10 @@ class EventsListWidget extends StatelessWidget {
       for (int i = 0; i <= index; i++) {
         final currentEvent = allEvents[i];
         if (currentEvent.type == MatchEventType.goal) {
-          if (currentEvent.teamId == homeTeam.id.toString()) {
+          final isCurrentHomeGoal = currentEvent.teamId == homeTeamId;
+          final isCurrentAwayGoal = currentEvent.teamId == awayTeamId;
+
+          if (isCurrentHomeGoal || !isCurrentAwayGoal) {
             homeGoals++;
           } else {
             awayGoals++;
@@ -267,7 +248,7 @@ class EventsListWidget extends StatelessWidget {
       }
 
       final teamScore =
-          isHomeTeamGoal
+          effectiveTeamGoal
               ? '$homeGoals-$awayGoals pour ${homeTeam.shortName}'
               : '$homeGoals-$awayGoals pour ${awayTeam.shortName}';
 

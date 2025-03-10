@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:espn_app/class/event.dart';
 import 'package:espn_app/class/club.dart';
@@ -207,14 +208,13 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                   },
                 ),
               ),
-              if (true)
-                SliverToBoxAdapter(
-                  child: EventsListWidget(
-                    eventsStream: eventsStream,
-                    homeTeam: _homeTeam,
-                    awayTeam: _awayTeam,
-                  ),
+              SliverToBoxAdapter(
+                child: EventsListWidget(
+                  eventsStream: eventsStream,
+                  homeTeam: _homeTeam,
+                  awayTeam: _awayTeam,
                 ),
+              ),
               if (!widget.event.isFinished)
                 SliverToBoxAdapter(
                   child: CallToActionWidget(

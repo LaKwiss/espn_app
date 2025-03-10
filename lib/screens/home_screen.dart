@@ -30,9 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
           final String? titleLine2 =
               spaceIndex > 0 ? fullTitle.substring(spaceIndex + 1) : null;
 
-          // Log provider state for debugging
-          dev.log('LeagueAsyncProvider state: ${eventsAsync.toString()}');
-
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Column(

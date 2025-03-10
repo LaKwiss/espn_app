@@ -31,26 +31,32 @@ final matchEventsStreamProvider = StreamProvider.autoDispose.family<
   // Crée un contrôleur de stream "broadcast" pour que plusieurs widgets puissent s'abonner
   final controller = StreamController<List<MatchEvent>>.broadcast();
 
-  bool isActive = true; // Indique si on écoute toujours le provider
+  // Cette variable sera utilisée pour vérifier si le stream est toujours actif
+  // avant d'ajouter des événements
+  bool isActive = true;
   Timer? timer;
 
   // Fonction pour charger les événements depuis le repository
   Future<void> loadEvents() async {
+    // Vérifie si le stream est toujours actif avant même de commencer
+    if (!isActive) {
+      dev.log('Stream no longer active, skipping loadEvents()');
+      return;
+    }
+
     dev.log('Loading events for match ${params.matchId}');
     try {
-      // If match is not started, add empty list to simulate "no events yet"
-      // Remove this condition to force fetch from API
-      // if (!params.isFinished) {
-      //   controller.add([]);
-      //   return;
-      // }
-
+      // Récupération des événements
       final events = await MatchEventRepository.fetchMatchEvents(
         matchId: params.matchId,
         leagueId: params.leagueId,
       );
 
-      dev.log('Loaded ${events.length} events for match ${params.matchId}');
+      // Vérifie à nouveau si le stream est toujours actif après l'opération asynchrone
+      if (!isActive) {
+        dev.log('Stream was closed during fetchMatchEvents, not adding events');
+        return;
+      }
 
       if (events.isEmpty) {
         dev.log('No events found for match ${params.matchId}');
@@ -61,15 +67,19 @@ final matchEventsStreamProvider = StreamProvider.autoDispose.family<
         );
       }
 
-      if (isActive) {
+      // Ajout des événements au stream seulement si le controller est toujours ouvert
+      if (isActive && !controller.isClosed) {
         controller.add(events);
+      } else {
+        dev.log('Stream controller is closed, cannot add events');
       }
     } catch (error, stackTrace) {
       dev.log('Error loading match events: $error');
       dev.log('Stack trace: $stackTrace');
-      if (isActive) {
+
+      // Vérifie si le controller est toujours ouvert avant d'ajouter une liste vide
+      if (isActive && !controller.isClosed) {
         // Add empty list instead of error to avoid breaking the UI
-        // controller.addError(error, stackTrace);
         controller.add([]);
       }
     }
@@ -81,17 +91,25 @@ final matchEventsStreamProvider = StreamProvider.autoDispose.family<
   // Si le match n'est pas terminé, on programme un rafraîchissement régulier
   if (!params.isFinished) {
     timer = Timer.periodic(const Duration(seconds: 5), (_) {
-      dev.log('Refreshing match events');
-      loadEvents();
+      if (isActive) {
+        dev.log('Refreshing match events');
+        loadEvents();
+      }
     });
   }
 
   // Quand on "dispose" le provider (plus personne n'écoute), on arrête tout
   ref.onDispose(() {
     dev.log('Disposing match events stream');
+    // Marque d'abord le stream comme inactif pour éviter les nouveaux ajouts
     isActive = false;
+    // Puis annule le timer et ferme le controller
     timer?.cancel();
-    controller.close();
+
+    // Vérifie si le controller n'est pas déjà fermé avant de le fermer
+    if (!controller.isClosed) {
+      controller.close();
+    }
   });
 
   return controller.stream;
