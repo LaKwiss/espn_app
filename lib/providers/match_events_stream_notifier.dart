@@ -52,12 +52,6 @@ final matchEventsStreamProvider = StreamProvider.autoDispose.family<
         leagueId: params.leagueId,
       );
 
-      // Vérifie à nouveau si le stream est toujours actif après l'opération asynchrone
-      if (!isActive) {
-        dev.log('Stream was closed during fetchMatchEvents, not adding events');
-        return;
-      }
-
       if (events.isEmpty) {
         dev.log('No events found for match ${params.matchId}');
       } else {
@@ -67,12 +61,7 @@ final matchEventsStreamProvider = StreamProvider.autoDispose.family<
         );
       }
 
-      // Ajout des événements au stream seulement si le controller est toujours ouvert
-      if (isActive && !controller.isClosed) {
-        controller.add(events);
-      } else {
-        dev.log('Stream controller is closed, cannot add events');
-      }
+      controller.add(events);
     } catch (error, stackTrace) {
       dev.log('Error loading match events: $error');
       dev.log('Stack trace: $stackTrace');
