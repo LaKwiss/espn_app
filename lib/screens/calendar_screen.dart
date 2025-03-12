@@ -1,11 +1,14 @@
+import 'dart:developer';
+
 import 'package:espn_app/class/event.dart';
-import 'package:espn_app/providers/league_async_notifier.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
+import 'package:espn_app/repositories/event_repository.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
 import 'package:espn_app/widgets/match_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -19,20 +22,103 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
+  int _selectedYear = DateTime.now().year;
+  final List<int> _availableYears = List.generate(
+    40,
+    (index) => DateTime.now().year - 39 + index,
+  );
 
-  // Filter options
+  // Événements pour la date sélectionnée
+  List<Event> _eventsForSelectedDate = [];
+  bool _isLoadingEvents = false;
+  String? _errorMessage;
+
+  // Options de filtre
   bool _showUpcoming = true;
   bool _showCompleted = true;
 
   @override
+  void initState() {
+    super.initState();
+
+    // Initialiser la ligue et récupérer les événements initiaux
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final selectedState = ref.read(selectedLeagueProvider);
+      final leagueCode = selectedState.$2.isEmpty ? 'ger.1' : selectedState.$2;
+
+      // Si aucune ligue n'est sélectionnée, utiliser 'ger.1' par défaut
+      if (selectedState.$2.isEmpty) {
+        ref.read(selectedLeagueProvider.notifier).selectCode(leagueCode);
+        ref.read(selectedLeagueProvider.notifier).selectLeague('Bundesliga');
+      }
+
+      // Récupérer les événements initiaux pour aujourd'hui
+      _fetchEventsForSelectedDate();
+    });
+  }
+
+  Future<void> _fetchEventsForSelectedDate() async {
+    if (_isLoadingEvents) return;
+
+    setState(() {
+      _isLoadingEvents = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Obtenir le code de la ligue sélectionnée ou utiliser 'ger.1' par défaut
+      final selectedState = ref.read(selectedLeagueProvider);
+
+      log('Selected league: ${selectedState.$1} (${selectedState.$2})');
+
+      final leagueCode = selectedState.$2.isEmpty ? 'ger.1' : selectedState.$2;
+
+      log('Fetching events for $_selectedDay in league $leagueCode');
+
+      // Récupérer les événements pour la date et la ligue sélectionnées
+      final events = await EventRepository.fetchEventsByDate(
+        leagueCode,
+        _selectedDay,
+      );
+
+      // Appliquer les filtres
+      final filteredEvents =
+          events.where((event) {
+            if (!_showUpcoming && !event.isFinished) return false;
+            if (!_showCompleted && event.isFinished) return false;
+            return true;
+          }).toList();
+
+      setState(() {
+        _eventsForSelectedDate = filteredEvents;
+        _isLoadingEvents = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Échec du chargement des événements: $e';
+        _isLoadingEvents = false;
+        _eventsForSelectedDate = [];
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final eventsAsync = ref.watch(leagueAsyncProvider);
-    final String leagueName = ref.watch(selectedLeagueProvider).$1;
+    // Observer les changements dans la ligue sélectionnée
+    final selectedLeagueState = ref.watch(selectedLeagueProvider);
+    final String leagueName = selectedLeagueState.$1;
+
+    // Si la ligue a changé, recharger les événements
+    ref.listen<(String, String)>(selectedLeagueProvider, (previous, current) {
+      if (previous?.$2 != current.$2) {
+        _fetchEventsForSelectedDate();
+      }
+    });
 
     return Scaffold(
       body: Column(
         children: [
-          // Custom AppBar
+          // Custom AppBar - Utilise le comportement par défaut pour le LeagueSelector
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: CustomAppBar(
@@ -41,19 +127,80 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
           ),
 
-          // Calendar Title
+          // Calendar Title avec sélecteur d'année
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
               vertical: 8.0,
             ),
-            child: Text(
-              'CALENDAR',
-              style: GoogleFonts.blackOpsOne(
-                fontSize: 45,
-                color: Colors.black,
-                height: 1,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'CALENDAR',
+                  style: GoogleFonts.blackOpsOne(
+                    fontSize: 45,
+                    color: Colors.black,
+                    height: 1,
+                  ),
+                ),
+                // Year Selector
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: DropdownButton<int>(
+                    value: _selectedYear,
+                    underline: Container(), // Supprimer la ligne par défaut
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _selectedYear = value;
+                          // Mettre à jour le jour focalisé avec l'année sélectionnée
+                          _focusedDay = DateTime(
+                            _selectedYear,
+                            _focusedDay.month,
+                            // S'assurer que le jour est valide dans le nouveau mois/année
+                            _focusedDay.day >
+                                    DateTime(
+                                      _selectedYear,
+                                      _focusedDay.month,
+                                      0,
+                                    ).day
+                                ? DateTime(
+                                  _selectedYear,
+                                  _focusedDay.month,
+                                  0,
+                                ).day
+                                : _focusedDay.day,
+                          );
+                          _selectedDay = _focusedDay;
+                        });
+
+                        // Récupérer les événements pour la nouvelle date
+                        _fetchEventsForSelectedDate();
+                      }
+                    },
+                    items:
+                        _availableYears
+                            .map(
+                              (year) => DropdownMenuItem<int>(
+                                value: year,
+                                child: Text(
+                                  year.toString(),
+                                  style: GoogleFonts.roboto(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -66,36 +213,111 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             child: _buildCalendar(),
           ),
 
+          // Date sélectionnée
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.calendar_today, color: Colors.black, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Date sélectionnée: ${DateFormat('d MMMM yyyy').format(_selectedDay)}',
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Selected day events
           Expanded(
-            child: eventsAsync.when(
-              data: (allEvents) {
-                // Filter events for the selected day
-                final eventsForDay = _getEventsForDay(allEvents, _selectedDay);
-
-                if (eventsForDay.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'No matches on this day',
-                      style: GoogleFonts.roboto(
-                        fontSize: 18,
-                        color: Colors.grey,
+            child:
+                _isLoadingEvents
+                    ? const Center(child: CircularProgressIndicator())
+                    : _errorMessage != null
+                    ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.red[300],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Erreur lors du chargement des matchs',
+                            style: GoogleFonts.roboto(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.roboto(
+                              fontSize: 14,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _fetchEventsForSelectedDate,
+                            child: const Text('Réessayer'),
+                          ),
+                        ],
+                      ),
+                    )
+                    : _eventsForSelectedDate.isEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.sports_soccer_outlined,
+                            size: 48,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Aucun match le ${DateFormat('d MMMM yyyy').format(_selectedDay)}',
+                            style: GoogleFonts.roboto(
+                              fontSize: 18,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Essayez de sélectionner une autre date ou ligue',
+                            style: GoogleFonts.roboto(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                    : RefreshIndicator(
+                      onRefresh: _fetchEventsForSelectedDate,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16.0),
+                        itemCount: _eventsForSelectedDate.length,
+                        itemBuilder: (context, index) {
+                          return MatchWidget(
+                            event: _eventsForSelectedDate[index],
+                          );
+                        },
                       ),
                     ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: eventsForDay.length,
-                  itemBuilder: (context, index) {
-                    return MatchWidget(event: eventsForDay[index]);
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
-            ),
           ),
         ],
       ),
@@ -109,12 +331,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         children: [
           Expanded(
             child: FilterChip(
-              label: const Text('Upcoming'),
+              label: const Text('À venir'),
               selected: _showUpcoming,
               onSelected: (selected) {
                 setState(() {
                   _showUpcoming = selected;
                 });
+                _fetchEventsForSelectedDate();
               },
               checkmarkColor: Colors.black,
               selectedColor: Colors.grey[300],
@@ -128,12 +351,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: FilterChip(
-              label: const Text('Completed'),
+              label: const Text('Terminés'),
               selected: _showCompleted,
               onSelected: (selected) {
                 setState(() {
                   _showCompleted = selected;
                 });
+                _fetchEventsForSelectedDate();
               },
               checkmarkColor: Colors.black,
               selectedColor: Colors.grey[300],
@@ -151,8 +375,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Widget _buildCalendar() {
     return TableCalendar(
-      firstDay: DateTime.utc(2024, 1, 1),
-      lastDay: DateTime.utc(2025, 12, 31),
+      firstDay: DateTime.utc(
+        _selectedYear - 5,
+        1,
+        1,
+      ), // 5 ans avant l'année sélectionnée
+      lastDay: DateTime.utc(
+        _selectedYear + 5,
+        12,
+        31,
+      ), // 5 ans après l'année sélectionnée
       focusedDay: _focusedDay,
       calendarFormat: _calendarFormat,
       selectedDayPredicate: (day) {
@@ -163,6 +395,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
         });
+
+        // Récupérer les événements pour la date sélectionnée
+        _fetchEventsForSelectedDate();
       },
       onFormatChanged: (format) {
         setState(() {
@@ -171,6 +406,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       },
       onPageChanged: (focusedDay) {
         _focusedDay = focusedDay;
+
+        // Mettre à jour l'année si elle a changé
+        if (_focusedDay.year != _selectedYear) {
+          setState(() {
+            _selectedYear = _focusedDay.year;
+          });
+        }
       },
       calendarStyle: CalendarStyle(
         selectedDecoration: BoxDecoration(
@@ -201,24 +443,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
       ),
     );
-  }
-
-  List<Event> _getEventsForDay(List<Event> allEvents, DateTime day) {
-    return allEvents.where((event) {
-      final eventDate = DateTime.tryParse(event.date);
-      if (eventDate == null) return false;
-
-      final isSameDate =
-          eventDate.year == day.year &&
-          eventDate.month == day.month &&
-          eventDate.day == day.day;
-
-      // Apply filters
-      if (!_showUpcoming && !event.isFinished) return false;
-      if (!_showCompleted && event.isFinished) return false;
-
-      return isSameDate;
-    }).toList();
   }
 
   String _getLeagueLogoUrl(String leagueName) {

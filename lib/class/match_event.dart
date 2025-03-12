@@ -180,7 +180,7 @@ class MatchEvent extends Equatable {
     return MatchEvent(
       id: json['id'] ?? '',
       type: _parseEventType(json['type']),
-      text: json['text'] ?? 'Kickoff',
+      text: json['text'] ?? json['type']['text'] ?? 'Kickoff',
       shortText: json['shortText'] as String?,
       alternateText: json['alternativeText'] ?? 'Kickoff',
       shortAlternateText: json['shortAlternativeText'] as String?,

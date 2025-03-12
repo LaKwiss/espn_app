@@ -59,6 +59,7 @@ class LeagueSelector extends ConsumerWidget {
     final String fullName = await ref
         .read(leagueAsyncProvider.notifier)
         .getLeagueName(leagueName);
+    ref.read(selectedLeagueProvider.notifier).selectCode(leagueName);
     ref.read(selectedLeagueProvider.notifier).selectLeague(fullName);
   }
 }
