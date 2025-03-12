@@ -3,8 +3,7 @@ import 'dart:math';
 import 'package:espn_app/class/score.dart';
 import 'package:espn_app/class/team.dart';
 import 'package:espn_app/screens/match_detail_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:espn_app/widgets/widgets.dart';
 import 'package:intl/intl.dart';
 import 'package:espn_app/class/event.dart';
 

@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:espn_app/class/club.dart';
-import 'package:espn_app/widgets/custom_app_bar.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:espn_app/widgets/widgets.dart';
 
 class ClubDetailScreen extends StatefulWidget {
   final Club club;

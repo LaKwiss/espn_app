@@ -1,7 +1,6 @@
-import 'package:espn_app/widgets/league_selector.dart';
-import 'package:espn_app/widgets/navigation_dots.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'widgets.dart';
 
 class CustomAppBar extends ConsumerStatefulWidget {
   const CustomAppBar({

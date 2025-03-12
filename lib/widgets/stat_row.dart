@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:espn_app/widgets/widgets.dart';
 
 class StatRow extends StatelessWidget {
   const StatRow({super.key, required this.label, required this.value});

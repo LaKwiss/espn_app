@@ -1,5 +1,5 @@
 import 'package:espn_app/providers/last_5_notifier.dart';
-import 'package:flutter/material.dart';
+import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class Last5RowWidget extends ConsumerWidget {

@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:espn_app/widgets/widgets.dart';
 
 class TeamStatCard extends StatelessWidget {
   const TeamStatCard({super.key, required this.label, required this.value});

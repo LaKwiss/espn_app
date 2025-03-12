@@ -1,9 +1,7 @@
 import 'dart:developer' as dev;
-import 'package:flutter/material.dart';
 import 'package:espn_app/class/match_event.dart';
 import 'package:espn_app/class/team.dart';
-import 'package:espn_app/widgets/event_widget.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:espn_app/widgets/widgets.dart';
 
 class EventsListWidget extends StatelessWidget {
   final List<MatchEvent> events;

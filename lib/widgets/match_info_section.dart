@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:espn_app/class/match_event.dart';
 import 'package:espn_app/class/score.dart';
 import 'package:espn_app/class/team.dart';
 import 'package:espn_app/widgets/score_display.dart';
 import 'package:espn_app/widgets/time_display.dart';
-import 'package:espn_app/widgets/team_logo_widget.dart';
+import 'package:espn_app/widgets/team_logo.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class MatchInfoSectionWidget extends StatelessWidget {

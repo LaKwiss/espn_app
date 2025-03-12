@@ -1,6 +1,5 @@
 import 'package:espn_app/providers/selected_league_notifier.dart';
-import 'package:espn_app/widgets/league_item.dart';
-import 'package:flutter/material.dart';
+import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:espn_app/providers/league_async_notifier.dart';
 

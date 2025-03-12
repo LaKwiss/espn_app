@@ -1,7 +1,6 @@
 import 'package:espn_app/class/event.dart';
 import 'package:espn_app/class/team.dart';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:espn_app/widgets/widgets.dart';
 
 class HeaderSection extends StatelessWidget {
   const HeaderSection({super.key, required this.event});

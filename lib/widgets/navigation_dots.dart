@@ -1,6 +1,6 @@
 import 'package:espn_app/constant/navigation_constants.dart';
 import 'package:espn_app/providers/page_index_provider.dart';
-import 'package:flutter/material.dart';
+import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NavigationDots extends ConsumerWidget {

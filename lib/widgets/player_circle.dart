@@ -1,6 +1,5 @@
 import 'package:espn_app/class/athlete.dart';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:espn_app/widgets/widgets.dart';
 
 class PlayerCircle extends StatelessWidget {
   const PlayerCircle({

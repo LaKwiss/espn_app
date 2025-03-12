@@ -11,7 +11,7 @@ import 'package:espn_app/class/stats.dart';
 import 'package:espn_app/class/club.dart';
 import 'package:espn_app/class/league.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
-import 'package:espn_app/widgets/club_info_widget.dart';
+import 'package:espn_app/widgets/club_info.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';

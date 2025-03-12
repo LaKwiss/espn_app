@@ -1,12 +1,8 @@
 import 'package:espn_app/class/event.dart';
-import 'package:espn_app/providers/league_async_notifier.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
 import 'package:espn_app/repositories/event_repository.dart';
-import 'package:espn_app/widgets/custom_app_bar.dart';
-import 'package:espn_app/widgets/match_widget.dart';
-import 'package:flutter/material.dart';
+import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 

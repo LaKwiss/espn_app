@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:espn_app/widgets/widgets.dart';
 
 class LastMatches extends StatelessWidget {
   const LastMatches({super.key, required this.results});
