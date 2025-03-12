@@ -6,19 +6,61 @@ import 'package:espn_app/widgets/event_widget.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class EventsListWidget extends StatelessWidget {
-  final Stream<List<MatchEvent>> eventsStream;
+  final List<MatchEvent> events;
   final Team homeTeam;
   final Team awayTeam;
 
   const EventsListWidget({
     super.key,
-    required this.eventsStream,
+    required this.events,
     required this.homeTeam,
     required this.awayTeam,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Version simplifiée sans StreamBuilder
+    if (events.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.sports_soccer_outlined,
+                  size: 48,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Aucun événement enregistré pour ce match',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Revenez plus tard pour voir les mises à jour',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Trier les événements par heure de match
+    final sortedEvents = _sortEventsByMatchTime(events);
+    dev.log('Affichage de ${sortedEvents.length} événements triés');
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(16),
@@ -26,112 +68,37 @@ class EventsListWidget extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: StreamBuilder<List<MatchEvent>>(
-        stream: eventsStream,
-        builder: (context, snapshot) {
-          // Case 1: Loading state
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text(
+              'ÉVÉNEMENTS DU MATCH',
+              style: GoogleFonts.blackOpsOne(fontSize: 24, color: Colors.black),
+            ),
+          ),
 
-          // Case 2: Error occurred
-          if (snapshot.hasError) {
-            dev.log('StreamBuilder error: ${snapshot.error}');
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    Text('Error loading match events: ${snapshot.error}'),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          // Case 3: Empty events list or no data
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.sports_soccer_outlined,
-                      size: 48,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'No events recorded for this match yet',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Check back once the match begins',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          // Case 4: We have events to display
-          final events = snapshot.data!;
-          dev.log('Events count: ${events.length}');
-
-          final sortedEvents = _sortEventsByMatchTime(events);
-          dev.log('Sorted events count: ${sortedEvents.length}');
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'ÉVÉNEMENTS DU MATCH',
-                  style: GoogleFonts.blackOpsOne(
-                    fontSize: 24,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: sortedEvents.length,
-                itemBuilder: (context, index) {
-                  final event = sortedEvents[index];
-                  if (event.type == MatchEventType.goal) {
-                    return _buildGoalEventItem(event, index, sortedEvents);
-                  }
-                  return EventWidget(event: event);
-                },
-              ),
-            ],
-          );
-        },
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sortedEvents.length,
+            itemBuilder: (context, index) {
+              final event = sortedEvents[index];
+              if (event.type == MatchEventType.goal) {
+                return _buildGoalEventItem(event, index, sortedEvents);
+              }
+              return EventWidget(event: event);
+            },
+          ),
+        ],
       ),
     );
   }
 
+  // Méthodes de tri et d'affichage (inchangées)
   List<MatchEvent> _sortEventsByMatchTime(List<MatchEvent> events) {
+    // Même implémentation que dans ton code original
     try {
       final sortedEvents = List<MatchEvent>.from(events)..sort((a, b) {
         int weightA = _calculateMatchTimeWeight(a.time);
@@ -146,6 +113,10 @@ class EventsListWidget extends StatelessWidget {
   }
 
   int _calculateMatchTimeWeight(String timeString) {
+    // Même implémentation que dans ton code original
+    // ...
+    // (Code repris de ta version originale)
+
     // First check for specific strings
     if (timeString.contains("First Half ends") || timeString == "45'") {
       return 4500;
@@ -202,6 +173,10 @@ class EventsListWidget extends StatelessWidget {
     int index,
     List<MatchEvent> allEvents,
   ) {
+    // Même implémentation que dans ton code original
+    // ...
+    // (Code repris de ta version originale)
+
     try {
       // Compare with String or int based on what's available
       final homeTeamId = homeTeam.id.toString();

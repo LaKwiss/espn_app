@@ -1,14 +1,13 @@
-import 'dart:async';
 import 'dart:developer' as dev;
 import 'package:espn_app/class/match_event.dart';
 import 'package:espn_app/repositories/match_event_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Regroupe les paramètres pour charger les événements d'un match
+// Classe pour contenir les paramètres du match
 class MatchParams {
   final String matchId;
   final String leagueId;
-  final bool isFinished; // indique si le match est terminé ou non
+  final bool isFinished;
 
   MatchParams({
     required this.matchId,
@@ -21,85 +20,59 @@ class MatchParams {
       'MatchParams(matchId: $matchId, leagueId: $leagueId, isFinished: $isFinished)';
 }
 
-/// Un provider "family" qui émet un Stream:List:MatchEvent.
-final matchEventsStreamProvider = StreamProvider.autoDispose.family<
-  List<MatchEvent>,
-  MatchParams
->((ref, params) {
-  dev.log('Creating match events stream for: $params');
+// AsyncNotifier pour gérer les événements du match
+class MatchEventsNotifier extends AsyncNotifier<List<MatchEvent>> {
+  late MatchParams _params;
 
-  // Crée un contrôleur de stream "broadcast" pour que plusieurs widgets puissent s'abonner
-  final controller = StreamController<List<MatchEvent>>.broadcast();
+  // Initialiser le notifier avec les paramètres spécifiques
+  void initialize(MatchParams params) {
+    _params = params;
+    // Charger les données immédiatement
+    _fetchEvents();
+  }
 
-  // Cette variable sera utilisée pour vérifier si le stream est toujours actif
-  // avant d'ajouter des événements
-  bool isActive = true;
-  Timer? timer;
-
-  // Fonction pour charger les événements depuis le repository
-  Future<void> loadEvents() async {
-    // Vérifie si le stream est toujours actif avant même de commencer
-    if (!isActive) {
-      dev.log('Stream no longer active, skipping loadEvents()');
-      return;
-    }
-
-    dev.log('Loading events for match ${params.matchId}');
+  // Récupérer les événements depuis le repository
+  Future<void> _fetchEvents() async {
+    state = const AsyncValue.loading();
     try {
-      // Récupération des événements
+      dev.log('Fetching events for match ${_params.matchId}');
       final events = await MatchEventRepository.fetchMatchEvents(
-        matchId: params.matchId,
-        leagueId: params.leagueId,
+        matchId: _params.matchId,
+        leagueId: _params.leagueId,
       );
 
       if (events.isEmpty) {
-        dev.log('No events found for match ${params.matchId}');
+        dev.log('No events found for match ${_params.matchId}');
       } else {
-        dev.log('Loaded ${events.length} events for match ${params.matchId}');
-        dev.log(
-          'First event: ${events.first.type.name}, team: ${events.first.teamId}',
-        );
+        dev.log('Loaded ${events.length} events for match ${_params.matchId}');
       }
 
-      controller.add(events);
+      state = AsyncValue.data(events);
     } catch (error, stackTrace) {
       dev.log('Error loading match events: $error');
-      dev.log('Stack trace: $stackTrace');
-
-      // Vérifie si le controller est toujours ouvert avant d'ajouter une liste vide
-      if (isActive && !controller.isClosed) {
-        // Add empty list instead of error to avoid breaking the UI
-        controller.add([]);
-      }
+      state = AsyncValue.error(error, stackTrace);
     }
   }
 
-  // Charge une première fois immédiatement
-  loadEvents();
-
-  // Si le match n'est pas terminé, on programme un rafraîchissement régulier
-  if (!params.isFinished) {
-    timer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (isActive) {
-        dev.log('Refreshing match events');
-        loadEvents();
-      }
-    });
+  // Rafraîchir les données manuellement
+  Future<void> refresh() async {
+    _fetchEvents();
   }
 
-  // Quand on "dispose" le provider (plus personne n'écoute), on arrête tout
-  ref.onDispose(() {
-    dev.log('Disposing match events stream');
-    // Marque d'abord le stream comme inactif pour éviter les nouveaux ajouts
-    isActive = false;
-    // Puis annule le timer et ferme le controller
-    timer?.cancel();
+  @override
+  Future<List<MatchEvent>> build() async {
+    // Sera remplacé par initialize() quand on l'appelle
+    return [];
+  }
+}
 
-    // Vérifie si le controller n'est pas déjà fermé avant de le fermer
-    if (!controller.isClosed) {
-      controller.close();
-    }
-  });
+// Provider pour accéder au notifier
+final matchEventsProvider =
+    AsyncNotifierProvider<MatchEventsNotifier, List<MatchEvent>>(
+      () => MatchEventsNotifier(),
+    );
 
-  return controller.stream;
-});
+// Pour utiliser le provider avec des paramètres spécifiques
+void initializeMatchEvents(WidgetRef ref, MatchParams params) {
+  ref.read(matchEventsProvider.notifier).initialize(params);
+}

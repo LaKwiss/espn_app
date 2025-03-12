@@ -36,6 +36,9 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
   bool _showEvents = false;
   String _leagueId = '';
 
+  // Contrôleur pour le RefreshIndicator
+  final _refreshController = GlobalKey<RefreshIndicatorState>();
+
   // Pour garder une trace des équipes
   late Team _homeTeam;
   late Team _awayTeam;
@@ -65,6 +68,31 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
     if (widget.event.isFinished) {
       _initializeScores();
     }
+
+    // Initialiser le provider de match events
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initializeMatchEvents(
+        ref,
+        MatchParams(
+          matchId: widget.event.id,
+          leagueId: _leagueId,
+          isFinished: widget.event.isFinished,
+        ),
+      );
+    });
+  }
+
+  // Fonction pour rafraîchir les données
+  Future<void> _refreshData() async {
+    log('Rafraîchissement des données du match ${widget.event.id}');
+
+    // Rafraîchir les événements du match
+    ref.read(matchEventsProvider.notifier).refresh();
+
+    // Attendre un peu pour montrer l'indicateur de chargement (plus une bonne expérience utilisateur)
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    return Future.value();
   }
 
   void _initializeTeams() {
@@ -141,96 +169,124 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
     final formattedDate = DateFormat('dd MMMM').format(matchDate);
     final formattedTime = DateFormat('HH:mm').format(matchDate);
 
-    // Récupération du flux des événements
-    final eventsStream = ref.read(
-      matchEventsStreamProvider(
-        MatchParams(
-          matchId: widget.event.id,
-          leagueId: _leagueId,
-          isFinished: widget.event.isFinished,
-        ),
-      ).stream,
-    );
+    // Récupération des événements depuis le provider
+    final eventsAsync = ref.watch(matchEventsProvider);
 
     return Scaffold(
-      body: Container(
-        color: widget.randomColor,
-        child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: CustomAppBar(
-                  url: _getLeagueLogoUrl(_leagueName),
-                  backgroundColor: widget.randomColor,
-                  iconOrientation: 3,
-                  onArrowButtonPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ),
-              SliverToBoxAdapter(child: HeaderSection(event: widget.event)),
-              if (!widget.event.isFinished)
+      body: RefreshIndicator(
+        key: _refreshController,
+        onRefresh: _refreshData,
+        child: Container(
+          color: widget.randomColor,
+          child: SafeArea(
+            child: CustomScrollView(
+              physics:
+                  const AlwaysScrollableScrollPhysics(), // Important pour le RefreshIndicator
+              slivers: [
                 SliverToBoxAdapter(
-                  child: PredictionSectionWidget(
-                    widget: widget,
-                    awayTeam: _awayTeam,
-                    homeTeam: _homeTeam,
-                  ),
-                ),
-              if (widget.event.isFinished)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Text(
-                      'TERMINÉ',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 32,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
-                ),
-              SliverToBoxAdapter(
-                child: MatchInfoSectionWidget(
-                  date: formattedDate,
-                  time: formattedTime,
-                  awayTeam: _awayTeam,
-                  homeTeam: _homeTeam,
-                  isFinished: widget.event.isFinished,
-                  scores: widget.event.score,
-                  eventsStream: eventsStream,
-                  showEvents: _showEvents,
-                  onToggleEvents: () {
-                    setState(() {
-                      _showEvents = !_showEvents;
-                    });
-                  },
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: EventsListWidget(
-                  eventsStream: eventsStream,
-                  homeTeam: _homeTeam,
-                  awayTeam: _awayTeam,
-                ),
-              ),
-              if (!widget.event.isFinished)
-                SliverToBoxAdapter(
-                  child: CallToActionWidget(
-                    text: 'CHOISIR LE GAGNANT',
-                    onTap: () {
-                      // Action à effectuer lors du clic
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Fonctionnalité à venir...'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
+                  child: CustomAppBar(
+                    url: _getLeagueLogoUrl(_leagueName),
+                    backgroundColor: widget.randomColor,
+                    iconOrientation: 3,
+                    onArrowButtonPressed: () {
+                      Navigator.of(context).pop();
                     },
                   ),
                 ),
-            ],
+                SliverToBoxAdapter(child: HeaderSection(event: widget.event)),
+                if (!widget.event.isFinished)
+                  SliverToBoxAdapter(
+                    child: PredictionSectionWidget(
+                      widget: widget,
+                      awayTeam: _awayTeam,
+                      homeTeam: _homeTeam,
+                    ),
+                  ),
+                if (widget.event.isFinished)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'TERMINÉ',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.blackOpsOne(
+                          fontSize: 32,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                SliverToBoxAdapter(
+                  child: MatchInfoSectionWidget(
+                    date: formattedDate,
+                    time: formattedTime,
+                    awayTeam: _awayTeam,
+                    homeTeam: _homeTeam,
+                    isFinished: widget.event.isFinished,
+                    scores: widget.event.score,
+                    showEvents: _showEvents,
+                    onToggleEvents: () {
+                      setState(() {
+                        _showEvents = !_showEvents;
+                      });
+                    },
+                  ),
+                ),
+                // Afficher les événements conditionnellement
+                if (_showEvents || !widget.event.isFinished)
+                  SliverToBoxAdapter(
+                    child: eventsAsync.when(
+                      data:
+                          (events) => EventsListWidget(
+                            events: events,
+                            homeTeam: _homeTeam,
+                            awayTeam: _awayTeam,
+                          ),
+                      loading:
+                          () => const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(20.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                      error:
+                          (error, stack) => Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    'Erreur de chargement des événements: $error',
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: _refreshData,
+                                    child: const Text('Réessayer'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                    ),
+                  ),
+                if (!widget.event.isFinished)
+                  SliverToBoxAdapter(
+                    child: CallToActionWidget(
+                      text: 'CHOISIR LE GAGNANT',
+                      onTap: () {
+                        // Action à effectuer lors du clic
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Fonctionnalité à venir...'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                // Ajouter un espace supplémentaire pour permettre le défilement
+                SliverToBoxAdapter(child: SizedBox(height: 50)),
+              ],
+            ),
           ),
         ),
       ),

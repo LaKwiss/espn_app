@@ -14,7 +14,6 @@ class MatchInfoSectionWidget extends StatelessWidget {
   final Team homeTeam;
   final bool isFinished;
   final (Future<Score> away, Future<Score> home) scores;
-  final Stream<List<MatchEvent>> eventsStream;
   final bool showEvents;
   final VoidCallback onToggleEvents;
 
@@ -26,7 +25,6 @@ class MatchInfoSectionWidget extends StatelessWidget {
     required this.homeTeam,
     required this.isFinished,
     required this.scores,
-    required this.eventsStream,
     required this.showEvents,
     required this.onToggleEvents,
   });
@@ -78,7 +76,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                     TeamLogoWidget(
                       team: awayTeam,
                       radius: 30,
-                      borderColor: Colors.red.withValues(alpha: 0.7),
+                      borderColor: Colors.red.withOpacity(0.7),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -168,32 +166,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                   return const SizedBox(height: 60);
                 },
               )
-              : StreamBuilder<List<MatchEvent>>(
-                key: const ValueKey('live-score'),
-                stream: eventsStream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError || !snapshot.hasData) {
-                    // Pas encore de data ? On affiche l'heure prévue
-                    return TimeDisplay(time: time);
-                  }
-                  final events = snapshot.data!;
-                  int homeGoals = 0;
-                  int awayGoals = 0;
-                  for (final event in events) {
-                    if (event.type == MatchEventType.goal) {
-                      if (event.teamId == homeTeam.id.toString()) {
-                        homeGoals++;
-                      } else {
-                        awayGoals++;
-                      }
-                    }
-                  }
-                  return ScoreDisplay(
-                    homeScore: homeGoals,
-                    awayScore: awayGoals,
-                  );
-                },
-              ),
+              : TimeDisplay(time: time),
     );
   }
 }
