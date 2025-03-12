@@ -262,7 +262,7 @@ class MatchEventParticipant extends Equatable {
     }
 
     return MatchEventParticipant(
-      jersey: json['jersey'] as String,
+      jersey: json['jersey'] as String? ?? '',
       athleteId: athleteId,
       teamId: teamId,
       positionId: positionId,

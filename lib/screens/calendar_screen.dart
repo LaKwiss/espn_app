@@ -1,6 +1,5 @@
-import 'dart:developer';
-
 import 'package:espn_app/class/event.dart';
+import 'package:espn_app/providers/league_async_notifier.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
 import 'package:espn_app/repositories/event_repository.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
@@ -23,10 +22,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
   int _selectedYear = DateTime.now().year;
-  final List<int> _availableYears = List.generate(
-    40,
-    (index) => DateTime.now().year - 39 + index,
-  );
+
+  // Liste des 20 dernières années
+  List<int> _availableYears = [];
 
   // Événements pour la date sélectionnée
   List<Event> _eventsForSelectedDate = [];
@@ -40,6 +38,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Initialiser la liste des années disponibles
+    _initAvailableYears();
 
     // Initialiser la ligue et récupérer les événements initiaux
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -57,6 +58,25 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     });
   }
 
+  // Initialise la liste des 20 dernières années
+  void _initAvailableYears() {
+    final currentYear = DateTime.now().year;
+    _availableYears = List.generate(20, (index) => currentYear - 19 + index);
+  }
+
+  // S'assure que l'année sélectionnée est dans la liste des années disponibles
+  void _ensureYearIsAvailable() {
+    if (!_availableYears.contains(_selectedYear)) {
+      setState(() {
+        // Régénérer la liste centrée autour de l'année sélectionnée
+        _availableYears = List.generate(
+          20,
+          (index) => _selectedYear - 10 + index,
+        );
+      });
+    }
+  }
+
   Future<void> _fetchEventsForSelectedDate() async {
     if (_isLoadingEvents) return;
 
@@ -68,12 +88,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     try {
       // Obtenir le code de la ligue sélectionnée ou utiliser 'ger.1' par défaut
       final selectedState = ref.read(selectedLeagueProvider);
-
-      log('Selected league: ${selectedState.$1} (${selectedState.$2})');
-
       final leagueCode = selectedState.$2.isEmpty ? 'ger.1' : selectedState.$2;
-
-      log('Fetching events for $_selectedDay in league $leagueCode');
 
       // Récupérer les événements pour la date et la ligue sélectionnées
       final events = await EventRepository.fetchEventsByDate(
@@ -107,6 +122,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Observer les changements dans la ligue sélectionnée
     final selectedLeagueState = ref.watch(selectedLeagueProvider);
     final String leagueName = selectedLeagueState.$1;
+    final String leagueCode = selectedLeagueState.$2;
 
     // Si la ligue a changé, recharger les événements
     ref.listen<(String, String)>(selectedLeagueProvider, (previous, current) {
@@ -376,15 +392,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _buildCalendar() {
     return TableCalendar(
       firstDay: DateTime.utc(
-        _selectedYear - 5,
+        1970,
         1,
         1,
-      ), // 5 ans avant l'année sélectionnée
-      lastDay: DateTime.utc(
-        _selectedYear + 5,
-        12,
-        31,
-      ), // 5 ans après l'année sélectionnée
+      ), // Très ancienne date pour permettre une grande navigation
+      lastDay: DateTime.utc(2050, 12, 31), // Très future date
       focusedDay: _focusedDay,
       calendarFormat: _calendarFormat,
       selectedDayPredicate: (day) {
@@ -394,6 +406,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         setState(() {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
+
+          // Mettre à jour l'année sélectionnée si nécessaire
+          if (_selectedDay.year != _selectedYear) {
+            _selectedYear = _selectedDay.year;
+            _ensureYearIsAvailable();
+          }
         });
 
         // Récupérer les événements pour la date sélectionnée
@@ -405,14 +423,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         });
       },
       onPageChanged: (focusedDay) {
-        _focusedDay = focusedDay;
+        setState(() {
+          _focusedDay = focusedDay;
 
-        // Mettre à jour l'année si elle a changé
-        if (_focusedDay.year != _selectedYear) {
-          setState(() {
+          // Mettre à jour l'année si elle a changé
+          if (_focusedDay.year != _selectedYear) {
             _selectedYear = _focusedDay.year;
-          });
-        }
+            _ensureYearIsAvailable();
+          }
+        });
       },
       calendarStyle: CalendarStyle(
         selectedDecoration: BoxDecoration(
