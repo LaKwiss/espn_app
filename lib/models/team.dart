@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:espn_app/class/club.dart';
+import 'package:espn_app/models/club.dart';
 
 class Team {
   final String id;

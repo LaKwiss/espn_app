@@ -1,9 +1,11 @@
-import 'package:espn_app/class/event.dart';
+import 'package:espn_app/models/event.dart';
+import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
-import 'package:espn_app/repositories/event_repository.dart';
+import 'package:espn_app/repositories/event_repository/i_event_repository.dart';
+import 'package:espn_app/services/asset_service.dart';
+import 'package:espn_app/services/date_formatter_service.dart';
 import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -31,9 +33,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   bool _showUpcoming = true;
   bool _showCompleted = true;
 
+  // Services
+  late final IEventRepository _eventRepository;
+  late final AssetService _assetService;
+  late final DateFormatterService _dateFormatter;
+
   @override
   void initState() {
     super.initState();
+
+    // Initialiser les services immédiatement
+    _eventRepository = ref.read(eventRepositoryProvider);
+    _assetService = ref.read(assetServiceProvider);
+    _dateFormatter = ref.read(dateFormatterServiceProvider);
 
     // Initialiser la liste des années disponibles
     _initAvailableYears();
@@ -87,7 +99,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       final leagueCode = selectedState.$2.isEmpty ? 'ger.1' : selectedState.$2;
 
       // Récupérer les événements pour la date et la ligue sélectionnées
-      final events = await EventRepository.fetchEventsByDate(
+      final events = await _eventRepository.fetchEventsByDate(
         leagueCode,
         _selectedDay,
       );
@@ -118,7 +130,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     // Observer les changements dans la ligue sélectionnée
     final selectedLeagueState = ref.watch(selectedLeagueProvider);
     final String leagueName = selectedLeagueState.$1;
-    final String leagueCode = selectedLeagueState.$2;
 
     // Si la ligue a changé, recharger les événements
     ref.listen<(String, String)>(selectedLeagueProvider, (previous, current) {
@@ -134,7 +145,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: CustomAppBar(
-              url: _getLeagueLogoUrl(leagueName),
+              url: _assetService.getLeagueLogoUrl(leagueName),
               backgroundColor: Colors.white,
             ),
           ),
@@ -237,7 +248,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 Icon(Icons.calendar_today, color: Colors.black, size: 20),
                 const SizedBox(width: 8),
                 Text(
-                  'Date sélectionnée: ${DateFormat('d MMMM yyyy').format(_selectedDay)}',
+                  'Date sélectionnée: ${_dateFormatter.formatDate(_selectedDay)}',
                   style: GoogleFonts.roboto(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -254,84 +265,77 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 _isLoadingEvents
                     ? const Center(child: CircularProgressIndicator())
                     : _errorMessage != null
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 48,
-                            color: Colors.red[300],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Erreur lors du chargement des matchs',
-                            style: GoogleFonts.roboto(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red[700],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _errorMessage!,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.roboto(
-                              fontSize: 14,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _fetchEventsForSelectedDate,
-                            child: const Text('Réessayer'),
-                          ),
-                        ],
-                      ),
-                    )
+                    ? _buildErrorWidget()
                     : _eventsForSelectedDate.isEmpty
-                    ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.sports_soccer_outlined,
-                            size: 48,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Aucun match le ${DateFormat('d MMMM yyyy').format(_selectedDay)}',
-                            style: GoogleFonts.roboto(
-                              fontSize: 18,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Essayez de sélectionner une autre date ou ligue',
-                            style: GoogleFonts.roboto(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                    : RefreshIndicator(
-                      onRefresh: _fetchEventsForSelectedDate,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16.0),
-                        itemCount: _eventsForSelectedDate.length,
-                        itemBuilder: (context, index) {
-                          return MatchWidget(
-                            event: _eventsForSelectedDate[index],
-                          );
-                        },
-                      ),
-                    ),
+                    ? _buildEmptyEventsWidget()
+                    : _buildEventsList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+          const SizedBox(height: 16),
+          Text(
+            'Erreur lors du chargement des matchs',
+            style: GoogleFonts.roboto(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.red[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _errorMessage!,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey[700]),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _fetchEventsForSelectedDate,
+            child: const Text('Réessayer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyEventsWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.sports_soccer_outlined, size: 48, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'Aucun match le ${_dateFormatter.formatDate(_selectedDay)}',
+            style: GoogleFonts.roboto(fontSize: 18, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Essayez de sélectionner une autre date ou ligue',
+            style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEventsList() {
+    return RefreshIndicator(
+      onRefresh: _fetchEventsForSelectedDate,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: _eventsForSelectedDate.length,
+        itemBuilder: (context, index) {
+          return MatchWidget(event: _eventsForSelectedDate[index]);
+        },
       ),
     );
   }
@@ -458,26 +462,5 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
       ),
     );
-  }
-
-  String _getLeagueLogoUrl(String leagueName) {
-    switch (leagueName) {
-      case 'Bundesliga':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/10.png';
-      case 'LALIGA':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png';
-      case 'French Ligue 1':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/9.png';
-      case 'Premier League':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/23.png';
-      case 'Italian Serie A':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/12.png';
-      case 'UEFA Europa League':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2310.png';
-      case 'Champions League':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
-      default:
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
-    }
   }
 }

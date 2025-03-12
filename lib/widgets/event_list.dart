@@ -1,6 +1,6 @@
 import 'dart:developer' as dev;
-import 'package:espn_app/class/match_event.dart';
-import 'package:espn_app/class/team.dart';
+import 'package:espn_app/models/match_event.dart';
+import 'package:espn_app/models/team.dart';
 import 'package:espn_app/widgets/widgets.dart';
 
 class EventsListWidget extends StatelessWidget {

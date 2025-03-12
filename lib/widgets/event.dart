@@ -1,4 +1,4 @@
-import 'package:espn_app/class/match_event.dart';
+import 'package:espn_app/models/match_event.dart';
 import 'package:flutter/material.dart';
 
 class EventWidget extends StatelessWidget {

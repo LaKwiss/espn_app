@@ -1,5 +1,5 @@
-import 'package:espn_app/class/event.dart';
-import 'package:espn_app/class/team.dart';
+import 'package:espn_app/models/event.dart';
+import 'package:espn_app/models/team.dart';
 import 'package:espn_app/widgets/widgets.dart';
 
 class HeaderSection extends StatelessWidget {

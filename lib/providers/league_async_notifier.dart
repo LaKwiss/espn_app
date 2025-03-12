@@ -1,21 +1,30 @@
 import 'dart:async';
-
-import 'package:espn_app/class/event.dart';
-import 'package:espn_app/repositories/event_repository.dart';
+import 'package:espn_app/models/event.dart';
+import 'package:espn_app/providers/provider_factory.dart';
+import 'package:espn_app/repositories/event_repository/i_event_repository.dart';
 import 'package:riverpod/riverpod.dart';
 
 class LeagueAsyncNotifier extends AsyncNotifier<List<Event>> {
+  late final IEventRepository _repository;
+
   @override
   FutureOr<List<Event>> build() async {
-    state = AsyncLoading();
-    List<Event> events = await EventRepository.fetchEventsFromLeague('ger.1');
-    state = AsyncData(events);
-    return events;
+    _repository = ref.read(eventRepositoryProvider);
+    state = const AsyncLoading();
+    try {
+      List<Event> events = await _repository.fetchEventsFromLeague('ger.1');
+      state = AsyncData(events);
+      return events;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return [];
+    }
   }
 
   void fetchEvents(String league) {
-    state = AsyncLoading();
-    EventRepository.fetchEventsFromLeague(league)
+    state = const AsyncLoading();
+    _repository
+        .fetchEventsFromLeague(league)
         .then((events) {
           state = AsyncData(events);
         })
@@ -24,8 +33,8 @@ class LeagueAsyncNotifier extends AsyncNotifier<List<Event>> {
         });
   }
 
-  getLeagueName(String leagueName) async {
-    return EventRepository.fetchLeagueName(leagueName);
+  Future<String> getLeagueName(String leagueName) async {
+    return _repository.fetchLeagueName(leagueName);
   }
 }
 

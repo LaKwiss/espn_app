@@ -1,5 +1,5 @@
-import 'package:espn_app/class/probability.dart';
-import 'package:espn_app/class/team.dart';
+import 'package:espn_app/models/probability.dart';
+import 'package:espn_app/models/team.dart';
 import 'package:espn_app/screens/match_detail_screen.dart';
 import 'package:espn_app/widgets/last_5_row.dart';
 import 'package:flutter/material.dart';

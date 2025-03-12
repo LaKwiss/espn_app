@@ -1,4 +1,4 @@
-import 'package:espn_app/class/athlete.dart';
+import 'package:espn_app/models/athlete.dart';
 import 'package:espn_app/widgets/widgets.dart';
 
 class PlayerCircle extends StatelessWidget {

@@ -1,6 +1,8 @@
+// lib/providers/match_events_notifier.dart
 import 'dart:developer' as dev;
-import 'package:espn_app/class/match_event.dart';
-import 'package:espn_app/repositories/match_event_repository.dart';
+import 'package:espn_app/models/match_event.dart';
+import 'package:espn_app/providers/provider_factory.dart';
+import 'package:espn_app/repositories/match_event_repository/i_match_event_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Classe pour contenir les paramètres du match
@@ -23,10 +25,12 @@ class MatchParams {
 // AsyncNotifier pour gérer les événements du match
 class MatchEventsNotifier extends AsyncNotifier<List<MatchEvent>> {
   late MatchParams _params;
+  late final IMatchEventRepository _repository;
 
   // Initialiser le notifier avec les paramètres spécifiques
   void initialize(MatchParams params) {
     _params = params;
+    _repository = ref.read(matchEventRepositoryProvider);
     // Charger les données immédiatement
     _fetchEvents();
   }
@@ -36,7 +40,7 @@ class MatchEventsNotifier extends AsyncNotifier<List<MatchEvent>> {
     state = const AsyncValue.loading();
     try {
       dev.log('Fetching events for match ${_params.matchId}');
-      final events = await MatchEventRepository.fetchMatchEvents(
+      final events = await _repository.fetchMatchEvents(
         matchId: _params.matchId,
         leagueId: _params.leagueId,
       );

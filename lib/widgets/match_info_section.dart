@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:espn_app/class/score.dart';
-import 'package:espn_app/class/team.dart';
+import 'package:espn_app/models/score.dart';
+import 'package:espn_app/models/team.dart';
 import 'package:espn_app/widgets/score_display.dart';
 import 'package:espn_app/widgets/time_display.dart';
 import 'package:espn_app/widgets/team_logo.dart';

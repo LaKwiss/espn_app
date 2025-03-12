@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:espn_app/class/team.dart';
+import 'package:espn_app/models/team.dart';
 import 'package:espn_app/screens/team_detail_screen.dart';
 
 class TeamLogoWidget extends StatelessWidget {

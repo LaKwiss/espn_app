@@ -1,10 +1,16 @@
-import 'package:espn_app/repositories/league_picture_repository.dart';
+// lib/providers/selected_league_notifier.dart
+import 'package:espn_app/providers/provider_factory.dart';
+import 'package:espn_app/repositories/league_picture_repository/i_league_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class SelectedLeagueNotifier
     extends StateNotifier<(String league, String code)> {
-  // Initialize with empty string
-  SelectedLeagueNotifier() : super(('Bundesliga', 'ger.1'));
+  final ILeaguePictureRepository _repository;
+
+  // Initialize with default values and repository
+  SelectedLeagueNotifier({required ILeaguePictureRepository repository})
+    : _repository = repository,
+      super(('Bundesliga', 'ger.1'));
 
   void selectLeague(String league) {
     state = (league, state.$2);
@@ -14,13 +20,14 @@ class SelectedLeagueNotifier
     state = (state.$1, code);
   }
 
-  Future<String> getUrlByLeagueCode(String $2) async {
-    final String code = state.$2;
-    return await LeaguePictureRepository.getUrlByLeagueCode(code);
+  Future<String> getUrlByLeagueCode(String code) async {
+    return await _repository.getUrlByLeagueCode(code.isEmpty ? state.$2 : code);
   }
 }
 
 final selectedLeagueProvider =
     StateNotifierProvider<SelectedLeagueNotifier, (String, String)>((ref) {
-      return SelectedLeagueNotifier();
+      return SelectedLeagueNotifier(
+        repository: ref.watch(leaguePictureRepositoryProvider),
+      );
     });

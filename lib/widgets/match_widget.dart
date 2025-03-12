@@ -1,11 +1,11 @@
 import 'dart:math';
 
-import 'package:espn_app/class/score.dart';
-import 'package:espn_app/class/team.dart';
+import 'package:espn_app/models/score.dart';
+import 'package:espn_app/models/team.dart';
 import 'package:espn_app/screens/match_detail_screen.dart';
 import 'package:espn_app/widgets/widgets.dart';
 import 'package:intl/intl.dart';
-import 'package:espn_app/class/event.dart';
+import 'package:espn_app/models/event.dart';
 
 class MatchWidget extends StatelessWidget {
   final Event event;

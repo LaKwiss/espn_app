@@ -1,4 +1,4 @@
-import 'package:espn_app/class/club.dart';
+import 'package:espn_app/models/club.dart';
 import 'package:espn_app/screens/club_detail_screen.dart';
 import 'package:espn_app/widgets/widgets.dart';
 

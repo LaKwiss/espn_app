@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:equatable/equatable.dart';
-import 'package:espn_app/class/club.dart';
-import 'package:espn_app/class/league.dart';
-import 'package:espn_app/class/probability.dart';
-import 'package:espn_app/class/score.dart';
+import 'package:espn_app/models/club.dart';
+import 'package:espn_app/models/league.dart';
+import 'package:espn_app/models/probability.dart';
+import 'package:espn_app/models/score.dart';
 import 'package:http/http.dart' as http;
 import 'package:espn_app/services/odds_service.dart';
 

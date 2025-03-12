@@ -1,11 +1,22 @@
 import 'dart:convert';
 import 'dart:developer' as dev;
-import 'package:http/http.dart' as http;
-import 'package:espn_app/class/event.dart';
+import 'package:espn_app/repositories/event_repository/i_event_repository.dart';
+import 'package:espn_app/services/api_service.dart';
+import 'package:espn_app/services/error_handler_service.dart';
+import 'package:espn_app/models/event.dart';
 
-class EventRepository {
-  /// Fetches events for a specific league with enhanced debugging
-  static Future<List<Event>> fetchEventsFromLeague(String league) async {
+class EventRepository implements IEventRepository {
+  final ApiService _apiService;
+  final ErrorHandlerService _errorHandler;
+
+  EventRepository({
+    required ApiService apiService,
+    required ErrorHandlerService errorHandler,
+  }) : _apiService = apiService,
+       _errorHandler = errorHandler;
+
+  @override
+  Future<List<Event>> fetchEventsFromLeague(String league) async {
     dev.log('Starting fetchEventsFromLeague for: $league');
 
     final url =
@@ -13,7 +24,7 @@ class EventRepository {
     dev.log('Fetching from URL: $url');
 
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await _apiService.get(url);
 
       dev.log('Response status code: ${response.statusCode}');
 
@@ -43,7 +54,7 @@ class EventRepository {
 
               try {
                 // Fetch event data
-                final eventResponse = await http.get(Uri.parse(url));
+                final eventResponse = await _apiService.get(url);
                 if (eventResponse.statusCode != 200) {
                   throw Exception(
                     'Failed to load event from $url, status: ${eventResponse.statusCode}',
@@ -91,7 +102,7 @@ class EventRepository {
                 dev.log('Fetching odds from: $oddsUrl');
 
                 // Fetch odds data
-                final oddsResponse = await http.get(Uri.parse(oddsUrl));
+                final oddsResponse = await _apiService.get(oddsUrl);
                 if (oddsResponse.statusCode != 200) {
                   throw Exception(
                     'Failed to load odds from $oddsUrl, status: ${oddsResponse.statusCode}',
@@ -105,9 +116,11 @@ class EventRepository {
                 // Create Event object
                 return Event.fromJson(eventJson, oddsJson);
               } catch (e, stack) {
-                dev.log('Error processing event $url: $e');
-                dev.log('Stack trace: $stack');
-                rethrow; // Allow the caller to handle this
+                return _errorHandler.handleError<Event>(
+                  e,
+                  stack,
+                  'processing event $url',
+                );
               }
             }).toList();
 
@@ -127,21 +140,22 @@ class EventRepository {
         );
       }
     } catch (e, stack) {
-      dev.log('Error in fetchEventsFromLeague: $e');
-      dev.log('Stack trace: $stack');
-      throw Exception('Failed to fetch events: $e');
+      return _errorHandler.handleError<List<Event>>(
+        e,
+        stack,
+        'fetchEventsFromLeague',
+        defaultValue: [],
+      );
     }
   }
 
-  /// Fetches the league name from its endpoint
-  static Future<String> fetchLeagueName(String leagueName) async {
+  @override
+  Future<String> fetchLeagueName(String leagueName) async {
     dev.log('Fetching league name for: $leagueName');
 
     try {
-      final response = await http.get(
-        Uri.parse(
-          'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueName',
-        ),
+      final response = await _apiService.get(
+        'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueName',
       );
 
       if (response.statusCode == 200) {
@@ -155,17 +169,18 @@ class EventRepository {
           'Failed to load league: $leagueName, status: ${response.statusCode}',
         );
       }
-    } catch (e) {
-      dev.log('Exception fetching league name: $e');
-      throw Exception('Failed to fetch league name: $e');
+    } catch (e, stack) {
+      return _errorHandler.handleError<String>(
+        e,
+        stack,
+        'fetchLeagueName',
+        defaultValue: leagueName,
+      );
     }
   }
 
-  /// Fetches events for a specific date and league
-  static Future<List<Event>> fetchEventsByDate(
-    String league,
-    DateTime date,
-  ) async {
+  @override
+  Future<List<Event>> fetchEventsByDate(String league, DateTime date) async {
     final formattedDate =
         '${date.year}${date.month.toString().padLeft(2, '0')}${date.day.toString().padLeft(2, '0')}';
     dev.log('Fetching events for league: $league on date: $formattedDate');
@@ -175,7 +190,7 @@ class EventRepository {
     dev.log('Fetching from URL: $url');
 
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await _apiService.get(url);
 
       dev.log('Response status code: ${response.statusCode}');
 
@@ -209,7 +224,7 @@ class EventRepository {
 
               try {
                 // Fetch event data
-                final eventResponse = await http.get(Uri.parse(url));
+                final eventResponse = await _apiService.get(url);
                 if (eventResponse.statusCode != 200) {
                   throw Exception(
                     'Failed to load event from $url, status: ${eventResponse.statusCode}',
@@ -257,7 +272,7 @@ class EventRepository {
                 dev.log('Fetching odds from: $oddsUrl');
 
                 // Fetch odds data
-                final oddsResponse = await http.get(Uri.parse(oddsUrl));
+                final oddsResponse = await _apiService.get(oddsUrl);
                 if (oddsResponse.statusCode != 200) {
                   throw Exception(
                     'Failed to load odds from $oddsUrl, status: ${oddsResponse.statusCode}',
@@ -271,9 +286,11 @@ class EventRepository {
                 // Create Event object
                 return Event.fromJson(eventJson, oddsJson);
               } catch (e, stack) {
-                dev.log('Error processing event $url: $e');
-                dev.log('Stack trace: $stack');
-                rethrow; // Allow the caller to handle this
+                return _errorHandler.handleError<Event>(
+                  e,
+                  stack,
+                  'processing event $url',
+                );
               }
             }).toList();
 
@@ -293,9 +310,12 @@ class EventRepository {
         );
       }
     } catch (e, stack) {
-      dev.log('Error in fetchEventsByDate: $e');
-      dev.log('Stack trace: $stack');
-      throw Exception('Failed to fetch events: $e');
+      return _errorHandler.handleError<List<Event>>(
+        e,
+        stack,
+        'fetchEventsByDate',
+        defaultValue: [],
+      );
     }
   }
 }

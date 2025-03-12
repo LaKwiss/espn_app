@@ -1,11 +1,22 @@
 import 'dart:convert';
 import 'dart:developer' as dev;
-import 'package:http/http.dart' as http;
-import 'package:espn_app/class/match_event.dart';
+import 'package:espn_app/repositories/match_event_repository/i_match_event_repository.dart';
+import 'package:espn_app/services/api_service.dart';
+import 'package:espn_app/services/error_handler_service.dart';
+import 'package:espn_app/models/match_event.dart';
 
-class MatchEventRepository {
-  /// Récupère tous les événements d'un match spécifique avec l'ID de la ligue
-  static Future<List<MatchEvent>> fetchMatchEvents({
+class MatchEventRepository implements IMatchEventRepository {
+  final ApiService _apiService;
+  final ErrorHandlerService _errorHandler;
+
+  MatchEventRepository({
+    required ApiService apiService,
+    required ErrorHandlerService errorHandler,
+  }) : _apiService = apiService,
+       _errorHandler = errorHandler;
+
+  @override
+  Future<List<MatchEvent>> fetchMatchEvents({
     required String matchId,
     required String leagueId,
   }) async {
@@ -15,14 +26,14 @@ class MatchEventRepository {
     dev.log('Fetching match events from: $url');
 
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await _apiService.get(url);
 
       if (response.statusCode != 200) {
         dev.log(
           'Error response: ${response.statusCode}, body: ${response.body}',
         );
         // Instead of throwing, return mock data for non-200 responses
-        final teamIds = await _fetchTeamIds(matchId, leagueId);
+        final teamIds = await fetchTeamIds(matchId, leagueId);
         dev.log('Using mock data due to non-200 response');
         return _generateMockEvents(teamIds);
       }
@@ -33,21 +44,21 @@ class MatchEventRepository {
       // Check if items exist in the response
       if (!json.containsKey('items') || json['items'] == null) {
         dev.log('No items found in response, using mock data');
-        final teamIds = await _fetchTeamIds(matchId, leagueId);
+        final teamIds = await fetchTeamIds(matchId, leagueId);
         return _generateMockEvents(teamIds);
       }
 
       final items = json['items'] as List?;
       if (items == null || items.isEmpty) {
         dev.log('Items list is empty or null, using mock data');
-        final teamIds = await _fetchTeamIds(matchId, leagueId);
+        final teamIds = await fetchTeamIds(matchId, leagueId);
         return _generateMockEvents(teamIds);
       }
 
       dev.log('Found ${items.length} events in response');
 
       // Récupérer les IDs des équipes
-      final teamIds = await _fetchTeamIds(matchId, leagueId);
+      final teamIds = await fetchTeamIds(matchId, leagueId);
       dev.log('Team IDs: ${teamIds.$1}, ${teamIds.$2}');
 
       // Parser les événements
@@ -63,22 +74,36 @@ class MatchEventRepository {
 
         return events;
       } catch (e, stack) {
-        dev.log('Error parsing events: $e');
-        dev.log('Stack trace: $stack');
-        // Return mock events on parse error instead of empty list
-        return _generateMockEvents(teamIds);
+        return _errorHandler.handleError<List<MatchEvent>>(
+          e,
+          stack,
+          'parsing events',
+          defaultValue: _generateMockEvents(teamIds),
+        );
       }
     } catch (e, stack) {
-      dev.log('Error fetching match events: $e');
-      dev.log('Stack trace: $stack');
       // Return mock events instead of rethrowing
-      final teamIds = await _fetchTeamIds(matchId, leagueId);
-      return _generateMockEvents(teamIds);
+      final teamIds = await fetchTeamIds(matchId, leagueId);
+      return _errorHandler.handleError<List<MatchEvent>>(
+        e,
+        stack,
+        'fetchMatchEvents',
+        defaultValue: _generateMockEvents(teamIds),
+      );
     }
   }
 
-  /// Récupère les IDs des équipes pour le match spécifié
-  static Future<(String away, String home)> _fetchTeamIds(
+  @override
+  Future<List<MatchEvent>> fetchLiveMatchEvents({
+    required String matchId,
+    required String leagueId,
+  }) async {
+    // Pour le streaming en temps réel, nous utilisons la même méthode mais optimisée pour une utilisation en direct
+    return fetchMatchEvents(matchId: matchId, leagueId: leagueId);
+  }
+
+  @override
+  Future<(String away, String home)> fetchTeamIds(
     String matchId,
     String leagueId,
   ) async {
@@ -88,7 +113,7 @@ class MatchEventRepository {
     dev.log('Fetching team IDs from: $url');
 
     try {
-      final response = await http.get(Uri.parse(url));
+      final response = await _apiService.get(url);
 
       if (response.statusCode != 200) {
         dev.log('Error response: ${response.statusCode}');
@@ -135,26 +160,17 @@ class MatchEventRepository {
       dev.log('Found team IDs - home: $homeId, away: $awayId');
       return (awayId, homeId);
     } catch (e, stack) {
-      dev.log('Error fetching team IDs: $e');
-      dev.log('Stack trace: $stack');
-      // Return default IDs on error
-      return ('0', '0');
+      return _errorHandler.handleError<(String, String)>(
+        e,
+        stack,
+        'fetchTeamIds',
+        defaultValue: ('0', '0'),
+      );
     }
   }
 
-  /// Récupère tous les événements d'un match en temps réel (pour le streaming live)
-  static Future<List<MatchEvent>> fetchLiveMatchEvents({
-    required String matchId,
-    required String leagueId,
-  }) async {
-    // Same as fetchMatchEvents but optimized for live
-    return fetchMatchEvents(matchId: matchId, leagueId: leagueId);
-  }
-
   /// Generate mock events for testing
-  static List<MatchEvent> _generateMockEvents(
-    (String away, String home) teams,
-  ) {
+  List<MatchEvent> _generateMockEvents((String away, String home) teams) {
     final now = DateTime.now();
     dev.log('Generating mock events with team IDs: ${teams.$1}, ${teams.$2}');
 

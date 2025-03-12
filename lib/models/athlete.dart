@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:espn_app/class/club.dart';
-import 'package:espn_app/class/stats.dart';
+import 'package:espn_app/models/club.dart';
+import 'package:espn_app/models/stats.dart';
 
 class Athlete extends Equatable {
   final int id;

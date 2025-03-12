@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:espn_app/class/league.dart';
+import 'package:espn_app/models/league.dart';
 
 class Club extends Equatable {
   final int id;

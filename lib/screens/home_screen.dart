@@ -95,7 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text('Error: $error'),
                             TextButton(
                               onPressed: () {
-                                ref.refresh(leagueAsyncProvider);
+                                final result = ref.refresh(leagueAsyncProvider);
+                                dev.log('Refresh result: $result');
                               },
                               child: const Text('Try Again'),
                             ),
