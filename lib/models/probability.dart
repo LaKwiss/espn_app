@@ -14,4 +14,8 @@ class Probability {
 
   @override
   String toString() => "${(value * 100).toStringAsFixed(1)}%";
+
+  static Probability empty() {
+    return Probability(value: 0);
+  }
 }

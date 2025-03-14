@@ -19,4 +19,8 @@ class Score {
       throw Exception('Erreur lors de la récupération du score');
     }
   }
+
+  static Score empty() {
+    return Score(value: 0.0);
+  }
 }
