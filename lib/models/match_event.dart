@@ -151,8 +151,6 @@ class MatchEvent extends Equatable {
     Map<String, dynamic> json, {
     required (String away, String home) teams,
   }) {
-    // Extraire l'heure formatée du temps de jeu
-    // In MatchEvent.fromJson method
     final clockValue =
         json['clock']['value'] is int
             ? (json['clock']['value'] as int).toDouble()
