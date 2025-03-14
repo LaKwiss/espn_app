@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:espn_app/models/lineup_player.dart';
 import 'package:espn_app/models/player_position.dart';
+import 'package:espn_app/providers/athletes_notifier.dart';
 import 'package:espn_app/providers/lineup_notifier.dart';
 import 'package:espn_app/screens/soccer_field_painter.dart';
 import 'package:espn_app/widgets/last_matches.dart';
@@ -915,119 +916,171 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
   }
 
   Widget _buildPlayersTab() {
-    // Sort players by position groups for better organization
-    final goalkeepers =
-        _players.where((p) => p.fullName.contains('GK')).toList();
-    final defenders =
-        _players
-            .where(
-              (p) =>
-                  p.fullName.contains('CB') ||
-                  p.fullName.contains('LB') ||
-                  p.fullName.contains('RB'),
-            )
-            .toList();
-    final midfielders =
-        _players
-            .where(
-              (p) =>
-                  p.fullName.contains('CM') ||
-                  p.fullName.contains('CDM') ||
-                  p.fullName.contains('CAM'),
-            )
-            .toList();
-    final forwards =
-        _players
-            .where(
-              (p) =>
-                  p.fullName.contains('ST') ||
-                  p.fullName.contains('LW') ||
-                  p.fullName.contains('RW'),
-            )
-            .toList();
+    return Consumer(
+      builder: (context, ref, child) {
+        final athletesAsync = ref.watch(athletesProvider);
 
-    // Players without position info go to others
-    final others =
-        _players
-            .where(
-              (p) =>
-                  !p.fullName.contains('GK') &&
-                  !p.fullName.contains('CB') &&
-                  !p.fullName.contains('LB') &&
-                  !p.fullName.contains('RB') &&
-                  !p.fullName.contains('CM') &&
-                  !p.fullName.contains('CDM') &&
-                  !p.fullName.contains('CAM') &&
-                  !p.fullName.contains('ST') &&
-                  !p.fullName.contains('LW') &&
-                  !p.fullName.contains('RW'),
-            )
-            .toList();
+        return athletesAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:
+              (error, stack) =>
+                  Center(child: Text('Error loading players: $error')),
+          data: (athletes) {
+            if (athletes.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.sports_soccer,
+                      size: 48,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text('No players data available'),
+                    ElevatedButton(
+                      onPressed: () {
+                        ref
+                            .read(athletesProvider.notifier)
+                            .fetchTeamAthletes('ger.1', widget.team.id);
+                      },
+                      child: const Text('Refresh'),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Search bar
-        TextField(
-          decoration: InputDecoration(
-            hintText: 'Search players...',
-            prefixIcon: const Icon(Icons.search),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            filled: true,
-            fillColor: Colors.grey[200],
-          ),
-          onChanged: (value) {
-            // Implement search functionality if needed
+            // Tri des joueurs par position
+            final goalkeepers =
+                athletes
+                    .where(
+                      (p) =>
+                          p.position?.toLowerCase().contains('goalkeeper') ??
+                          false,
+                    )
+                    .toList();
+            final defenders =
+                athletes
+                    .where(
+                      (p) =>
+                          p.position?.toLowerCase().contains('defender') ??
+                          false,
+                    )
+                    .toList();
+            final midfielders =
+                athletes
+                    .where(
+                      (p) =>
+                          p.position?.toLowerCase().contains('midfielder') ??
+                          false,
+                    )
+                    .toList();
+            final forwards =
+                athletes
+                    .where(
+                      (p) =>
+                          p.position?.toLowerCase().contains('forward') ??
+                          false,
+                    )
+                    .toList();
+
+            // Autres joueurs sans position identifiée
+            final others =
+                athletes
+                    .where(
+                      (p) =>
+                          !(p.position?.toLowerCase().contains('goalkeeper') ??
+                              false) &&
+                          !(p.position?.toLowerCase().contains('defender') ??
+                              false) &&
+                          !(p.position?.toLowerCase().contains('midfielder') ??
+                              false) &&
+                          !(p.position?.toLowerCase().contains('forward') ??
+                              false),
+                    )
+                    .toList();
+
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Barre de recherche
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search players...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                  ),
+                  onChanged: (value) {
+                    // Implémentation future de la recherche
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // Listes de joueurs par position
+                if (goalkeepers.isNotEmpty) ...[
+                  _buildPositionHeader(
+                    'Goalkeepers',
+                    Icons.sports_handball,
+                    Colors.orange,
+                  ),
+                  ...goalkeepers.map((player) => _buildPlayerCard(player)),
+                ],
+
+                if (defenders.isNotEmpty) ...[
+                  _buildPositionHeader('Defenders', Icons.shield, Colors.blue),
+                  ...defenders.map((player) => _buildPlayerCard(player)),
+                ],
+
+                if (midfielders.isNotEmpty) ...[
+                  _buildPositionHeader(
+                    'Midfielders',
+                    Icons.center_focus_strong,
+                    Colors.green,
+                  ),
+                  ...midfielders.map((player) => _buildPlayerCard(player)),
+                ],
+
+                if (forwards.isNotEmpty) ...[
+                  _buildPositionHeader(
+                    'Forwards',
+                    Icons.trending_up,
+                    Colors.red,
+                  ),
+                  ...forwards.map((player) => _buildPlayerCard(player)),
+                ],
+
+                if (others.isNotEmpty) ...[
+                  _buildPositionHeader(
+                    'Squad Players',
+                    Icons.group,
+                    Colors.purple,
+                  ),
+                  ...others.map((player) => _buildPlayerCard(player)),
+                ],
+
+                // Si aucun tri par position n'a fonctionné, afficher tous les joueurs
+                if (goalkeepers.isEmpty &&
+                    defenders.isEmpty &&
+                    midfielders.isEmpty &&
+                    forwards.isEmpty) ...[
+                  _buildPositionHeader(
+                    'Team Squad',
+                    Icons.group,
+                    Colors.blueGrey,
+                  ),
+                  ...athletes.map((player) => _buildPlayerCard(player)),
+                ],
+              ],
+            );
           },
-        ),
-        const SizedBox(height: 16),
-
-        // Player list by position groups
-        if (goalkeepers.isNotEmpty) ...[
-          _buildPositionHeader(
-            'Goalkeepers',
-            Icons.sports_handball,
-            Colors.orange,
-          ),
-          ...goalkeepers.map((player) => _buildPlayerCard(player)),
-        ],
-
-        if (defenders.isNotEmpty) ...[
-          _buildPositionHeader('Defenders', Icons.shield, Colors.blue),
-          ...defenders.map((player) => _buildPlayerCard(player)),
-        ],
-
-        if (midfielders.isNotEmpty) ...[
-          _buildPositionHeader(
-            'Midfielders',
-            Icons.center_focus_strong,
-            Colors.green,
-          ),
-          ...midfielders.map((player) => _buildPlayerCard(player)),
-        ],
-
-        if (forwards.isNotEmpty) ...[
-          _buildPositionHeader('Forwards', Icons.trending_up, Colors.red),
-          ...forwards.map((player) => _buildPlayerCard(player)),
-        ],
-
-        if (others.isNotEmpty) ...[
-          _buildPositionHeader('Squad Players', Icons.group, Colors.purple),
-          ...others.map((player) => _buildPlayerCard(player)),
-        ],
-
-        // If no position-based sorting was possible, show all players
-        if (goalkeepers.isEmpty &&
-            defenders.isEmpty &&
-            midfielders.isEmpty &&
-            forwards.isEmpty) ...[
-          _buildPositionHeader('Team Squad', Icons.group, Colors.blueGrey),
-          ..._players.map((player) => _buildPlayerCard(player)),
-        ],
-      ],
+        );
+      },
     );
   }
 
