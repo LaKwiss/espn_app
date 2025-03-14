@@ -152,7 +152,11 @@ class MatchEvent extends Equatable {
     required (String away, String home) teams,
   }) {
     // Extraire l'heure formatée du temps de jeu
-    final clockValue = json['clock']['value'] as double;
+    // In MatchEvent.fromJson method
+    final clockValue =
+        json['clock']['value'] is int
+            ? (json['clock']['value'] as int).toDouble()
+            : json['clock']['value'] as double;
     final minutes = (clockValue / 60).floor();
     final displayTime =
         json['clock']['displayValue'] as String? ?? '$minutes\'';
