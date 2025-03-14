@@ -15,9 +15,7 @@ export 'navigation_dots.dart';
 export 'player_circle.dart';
 export 'prediction_section.dart';
 export 'score_display.dart';
-export 'stat_row.dart';
 export 'team_logo.dart';
-export 'team_stat_card.dart';
 export 'time_display.dart';
 
 export 'package:flutter/material.dart';

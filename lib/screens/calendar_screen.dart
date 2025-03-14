@@ -30,8 +30,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   String? _errorMessage;
 
   // Options de filtre
-  bool _showUpcoming = true;
-  bool _showCompleted = true;
+  final bool _showUpcoming = true;
+  final bool _showCompleted = true;
 
   // Services
   late final IEventRepository _eventRepository;
@@ -227,38 +227,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
           ),
 
-          // Filter options
-          _buildFilterOptions(),
-
           // Calendar widget
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: _buildCalendar(),
           ),
-
-          // Date sélectionnée
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.calendar_today, color: Colors.black, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Date sélectionnée: ${_dateFormatter.formatDate(_selectedDay)}',
-                  style: GoogleFonts.roboto(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           // Selected day events
           Expanded(
             child:
@@ -336,55 +309,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         itemBuilder: (context, index) {
           return MatchWidget(event: _eventsForSelectedDate[index]);
         },
-      ),
-    );
-  }
-
-  Widget _buildFilterOptions() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: FilterChip(
-              label: const Text('À venir'),
-              selected: _showUpcoming,
-              onSelected: (selected) {
-                setState(() {
-                  _showUpcoming = selected;
-                });
-                _fetchEventsForSelectedDate();
-              },
-              checkmarkColor: Colors.black,
-              selectedColor: Colors.grey[300],
-              labelStyle: GoogleFonts.roboto(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: _showUpcoming ? Colors.black : Colors.grey,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: FilterChip(
-              label: const Text('Terminés'),
-              selected: _showCompleted,
-              onSelected: (selected) {
-                setState(() {
-                  _showCompleted = selected;
-                });
-                _fetchEventsForSelectedDate();
-              },
-              checkmarkColor: Colors.black,
-              selectedColor: Colors.grey[300],
-              labelStyle: GoogleFonts.roboto(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: _showCompleted ? Colors.black : Colors.grey,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

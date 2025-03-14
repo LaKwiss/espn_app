@@ -69,8 +69,8 @@ class MatchWidget extends StatelessWidget {
 
   Widget _buildScheduledLayout(
     BuildContext context,
-    Team homeTeam,
     Team awayTeam,
+    Team homeTeam,
     bool isFinished,
     (Future<Score> home, Future<Score> away) score,
     DateTime matchDate,

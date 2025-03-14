@@ -39,14 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 HomeScreenTitle(titleLine1: titleLine1, titleLine2: titleLine2),
 
                 // Debug info
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  color: Colors.grey[200],
-                  child: Text(
-                    'Provider state: ${eventsAsync.toString().substring(0, eventsAsync.toString().length > 100 ? 100 : eventsAsync.toString().length)}...',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
 
                 // Detailed events display with error handling
                 eventsAsync.when(

@@ -75,7 +75,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                     TeamLogoWidget(
                       team: awayTeam,
                       radius: 30,
-                      borderColor: Colors.red.withOpacity(0.7),
+                      borderColor: Colors.red.withValues(alpha: 0.7),
                     ),
                     const SizedBox(height: 8),
                     Text(

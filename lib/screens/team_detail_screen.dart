@@ -1,8 +1,10 @@
+import 'dart:convert';
+import 'package:espn_app/models/lineup_player.dart';
 import 'package:espn_app/models/player_position.dart';
+import 'package:espn_app/providers/lineup_notifier.dart';
 import 'package:espn_app/screens/soccer_field_painter.dart';
 import 'package:espn_app/widgets/last_matches.dart';
 import 'package:espn_app/widgets/player_circle.dart';
-import 'package:espn_app/widgets/stat_row.dart';
 import 'package:espn_app/widgets/team_stat_card.dart';
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/team.dart';
@@ -12,9 +14,9 @@ import 'package:espn_app/models/club.dart';
 import 'package:espn_app/models/league.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
 import 'package:espn_app/widgets/club_info.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class TeamDetailScreen extends StatefulWidget {
   final Team team;
@@ -30,8 +32,10 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
   late TabController _tabController;
   bool _isLoading = true;
   List<Athlete> _players = [];
-  String _formation = '';
   Map<String, dynamic> _teamStats = {};
+  String _stadiumName = '';
+  String _foundedYear = '';
+  String _nickname = '';
 
   @override
   void initState() {
@@ -48,134 +52,387 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
 
   Future<void> _fetchTeamData() async {
     try {
-      // Fetch team data from API
-      final response = await http.get(
-        Uri.parse(
-          'http://sports.core.api.espn.com/v2/sports/soccer/leagues/esp.1/seasons/2024/teams/${widget.team.id}',
-        ),
-      );
+      // Fetch team data from API with proper error handling
+      final response = await http
+          .get(
+            Uri.parse(
+              'http://sports.core.api.espn.com/v2/sports/soccer/leagues/esp.1/seasons/2024/teams/${widget.team.id}',
+            ),
+          )
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception(
+                'Connection timeout. Please check your internet connection.',
+              );
+            },
+          );
 
       if (response.statusCode == 200) {
         final teamData = json.decode(response.body);
 
-        // Extract data
+        // Extract data with null checks and default values
         setState(() {
           _isLoading = false;
-          _formation = teamData['formation'] ?? '4-3-3';
-          _teamStats = {
-            'position': teamData['standingSummary'] ?? '5th',
-            'wins':
-                teamData['record']?['items']?[0]?['stats']?[0]?['value'] ?? 10,
-            'draws':
-                teamData['record']?['items']?[0]?['stats']?[1]?['value'] ?? 5,
-            'losses':
-                teamData['record']?['items']?[0]?['stats']?[2]?['value'] ?? 3,
-            'goalsFor':
-                teamData['record']?['items']?[0]?['stats']?[4]?['value'] ?? 35,
-            'goalsAgainst':
-                teamData['record']?['items']?[0]?['stats']?[5]?['value'] ?? 20,
-            'points':
-                teamData['record']?['items']?[0]?['stats']?[3]?['value'] ?? 35,
-            'form': teamData['form'] ?? 'WDWLW',
-          };
 
-          // Get players (this would be done with another API call)
-          _fetchPlayers();
+          // Extract team bio from various possible locations in the API
+
+          // Extract stadium info safely
+          final venueData = teamData['venue'];
+          if (venueData != null && venueData is Map) {
+            _stadiumName = venueData['fullName'] ?? 'Unknown Stadium';
+          } else {
+            _stadiumName = 'Unknown Stadium';
+          }
+
+          // Extract founded year
+          _foundedYear = teamData['established'] ?? 'Unknown';
+
+          // Extract nickname
+          final displayNames = teamData['displayNames'];
+          if (displayNames != null &&
+              displayNames is List &&
+              displayNames.isNotEmpty) {
+            for (var nameData in displayNames) {
+              if (nameData['type'] == 'nickname') {
+                _nickname = nameData['value'] ?? '';
+                break;
+              }
+            }
+          }
+
+          // Parse team stats more robustly
+          _teamStats = _extractTeamStats(teamData);
+
+          // Get players (fetch player data separately)
+          _fetchPlayers(teamData);
         });
       } else {
-        // If API call fails, use mock data
-        setState(() {
-          _isLoading = false;
-          _formation = '4-3-3';
-          _teamStats = {
-            'position': '5th',
-            'wins': 10,
-            'draws': 5,
-            'losses': 3,
-            'goalsFor': 35,
-            'goalsAgainst': 20,
-            'points': 35,
-            'form': 'WDWLW',
-          };
-
-          // Mock player data
-          _fetchPlayers();
-        });
+        // Handle API error with more detailed information
+        _handleApiError(
+          'API Error: ${response.statusCode} - ${response.reasonPhrase}',
+        );
       }
     } catch (error) {
-      // Default to mock data
-      setState(() {
-        _isLoading = false;
-        _formation = '4-3-3';
-        _teamStats = {
-          'position': '5th',
-          'wins': 10,
-          'draws': 5,
-          'losses': 3,
-          'goalsFor': 35,
-          'goalsAgainst': 20,
-          'points': 35,
-          'form': 'WDWLW',
-        };
+      _handleApiError('Error fetching team data: $error');
+    }
+  }
 
-        // Mock player data
-        _fetchPlayers();
+  Map<String, dynamic> _extractTeamStats(Map<String, dynamic> teamData) {
+    final stats = <String, dynamic>{};
+
+    // Try to extract standing summary
+    stats['position'] = teamData['standingSummary'] ?? 'Unknown';
+
+    // Try to extract record and stats
+    if (teamData.containsKey('record') &&
+        teamData['record'] != null &&
+        teamData['record'].containsKey('items') &&
+        teamData['record']['items'] is List &&
+        teamData['record']['items'].isNotEmpty) {
+      final recordItems = teamData['record']['items'] as List;
+      if (recordItems.isNotEmpty && recordItems[0].containsKey('stats')) {
+        final statsList = recordItems[0]['stats'] as List?;
+
+        if (statsList != null && statsList.isNotEmpty) {
+          for (var statItem in statsList) {
+            if (statItem.containsKey('name') && statItem.containsKey('value')) {
+              final name = statItem['name'];
+              final value = statItem['value'];
+
+              switch (name) {
+                case 'wins':
+                  stats['wins'] = value;
+                  break;
+                case 'losses':
+                  stats['losses'] = value;
+                  break;
+                case 'ties':
+                case 'draws':
+                  stats['draws'] = value;
+                  break;
+                case 'pointsFor':
+                case 'goalsFor':
+                  stats['goalsFor'] = value;
+                  break;
+                case 'pointsAgainst':
+                case 'goalsAgainst':
+                  stats['goalsAgainst'] = value;
+                  break;
+                case 'points':
+                  stats['points'] = value;
+                  break;
+                default:
+                  stats[name] = value;
+                  break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Extract form if available
+    stats['form'] = teamData['form'] ?? 'WWDLD';
+
+    // Set defaults for missing values
+    stats.putIfAbsent('wins', () => 0);
+    stats.putIfAbsent('draws', () => 0);
+    stats.putIfAbsent('losses', () => 0);
+    stats.putIfAbsent('goalsFor', () => 0);
+    stats.putIfAbsent('goalsAgainst', () => 0);
+    stats.putIfAbsent('points', () => 0);
+
+    return stats;
+  }
+
+  void _handleApiError(String errorMessage) {
+    setState(() {
+      _isLoading = false;
+      _teamStats = {
+        'position': 'Unknown',
+        'wins': 0,
+        'draws': 0,
+        'losses': 0,
+        'goalsFor': 0,
+        'goalsAgainst': 0,
+        'points': 0,
+        'form': 'WWDLD',
+      };
+      // Prepare minimal mock data
+      _generateMockPlayers();
+    });
+  }
+
+  Future<void> _fetchPlayers(Map<String, dynamic> teamData) async {
+    try {
+      final List<Athlete> playersList = [];
+      // Check if there's a roster/players endpoint in the teamData
+      String? playersUrl;
+
+      if (teamData.containsKey('roster') &&
+          teamData['roster'] != null &&
+          teamData['roster'].containsKey('\$ref')) {
+        playersUrl = teamData['roster']['\$ref'];
+      } else if (teamData.containsKey('athletes') &&
+          teamData['athletes'] != null &&
+          teamData['athletes'].containsKey('\$ref')) {
+        playersUrl = teamData['athletes']['\$ref'];
+      }
+
+      if (playersUrl != null) {
+        // Fetch player data from roster URL
+        final response = await http
+            .get(Uri.parse(playersUrl))
+            .timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final rosterData = json.decode(response.body);
+
+          if (rosterData.containsKey('items') && rosterData['items'] is List) {
+            final playerItems = rosterData['items'] as List;
+
+            for (var item in playerItems) {
+              if (item.containsKey('athlete') &&
+                  item['athlete'] != null &&
+                  item['athlete'].containsKey('\$ref')) {
+                final athleteUrl = item['athlete']['\$ref'];
+                // Fetch individual athlete data
+                final athleteResponse = await http.get(Uri.parse(athleteUrl));
+
+                if (athleteResponse.statusCode == 200) {
+                  final athleteData = json.decode(athleteResponse.body);
+
+                  // Extract and create an Athlete object
+                  final athlete = _parseAthleteData(athleteData);
+                  if (athlete != null) {
+                    playersList.add(athlete);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      setState(() {
+        // Use fetched players or generate mock ones if list is empty
+        if (playersList.isNotEmpty) {
+          _players = playersList;
+        } else {
+          _generateMockPlayers();
+        }
+      });
+    } catch (error) {
+      setState(() {
+        _generateMockPlayers();
       });
     }
   }
 
-  Future<void> _fetchPlayers() async {
+  Athlete? _parseAthleteData(Map<String, dynamic> athleteData) {
     try {
-      // In a real app, this would be an API call to get players
-      // For now, we'll use mock data
+      // Extract basic player info
+      final id = athleteData['id'] ?? 0;
+      final fullName = athleteData['displayName'] ?? 'Unknown Player';
 
-      // Mock players - you'll replace with actual API data
-      setState(() {
-        _players = List.generate(
-          18,
-          (index) => Athlete(
-            id: 1000 + index,
-            fullName: 'Player ${index + 1}',
-            dateOfBirth: '1990-01-01',
-            country: 'Spain',
-            stats: Stats(
-              id: index,
-              goals: 5,
-              assists: 3,
-              appearances: 15,
-              minutesPlayed: 1200,
-              yellowCards: 2,
-              redCards: 0,
+      // Extract birthdate
+      String dateOfBirth = 'Unknown';
+      if (athleteData.containsKey('dateOfBirth') &&
+          athleteData['dateOfBirth'] != null) {
+        dateOfBirth = athleteData['dateOfBirth'];
+      }
+
+      // Extract country
+      String country = 'Unknown';
+      if (athleteData.containsKey('nationality') &&
+          athleteData['nationality'] != null &&
+          athleteData['nationality'].containsKey('name')) {
+        country = athleteData['nationality']['name'];
+      } else if (athleteData.containsKey('country') &&
+          athleteData['country'] != null &&
+          athleteData['country'].containsKey('name')) {
+        country = athleteData['country']['name'];
+      }
+
+      // Extract stats
+      final stats = _parsePlayerStats(athleteData);
+
+      // Use the team's club
+      final club =
+          widget.team.club ??
+          Club(
+            id: int.parse(widget.team.id),
+            name: widget.team.name,
+            logo:
+                'https://a.espncdn.com/i/teamlogos/soccer/500/${widget.team.id}.png',
+            country: 'Unknown',
+            flag: '',
+            league: const League(
+              id: 1,
+              name: 'Unknown League',
+              displayName: 'Unknown League',
+              logo: '',
+              country: 'Unknown',
+              flag: '',
+              shortName: '',
             ),
-            club:
-                widget.team.club ??
-                Club(
-                  id: int.parse(widget.team.id),
-                  name: widget.team.name,
-                  logo:
-                      'https://a.espncdn.com/i/teamlogos/soccer/500/${widget.team.id}.png',
-                  country: 'Spain',
-                  flag: 'https://a.espncdn.com/i/flags/20x13/esp.gif',
-                  league: const League(
-                    id: 1,
-                    name: 'La Liga',
-                    displayName: 'La Liga',
-                    logo:
-                        'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png',
-                    country: 'Spain',
-                    flag: 'https://a.espncdn.com/i/flags/20x13/esp.gif',
-                    shortName: 'LIGA',
-                  ),
-                ),
-          ),
-        );
-      });
-    } catch (error) {
-      // Use empty player list
-      setState(() {
-        _players = [];
-      });
+          );
+
+      return Athlete(
+        id: id,
+        fullName: fullName,
+        dateOfBirth: dateOfBirth,
+        country: country,
+        stats: stats,
+        club: club,
+      );
+    } catch (e) {
+      return null;
     }
+  }
+
+  Stats _parsePlayerStats(Map<String, dynamic> athleteData) {
+    int goals = 0;
+    int assists = 0;
+    int appearances = 0;
+    int minutesPlayed = 0;
+    int yellowCards = 0;
+    int redCards = 0;
+
+    // Try to extract statistics data
+    if (athleteData.containsKey('statistics') &&
+        athleteData['statistics'] != null &&
+        athleteData['statistics'] is List) {
+      final statsList = athleteData['statistics'] as List;
+      for (var statItem in statsList) {
+        if (statItem is Map<String, dynamic>) {
+          // Look for various stat names that might be in the API
+          if (statItem.containsKey('name') && statItem.containsKey('value')) {
+            final name = statItem['name']?.toString().toLowerCase();
+            final value = int.tryParse(statItem['value'].toString()) ?? 0;
+
+            switch (name) {
+              case 'goals':
+              case 'totalgoals':
+                goals = value;
+                break;
+              case 'assists':
+              case 'totalassists':
+                assists = value;
+                break;
+              case 'appearances':
+              case 'games':
+              case 'matches':
+                appearances = value;
+                break;
+              case 'minutesplayed':
+              case 'minutes':
+                minutesPlayed = value;
+                break;
+              case 'yellowcards':
+              case 'cautions':
+                yellowCards = value;
+                break;
+              case 'redcards':
+              case 'ejections':
+                redCards = value;
+                break;
+            }
+          }
+        }
+      }
+    }
+
+    return Stats(
+      id: 0,
+      goals: goals,
+      assists: assists,
+      appearances: appearances,
+      minutesPlayed: minutesPlayed,
+      yellowCards: yellowCards,
+      redCards: redCards,
+    );
+  }
+
+  void _generateMockPlayers() {
+    _players = List.generate(
+      18,
+      (index) => Athlete(
+        id: 1000 + index,
+        fullName: 'Player ${index + 1}',
+        dateOfBirth: '1990-01-01',
+        country: 'Spain',
+        stats: Stats(
+          id: index,
+          goals: 5,
+          assists: 3,
+          appearances: 15,
+          minutesPlayed: 1200,
+          yellowCards: 2,
+          redCards: 0,
+        ),
+        club:
+            widget.team.club ??
+            Club(
+              id: int.tryParse(widget.team.id) ?? 0,
+              name: widget.team.name,
+              logo:
+                  'https://a.espncdn.com/i/teamlogos/soccer/500/${widget.team.id}.png',
+              country: 'Spain',
+              flag: 'https://a.espncdn.com/i/flags/20x13/esp.gif',
+              league: const League(
+                id: 1,
+                name: 'La Liga',
+                displayName: 'La Liga',
+                logo: 'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png',
+                country: 'Spain',
+                flag: 'https://a.espncdn.com/i/flags/20x13/esp.gif',
+                shortName: 'LIGA',
+              ),
+            ),
+      ),
+    );
   }
 
   @override
@@ -211,13 +468,24 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
                         children: [
                           Hero(
                             tag: 'team-logo-${widget.team.id}',
-                            child: Image.network(
-                              'https://a.espncdn.com/i/teamlogos/soccer/500/${widget.team.id}.png',
-                              width: 64,
-                              height: 64,
-                              errorBuilder:
-                                  (context, error, stackTrace) =>
-                                      const Icon(Icons.sports_soccer, size: 64),
+                            child: ClipOval(
+                              child: Image.network(
+                                'https://a.espncdn.com/i/teamlogos/soccer/500/${widget.team.id}.png',
+                                width: 64,
+                                height: 64,
+                                fit: BoxFit.cover,
+                                errorBuilder:
+                                    (context, error, stackTrace) => Container(
+                                      width: 64,
+                                      height: 64,
+                                      color: Colors.grey[300],
+                                      child: const Icon(
+                                        Icons.sports_soccer,
+                                        size: 40,
+                                        color: Colors.black54,
+                                      ),
+                                    ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -240,6 +508,17 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                                if (_nickname.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Nickname: $_nickname',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -262,7 +541,16 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
                 Expanded(
                   child:
                       _isLoading
-                          ? const Center(child: CircularProgressIndicator())
+                          ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(),
+                                SizedBox(height: 16),
+                                Text('Loading team data...'),
+                              ],
+                            ),
+                          )
                           : TabBarView(
                             controller: _tabController,
                             children: [
@@ -289,46 +577,473 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
   }
 
   Widget _buildLineupTab() {
-    return SingleChildScrollView(
+    return Consumer(
+      builder: (context, ref, child) {
+        final lineupAsync = ref.watch(lineupProvider);
+
+        // Ajouter ceci dans initState() pour charger les données
+        // ref.read(lineupProvider.notifier).fetchLineup('ger.1', widget.team.id, 'SOME_EVENT_ID');
+        // ref.read(athletesProvider.notifier).fetchTeamAthletes('ger.1', widget.team.id);
+
+        return lineupAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:
+              (error, stackTrace) =>
+                  Center(child: Text('Failed to load lineup: $error')),
+          data: (lineup) {
+            final formation = lineup.formationSummary;
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Formation: $formation',
+                        style: GoogleFonts.roboto(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Chip(
+                        label: Text(
+                          'Stadium: $_stadiumName',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        backgroundColor: Colors.blue[50],
+                        avatar: const Icon(Icons.stadium, size: 16),
+                      ),
+                    ],
+                  ),
+                  if (_foundedYear.isNotEmpty && _foundedYear != 'Unknown')
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        'Founded: $_foundedYear',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[700],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  Container(
+                    height: 400,
+                    decoration: BoxDecoration(
+                      color: Colors.green[800],
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          offset: const Offset(0, 2),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      children: [
+                        // Field markings
+                        CustomPaint(
+                          size: const Size(double.infinity, 400),
+                          painter: SoccerFieldPainter(),
+                        ),
+
+                        // Team name in the center
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.7),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              widget.team.name,
+                              style: GoogleFonts.roboto(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Position the players based on formation
+                        ..._getPlayerPositions(formation, lineup.players).map((
+                          position,
+                        ) {
+                          return Positioned(
+                            top: position.top,
+                            left: position.left,
+                            child: PlayerCircle(
+                              playerId: position.playerId,
+                              position: position.position,
+                              leagueId: 'ger.1',
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+                  // Reste du contenu...
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  List<PlayerPosition> _getPlayerPositions(
+    String formation,
+    List<LineupPlayer> players,
+  ) {
+    final formationParts = formation.split('-').map(int.parse).toList();
+    final positions = <PlayerPosition>[];
+    final width = MediaQuery.of(context).size.width - 32; // Avec padding
+
+    // Toujours récupérer le gardien (qui a la formationPlace = 1)
+    final goalkeeper = players.firstWhere(
+      (p) => p.formationPlace == '1',
+      orElse:
+          () => players.firstWhere(
+            (p) => p.positionId == '1',
+            orElse: () => LineupPlayer.empty(),
+          ),
+    );
+
+    if (goalkeeper.id.isNotEmpty) {
+      positions.add(
+        PlayerPosition(
+          playerIndex: int.parse(goalkeeper.formationPlace) - 1,
+          playerId: goalkeeper.id,
+          position: 'GK',
+          top: 350,
+          left: width / 2 - 30,
+        ),
+      );
+    }
+
+    // Placer les défenseurs
+    int defenderCount = formationParts[0];
+    List<LineupPlayer> defenders =
+        players
+            .where(
+              (p) =>
+                  p.isStarter &&
+                  int.parse(p.formationPlace) > 1 &&
+                  int.parse(p.formationPlace) <= 1 + defenderCount,
+            )
+            .toList();
+
+    if (defenders.length == defenderCount) {
+      double defenderSpacing = width / (defenderCount + 1);
+      defenders.sort(
+        (a, b) =>
+            int.parse(a.formationPlace).compareTo(int.parse(b.formationPlace)),
+      );
+
+      for (int i = 0; i < defenders.length; i++) {
+        positions.add(
+          PlayerPosition(
+            playerIndex: int.parse(defenders[i].formationPlace) - 1,
+            playerId: defenders[i].id,
+            position: i == 0 ? 'LB' : (i == defenderCount - 1 ? 'RB' : 'CB'),
+            top: 280,
+            left: defenderSpacing * (i + 1) - 30,
+          ),
+        );
+      }
+    }
+
+    // Placer les milieux de terrain
+    int midfielderCount = formationParts[1];
+    int midfielderStart = 1 + defenderCount;
+    List<LineupPlayer> midfielders =
+        players
+            .where(
+              (p) =>
+                  p.isStarter &&
+                  int.parse(p.formationPlace) > midfielderStart &&
+                  int.parse(p.formationPlace) <=
+                      midfielderStart + midfielderCount,
+            )
+            .toList();
+
+    if (midfielders.length == midfielderCount) {
+      double midfielderSpacing = width / (midfielderCount + 1);
+      midfielders.sort(
+        (a, b) =>
+            int.parse(a.formationPlace).compareTo(int.parse(b.formationPlace)),
+      );
+
+      for (int i = 0; i < midfielders.length; i++) {
+        positions.add(
+          PlayerPosition(
+            playerIndex: int.parse(midfielders[i].formationPlace) - 1,
+            playerId: midfielders[i].id,
+            position: 'CM',
+            top: 200,
+            left: midfielderSpacing * (i + 1) - 30,
+          ),
+        );
+      }
+    }
+
+    // Placer les attaquants
+    int forwardCount = formationParts.length > 2 ? formationParts[2] : 0;
+    int forwardStart = midfielderStart + midfielderCount;
+    List<LineupPlayer> forwards =
+        players
+            .where(
+              (p) =>
+                  p.isStarter &&
+                  int.parse(p.formationPlace) > forwardStart &&
+                  int.parse(p.formationPlace) <= forwardStart + forwardCount,
+            )
+            .toList();
+
+    if (forwards.length == forwardCount) {
+      double forwardSpacing = width / (forwardCount + 1);
+      forwards.sort(
+        (a, b) =>
+            int.parse(a.formationPlace).compareTo(int.parse(b.formationPlace)),
+      );
+
+      for (int i = 0; i < forwards.length; i++) {
+        String position = 'ST';
+        if (forwardCount >= 3) {
+          if (i == 0)
+            position = 'LW';
+          else if (i == forwardCount - 1)
+            position = 'RW';
+        }
+
+        positions.add(
+          PlayerPosition(
+            playerIndex: int.parse(forwards[i].formationPlace) - 1,
+            playerId: forwards[i].id,
+            position: position,
+            top: 100,
+            left: forwardSpacing * (i + 1) - 30,
+          ),
+        );
+      }
+    }
+
+    // Gestion des formations avec 4 lignes comme le 4-2-3-1
+    if (formationParts.length > 3) {
+      int attackingMidsCount = formationParts[2];
+      int attackingMidsStart = forwardStart;
+      forwardStart = attackingMidsStart + attackingMidsCount;
+
+      List<LineupPlayer> attackingMids =
+          players
+              .where(
+                (p) =>
+                    p.isStarter &&
+                    int.parse(p.formationPlace) > attackingMidsStart &&
+                    int.parse(p.formationPlace) <= forwardStart,
+              )
+              .toList();
+
+      if (attackingMids.length == attackingMidsCount) {
+        double attackingMidSpacing = width / (attackingMidsCount + 1);
+        attackingMids.sort(
+          (a, b) => int.parse(
+            a.formationPlace,
+          ).compareTo(int.parse(b.formationPlace)),
+        );
+
+        for (int i = 0; i < attackingMids.length; i++) {
+          String position = 'CAM';
+          if (attackingMidsCount >= 3) {
+            if (i == 0)
+              position = 'LAM';
+            else if (i == attackingMidsCount - 1)
+              position = 'RAM';
+          }
+
+          positions.add(
+            PlayerPosition(
+              playerIndex: int.parse(attackingMids[i].formationPlace) - 1,
+              playerId: attackingMids[i].id,
+              position: position,
+              top: 150,
+              left: attackingMidSpacing * (i + 1) - 30,
+            ),
+          );
+        }
+
+        // Réajuster les attaquants pour une formation comme 4-2-3-1
+        if (formationParts[3] == 1) {
+          List<LineupPlayer> strikers =
+              players
+                  .where(
+                    (p) =>
+                        p.isStarter &&
+                        int.parse(p.formationPlace) > forwardStart,
+                  )
+                  .toList();
+
+          if (strikers.isNotEmpty) {
+            positions.add(
+              PlayerPosition(
+                playerIndex: int.parse(strikers[0].formationPlace) - 1,
+                playerId: strikers[0].id,
+                position: 'ST',
+                top: 80,
+                left: width / 2 - 30,
+              ),
+            );
+          }
+        }
+      }
+    }
+
+    return positions;
+  }
+
+  Widget _buildPlayersTab() {
+    // Sort players by position groups for better organization
+    final goalkeepers =
+        _players.where((p) => p.fullName.contains('GK')).toList();
+    final defenders =
+        _players
+            .where(
+              (p) =>
+                  p.fullName.contains('CB') ||
+                  p.fullName.contains('LB') ||
+                  p.fullName.contains('RB'),
+            )
+            .toList();
+    final midfielders =
+        _players
+            .where(
+              (p) =>
+                  p.fullName.contains('CM') ||
+                  p.fullName.contains('CDM') ||
+                  p.fullName.contains('CAM'),
+            )
+            .toList();
+    final forwards =
+        _players
+            .where(
+              (p) =>
+                  p.fullName.contains('ST') ||
+                  p.fullName.contains('LW') ||
+                  p.fullName.contains('RW'),
+            )
+            .toList();
+
+    // Players without position info go to others
+    final others =
+        _players
+            .where(
+              (p) =>
+                  !p.fullName.contains('GK') &&
+                  !p.fullName.contains('CB') &&
+                  !p.fullName.contains('LB') &&
+                  !p.fullName.contains('RB') &&
+                  !p.fullName.contains('CM') &&
+                  !p.fullName.contains('CDM') &&
+                  !p.fullName.contains('CAM') &&
+                  !p.fullName.contains('ST') &&
+                  !p.fullName.contains('LW') &&
+                  !p.fullName.contains('RW'),
+            )
+            .toList();
+
+    return ListView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Search bar
+        TextField(
+          decoration: InputDecoration(
+            hintText: 'Search players...',
+            prefixIcon: const Icon(Icons.search),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            filled: true,
+            fillColor: Colors.grey[200],
+          ),
+          onChanged: (value) {
+            // Implement search functionality if needed
+          },
+        ),
+        const SizedBox(height: 16),
+
+        // Player list by position groups
+        if (goalkeepers.isNotEmpty) ...[
+          _buildPositionHeader(
+            'Goalkeepers',
+            Icons.sports_handball,
+            Colors.orange,
+          ),
+          ...goalkeepers.map((player) => _buildPlayerCard(player)),
+        ],
+
+        if (defenders.isNotEmpty) ...[
+          _buildPositionHeader('Defenders', Icons.shield, Colors.blue),
+          ...defenders.map((player) => _buildPlayerCard(player)),
+        ],
+
+        if (midfielders.isNotEmpty) ...[
+          _buildPositionHeader(
+            'Midfielders',
+            Icons.center_focus_strong,
+            Colors.green,
+          ),
+          ...midfielders.map((player) => _buildPlayerCard(player)),
+        ],
+
+        if (forwards.isNotEmpty) ...[
+          _buildPositionHeader('Forwards', Icons.trending_up, Colors.red),
+          ...forwards.map((player) => _buildPlayerCard(player)),
+        ],
+
+        if (others.isNotEmpty) ...[
+          _buildPositionHeader('Squad Players', Icons.group, Colors.purple),
+          ...others.map((player) => _buildPlayerCard(player)),
+        ],
+
+        // If no position-based sorting was possible, show all players
+        if (goalkeepers.isEmpty &&
+            defenders.isEmpty &&
+            midfielders.isEmpty &&
+            forwards.isEmpty) ...[
+          _buildPositionHeader('Team Squad', Icons.group, Colors.blueGrey),
+          ..._players.map((player) => _buildPlayerCard(player)),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildPositionHeader(String title, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
+      child: Row(
         children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(width: 8),
           Text(
-            'Formation: $_formation',
+            title,
             style: GoogleFonts.roboto(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 400,
-            decoration: BoxDecoration(
-              color: Colors.green[800],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Stack(
-              children: [
-                // Field markings
-                CustomPaint(
-                  size: const Size(double.infinity, 400),
-                  painter: SoccerFieldPainter(),
-                ),
-
-                // Position the players based on formation
-                ..._getPlayerPositions().map((position) {
-                  return Positioned(
-                    top: position.top,
-                    left: position.left,
-                    child: PlayerCircle(
-                      players: _players,
-                      playerIndex: position.playerIndex,
-                      position: position.position,
-                    ),
-                  );
-                }),
-              ],
+              color: color,
             ),
           ),
         ],
@@ -336,273 +1051,231 @@ class _TeamDetailScreenState extends State<TeamDetailScreen>
     );
   }
 
-  List<PlayerPosition> _getPlayerPositions() {
-    // This is a simplified example for a 4-3-3 formation
-    // You'll need to adjust positions based on the actual formation
-    final width =
-        MediaQuery.of(context).size.width - 32; // Accounting for padding
+  Widget _buildPlayerCard(Athlete player) {
+    final age = _calculateAge(player.dateOfBirth);
 
-    return [
-      // Goalkeeper
-      PlayerPosition(
-        playerIndex: 0,
-        position: 'GK',
-        top: 350,
-        left: width / 2 - 30,
-      ),
-      // Defenders
-      PlayerPosition(playerIndex: 1, position: 'LB', top: 280, left: 20),
-      PlayerPosition(
-        playerIndex: 2,
-        position: 'CB',
-        top: 280,
-        left: width / 3 - 20,
-      ),
-      PlayerPosition(
-        playerIndex: 3,
-        position: 'CB',
-        top: 280,
-        left: width * 2 / 3 - 40,
-      ),
-      PlayerPosition(
-        playerIndex: 4,
-        position: 'RB',
-        top: 280,
-        left: width - 80,
-      ),
-      // Midfielders
-      PlayerPosition(
-        playerIndex: 5,
-        position: 'CM',
-        top: 200,
-        left: width / 4 - 20,
-      ),
-      PlayerPosition(
-        playerIndex: 6,
-        position: 'CM',
-        top: 200,
-        left: width / 2 - 30,
-      ),
-      PlayerPosition(
-        playerIndex: 7,
-        position: 'CM',
-        top: 200,
-        left: width * 3 / 4 - 40,
-      ),
-      // Forwards
-      PlayerPosition(playerIndex: 8, position: 'LW', top: 100, left: 50),
-      PlayerPosition(
-        playerIndex: 9,
-        position: 'ST',
-        top: 80,
-        left: width / 2 - 30,
-      ),
-      PlayerPosition(
-        playerIndex: 10,
-        position: 'RW',
-        top: 100,
-        left: width - 110,
-      ),
-    ];
-  }
-
-  Widget _buildPlayersTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _players.length,
-      itemBuilder: (context, index) {
-        final player = _players[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: CircleAvatar(
-              child: Text(
-                player.fullName.substring(0, 1),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            title: Text(player.fullName),
-            subtitle: Text(
-              'Age: ${_calculateAge(player.dateOfBirth)} | ${player.country}',
-            ),
-            trailing: Text(
-              '${player.stats.goals} goals',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-            ),
-            onTap: () {
-              // Show player details
-              _showPlayerDetails(player);
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  int _calculateAge(String dateOfBirth) {
-    final birthDate = DateTime.tryParse(dateOfBirth);
-    if (birthDate == null) return 0;
-
-    final today = DateTime.now();
-    int age = today.year - birthDate.year;
-    if (today.month < birthDate.month ||
-        (today.month == birthDate.month && today.day < birthDate.day)) {
-      age--;
-    }
-    return age;
-  }
-
-  void _showPlayerDetails(Athlete player) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => _showPlayerDetails(player),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
+              // Player avatar
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.grey[200],
+                child: Text(
+                  player.fullName.substring(0, 1),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
               ),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.grey[200],
-                    child: Text(
-                      player.fullName.substring(0, 1),
+              const SizedBox(width: 16),
+
+              // Player info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      player.fullName,
                       style: const TextStyle(
-                        fontSize: 28,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 4),
+                    Row(
                       children: [
+                        Icon(Icons.cake, size: 14, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
                         Text(
-                          player.fullName,
-                          style: GoogleFonts.roboto(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                          'Age: $age',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        Icon(Icons.flag, size: 14, color: Colors.grey[600]),
+                        const SizedBox(width: 4),
                         Text(
-                          'Age: ${_calculateAge(player.dateOfBirth)} | ${player.country}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
+                          player.country,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
                           ),
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+
+              // Player stats
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green.shade200),
+                    ),
+                    child: Text(
+                      '${player.stats.goals} goals',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[700],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${player.stats.appearances} apps',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-              Text(
-                'Statistics',
-                style: GoogleFonts.roboto(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              StatRow(label: 'Goals', value: player.stats.goals.toString()),
-              StatRow(label: 'Assists', value: player.stats.assists.toString()),
-              StatRow(
-                label: 'Appearances',
-                value: player.stats.appearances.toString(),
-              ),
-              StatRow(
-                label: 'Minutes Played',
-                value: player.stats.minutesPlayed.toString(),
-              ),
-              StatRow(
-                label: 'Yellow Cards',
-                value: player.stats.yellowCards.toString(),
-              ),
-              StatRow(
-                label: 'Red Cards',
-                value: player.stats.redCards.toString(),
-              ),
             ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  int _calculateAge(String dateOfBirth) {
+    if (dateOfBirth == 'Unknown') return 0;
+
+    try {
+      final birthDate = DateTime.parse(dateOfBirth);
+      final currentDate = DateTime.now();
+      int age = currentDate.year - birthDate.year;
+      if (currentDate.month < birthDate.month ||
+          (currentDate.month == birthDate.month &&
+              currentDate.day < birthDate.day)) {
+        age--;
+      }
+      return age;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  void _showPlayerDetails(Athlete player) {
+    // Implement player details modal or navigation
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            maxChildSize: 0.9,
+            minChildSize: 0.5,
+            builder:
+                (context, scrollController) => Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      // Player header
+                      Center(
+                        child: Text(
+                          player.fullName,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Player details
+                      // Add more details here
+                    ],
+                  ),
+                ),
+          ),
     );
   }
 
   Widget _buildStatsTab() {
-    // Convert form string to list (e.g., "WDWLW" -> ["W", "D", "W", "L", "W"])
-    final formString = _teamStats['form'] ?? '';
-    final formList = formString.split('');
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Team Statistics',
-            style: GoogleFonts.roboto(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+          // Team record card
+          TeamStatCard(
+            title: 'Season Record',
+            stats: [
+              StatRow(
+                label: 'Wins',
+                value: '${_teamStats['wins'] ?? 0}',
+                color: Colors.green,
+              ),
+              StatRow(
+                label: 'Draws',
+                value: '${_teamStats['draws'] ?? 0}',
+                color: Colors.amber,
+              ),
+              StatRow(
+                label: 'Losses',
+                value: '${_teamStats['losses'] ?? 0}',
+                color: Colors.red,
+              ),
+            ],
           ),
           const SizedBox(height: 16),
+
+          // Goals card
           TeamStatCard(
-            label: 'Goals Scored',
-            value: _teamStats['goalsFor']?.toString() ?? '34',
-          ),
-          TeamStatCard(
-            label: 'Goals Conceded',
-            value: _teamStats['goalsAgainst']?.toString() ?? '18',
-          ),
-          TeamStatCard(
-            label: 'Wins',
-            value: _teamStats['wins']?.toString() ?? '10',
-          ),
-          TeamStatCard(
-            label: 'Draws',
-            value: _teamStats['draws']?.toString() ?? '5',
-          ),
-          TeamStatCard(
-            label: 'Losses',
-            value: _teamStats['losses']?.toString() ?? '3',
-          ),
-          TeamStatCard(
-            label: 'Points',
-            value: _teamStats['points']?.toString() ?? '35',
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'Last 5 Matches',
-            style: GoogleFonts.roboto(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            title: 'Goal Statistics',
+            stats: [
+              StatRow(
+                label: 'Goals For',
+                value: '${_teamStats['goalsFor'] ?? 0}',
+                color: Colors.blue,
+              ),
+              StatRow(
+                label: 'Goals Against',
+                value: '${_teamStats['goalsAgainst'] ?? 0}',
+                color: Colors.orange,
+              ),
+              StatRow(
+                label: 'Goal Difference',
+                value:
+                    '${((_teamStats['goalsFor'] ?? 0) - (_teamStats['goalsAgainst'] ?? 0))}',
+                color: Colors.purple,
+              ),
+            ],
           ),
           const SizedBox(height: 16),
-          LastMatches(results: formList),
+
+          // Last matches
+          LastMatches(formString: _teamStats['form']?.toString() ?? 'WDLWD'),
+
+          // Add more stat widgets as needed
         ],
       ),
     );

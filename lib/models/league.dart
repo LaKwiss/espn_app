@@ -41,4 +41,16 @@ class League extends Equatable {
     flag,
     shortName,
   ];
+
+  static empty() {
+    return League(
+      id: 0,
+      name: 'Unknown League',
+      displayName: 'Unknown League',
+      logo: '',
+      country: 'Unknown',
+      flag: '',
+      shortName: 'Unknown',
+    );
+  }
 }

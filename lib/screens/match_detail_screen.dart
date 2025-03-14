@@ -4,7 +4,7 @@ import 'dart:developer';
 import 'package:espn_app/models/event.dart';
 import 'package:espn_app/models/club.dart';
 import 'package:espn_app/models/team.dart';
-import 'package:espn_app/providers/match_events_stream_notifier.dart';
+import 'package:espn_app/providers/match_events_notifier.dart';
 import 'package:espn_app/widgets/call_to_action.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
 import 'package:espn_app/widgets/event_list.dart';

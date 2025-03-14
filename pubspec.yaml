@@ -46,6 +46,7 @@ dependencies:
   table_calendar: ^3.2.0
   mockito: ^5.4.5
   mocktail: ^1.0.4
+  lock_orientation_screen: ^0.0.4
 
 dev_dependencies:
   flutter_test:

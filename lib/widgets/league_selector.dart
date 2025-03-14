@@ -48,12 +48,6 @@ class LeagueSelector extends ConsumerWidget {
     WidgetRef ref,
     String leagueName,
   ) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$leagueName sélectionnée'),
-        duration: Duration(seconds: 1),
-      ),
-    );
     ref.read(leagueAsyncProvider.notifier).fetchEvents(leagueName);
     final String fullName = await ref
         .read(leagueAsyncProvider.notifier)

@@ -32,4 +32,15 @@ class Athlete extends Equatable {
 
   @override
   List<Object?> get props => [id, fullName, dateOfBirth, country, stats, club];
+
+  static empty() {
+    return Athlete(
+      id: 0,
+      fullName: 'Unknown Player',
+      dateOfBirth: '2000-01-01',
+      country: 'Unknown',
+      stats: Stats.empty(),
+      club: Club.empty(),
+    );
+  }
 }

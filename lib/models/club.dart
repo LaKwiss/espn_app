@@ -31,4 +31,15 @@ class Club extends Equatable {
 
   @override
   List<Object?> get props => [id, name, logo, country, flag, league];
+
+  static empty() {
+    return Club(
+      id: 0,
+      name: 'Unknown Club',
+      logo: '',
+      country: 'Unknown',
+      flag: '',
+      league: League.empty(),
+    );
+  }
 }

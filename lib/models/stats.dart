@@ -41,4 +41,16 @@ class Stats extends Equatable {
     yellowCards,
     redCards,
   ];
+
+  static empty() {
+    return Stats(
+      id: 0,
+      goals: 0,
+      assists: 0,
+      appearances: 0,
+      minutesPlayed: 0,
+      yellowCards: 0,
+      redCards: 0,
+    );
+  }
 }
