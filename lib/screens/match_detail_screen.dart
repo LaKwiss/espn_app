@@ -5,7 +5,6 @@ import 'package:espn_app/models/event.dart';
 import 'package:espn_app/models/club.dart';
 import 'package:espn_app/models/team.dart';
 import 'package:espn_app/providers/match_events_notifier.dart';
-import 'package:espn_app/widgets/call_to_action.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
 import 'package:espn_app/widgets/event_list.dart';
 import 'package:espn_app/widgets/header_section.dart';
@@ -270,21 +269,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                           ),
                     ),
                   ),
-                if (!widget.event.isFinished)
-                  SliverToBoxAdapter(
-                    child: CallToActionWidget(
-                      text: 'CHOISIR LE GAGNANT',
-                      onTap: () {
-                        // Action à effectuer lors du clic
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Fonctionnalité à venir...'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+
                 SliverToBoxAdapter(
                   child:
                       _showTactics

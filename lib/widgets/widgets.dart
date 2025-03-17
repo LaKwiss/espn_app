@@ -1,5 +1,3 @@
-export 'call_to_action.dart';
-export 'club_info.dart';
 export 'custom_app_bar.dart';
 export 'event_list.dart';
 export 'event.dart';
