@@ -1,7 +1,7 @@
 // lib/providers/lineup_notifier.dart
 import 'package:espn_app/models/lineup.dart';
 import 'package:espn_app/providers/provider_factory.dart';
-import 'package:espn_app/repositories/lineup_repository/I_lineup_repository.dart';
+import 'package:espn_app/repositories/lineup_repository/i_lineup_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LineupNotifier extends AsyncNotifier<Lineup> {

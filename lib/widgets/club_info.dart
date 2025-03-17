@@ -1,5 +1,6 @@
+import 'dart:developer';
+
 import 'package:espn_app/models/club.dart';
-import 'package:espn_app/screens/club_detail_screen.dart';
 import 'package:espn_app/widgets/widgets.dart';
 
 class ClubInfoWidget extends StatelessWidget {
@@ -67,10 +68,6 @@ class ClubInfoWidget extends StatelessWidget {
   }
 
   void _showClubDetails(BuildContext context) {
-    // Navigation vers l'écran de détails du club
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ClubDetailScreen(club: club)),
-    );
+    log('object');
   }
 }

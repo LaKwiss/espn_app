@@ -2,7 +2,7 @@
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'package:espn_app/models/lineup.dart';
-import 'package:espn_app/repositories/lineup_repository/I_lineup_repository.dart';
+import 'package:espn_app/repositories/lineup_repository/i_lineup_repository.dart';
 import 'package:espn_app/services/api_service.dart';
 import 'package:espn_app/services/error_handler_service.dart';
 

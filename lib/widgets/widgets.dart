@@ -12,7 +12,6 @@ export 'league_selector.dart';
 export 'match_info_section.dart';
 export 'match_widget.dart';
 export 'navigation_dots.dart';
-export 'player_circle.dart';
 export 'prediction_section.dart';
 export 'score_display.dart';
 export 'team_logo.dart';

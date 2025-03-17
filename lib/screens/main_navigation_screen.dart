@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:espn_app/screens/calendar_screen.dart';
 import 'package:espn_app/screens/home_screen.dart';
 import 'package:espn_app/providers/page_index_provider.dart';
@@ -44,7 +46,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         onPageChanged: (index) {
           // Update the current page index in the provider
           ref.read(pageIndexProvider.notifier).state = index;
-          print("Page changée vers: $index"); // Debug
+          log("Page changée vers: $index"); // Debug
         },
         children: const [
           HomeScreen(),

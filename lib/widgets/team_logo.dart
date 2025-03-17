@@ -1,6 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/team.dart';
-import 'package:espn_app/screens/team_detail_screen.dart';
 
 class TeamLogoWidget extends StatelessWidget {
   final Team team;
@@ -67,9 +68,6 @@ class TeamLogoWidget extends StatelessWidget {
 
   void _showTeamDetails(BuildContext context) {
     // Navigation vers l'écran de détails de l'équipe
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => TeamDetailScreen(team: team)),
-    );
+    log('object');
   }
 }

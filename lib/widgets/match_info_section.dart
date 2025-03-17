@@ -39,7 +39,6 @@ class MatchInfoSectionWidget extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Date avec bouton d'expansion
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -80,6 +79,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       awayTeam.firstName,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 20,
                         color: const Color(0xFF5A7DF3),
@@ -88,6 +88,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                     if (awayTeam.secondName.isNotEmpty)
                       Text(
                         awayTeam.secondName,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.blackOpsOne(
                           fontSize: 20,
                           color: Colors.black,
@@ -102,11 +103,12 @@ class MatchInfoSectionWidget extends StatelessWidget {
                     TeamLogoWidget(
                       team: homeTeam,
                       radius: 30,
-                      borderColor: Colors.blue.withOpacity(0.7),
+                      borderColor: Colors.blue.withValues(alpha: 0.7),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       homeTeam.firstName,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 20,
                         color: Colors.black,
@@ -115,6 +117,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                     if (homeTeam.secondName.isNotEmpty)
                       Text(
                         homeTeam.secondName,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.blackOpsOne(
                           fontSize: 20,
                           color: const Color(0xFF5A7DF3),

@@ -41,10 +41,11 @@ class NavigationDots extends ConsumerWidget {
                 width: dotSize,
                 height: dotSize,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(
-                    isSelected
-                        ? NavigationConstants.selectedOpacity
-                        : NavigationConstants.unselectedOpacity,
+                  color: Colors.black.withValues(
+                    alpha:
+                        isSelected
+                            ? NavigationConstants.selectedOpacity
+                            : NavigationConstants.unselectedOpacity,
                   ),
                   shape: BoxShape.circle,
                 ),
