@@ -11,6 +11,7 @@ import 'package:espn_app/widgets/event_list.dart';
 import 'package:espn_app/widgets/header_section.dart';
 import 'package:espn_app/widgets/match_info_section.dart';
 import 'package:espn_app/widgets/prediction_section.dart';
+import 'package:espn_app/widgets/tactics_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -35,6 +36,7 @@ class MatchDetailScreen extends ConsumerStatefulWidget {
 class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
   bool _showEvents = false;
   String _leagueId = '';
+  bool _showTactics = false;
 
   // Contrôleur pour le RefreshIndicator
   final _refreshController = GlobalKey<RefreshIndicatorState>();
@@ -283,7 +285,77 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                       },
                     ),
                   ),
-                // Ajouter un espace supplémentaire pour permettre le défilement
+                SliverToBoxAdapter(
+                  child:
+                      _showTactics
+                          ? TacticsView(
+                            event: widget.event,
+                            homeTeam: _homeTeam,
+                            awayTeam: _awayTeam,
+                            onToggleView: () {
+                              setState(() {
+                                _showTactics = false;
+                              });
+                            },
+                          )
+                          : Column(
+                            children: [
+                              // Bouton pour basculer vers la vue tactique
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8.0,
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _showTactics = true;
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.black,
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  child: const Text(
+                                    'Voir les formations tactiques',
+                                  ),
+                                ),
+                              ),
+                              // Liste des événements
+                              eventsAsync.when(
+                                data:
+                                    (events) => EventsListWidget(
+                                      events: events,
+                                      homeTeam: _homeTeam,
+                                      awayTeam: _awayTeam,
+                                    ),
+                                loading:
+                                    () => const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(20.0),
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    ),
+                                error:
+                                    (error, stack) => Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(16.0),
+                                        child: Column(
+                                          children: [
+                                            Text(
+                                              'Erreur de chargement des événements: $error',
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: _refreshData,
+                                              child: const Text('Réessayer'),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                              ),
+                            ],
+                          ),
+                ),
                 SliverToBoxAdapter(child: SizedBox(height: 50)),
               ],
             ),
