@@ -1,7 +1,8 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/club.dart';
 
-class Team {
+class Team extends Equatable {
   final String id;
   final String name;
   final String shortName;
@@ -40,4 +41,10 @@ class Team {
       club: club,
     );
   }
+
+  @override
+  List<Object?> get props => [id, name, shortName, icon, club];
+
+  @override
+  bool? get stringify => true;
 }

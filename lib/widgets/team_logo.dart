@@ -20,7 +20,7 @@ class TeamLogoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isInteractive ? () => _showTeamDetails(context) : null,
+      onTap: isInteractive ? () => _showTeamDetails(context, team) : null,
       child: Stack(
         children: [
           CircleAvatar(
@@ -66,8 +66,7 @@ class TeamLogoWidget extends StatelessWidget {
     );
   }
 
-  void _showTeamDetails(BuildContext context) {
-    // Navigation vers l'écran de détails de l'équipe
-    log('object');
+  void _showTeamDetails(BuildContext context, Team team) {
+    log(team.toString());
   }
 }
