@@ -32,10 +32,12 @@ class MatchDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<MatchDetailScreen> createState() => _MatchDetailScreenState();
 }
 
-class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
-  bool _showEvents = false;
+class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen>
+    with SingleTickerProviderStateMixin {
   String _leagueId = '';
-  bool _showTactics = false;
+
+  // Contrôleur pour les onglets
+  late TabController _tabController;
 
   // Contrôleur pour le RefreshIndicator
   final _refreshController = GlobalKey<RefreshIndicatorState>();
@@ -53,6 +55,9 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Initialiser le contrôleur de tabs avec 2 onglets
+    _tabController = TabController(length: 2, vsync: this);
 
     // Extraire l'ID de la ligue à partir de l'URL
     _leagueId = _extractLeagueId(widget.event.league);
@@ -81,6 +86,12 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
         ),
       );
     });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   // Fonction pour rafraîchir les données
@@ -170,183 +181,159 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
     final formattedDate = DateFormat('dd MMMM').format(matchDate);
     final formattedTime = DateFormat('HH:mm').format(matchDate);
 
-    // Récupération des événements depuis le provider
-    final eventsAsync = ref.watch(matchEventsProvider);
-
     return Scaffold(
-      body: RefreshIndicator(
-        key: _refreshController,
-        onRefresh: _refreshData,
-        child: Container(
-          color: widget.randomColor,
-          child: SafeArea(
-            child: CustomScrollView(
-              physics:
-                  const AlwaysScrollableScrollPhysics(), // Important pour le RefreshIndicator
-              slivers: [
-                SliverToBoxAdapter(
-                  child: CustomAppBar(
-                    url: _getLeagueLogoUrl(_leagueName),
-                    backgroundColor: widget.randomColor,
-                    iconOrientation: 3,
-                    onArrowButtonPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-                SliverToBoxAdapter(child: HeaderSection(event: widget.event)),
-                if (!widget.event.isFinished)
-                  SliverToBoxAdapter(
-                    child: PredictionSectionWidget(
-                      widget: widget,
-                      awayTeam: _awayTeam,
-                      homeTeam: _homeTeam,
-                    ),
-                  ),
-                if (widget.event.isFinished)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Text(
-                        'TERMINÉ',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.blackOpsOne(
-                          fontSize: 32,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-                SliverToBoxAdapter(
-                  child: MatchInfoSectionWidget(
-                    date: formattedDate,
-                    time: formattedTime,
-                    awayTeam: _awayTeam,
-                    homeTeam: _homeTeam,
-                    isFinished: widget.event.isFinished,
-                    scores: widget.event.score,
-                    showEvents: _showEvents,
-                    onToggleEvents: () {
-                      setState(() {
-                        _showEvents = !_showEvents;
-                      });
-                    },
-                  ),
-                ),
-                // Afficher les événements conditionnellement
-                if (_showEvents || !widget.event.isFinished)
-                  SliverToBoxAdapter(
-                    child: eventsAsync.when(
-                      data:
-                          (events) => EventsListWidget(
-                            events: events,
-                            homeTeam: _homeTeam,
-                            awayTeam: _awayTeam,
-                          ),
-                      loading:
-                          () => const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(20.0),
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                      error:
-                          (error, stack) => Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Erreur de chargement des événements: $error',
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: _refreshData,
-                                    child: const Text('Réessayer'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                    ),
-                  ),
+      body: Container(
+        color: widget.randomColor,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // AppBar personnalisée
+              CustomAppBar(
+                url: _getLeagueLogoUrl(_leagueName),
+                backgroundColor: widget.randomColor,
+                iconOrientation: 3,
+                onArrowButtonPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
 
-                SliverToBoxAdapter(
-                  child:
-                      _showTactics
-                          ? TacticsView(
-                            event: widget.event,
-                            homeTeam: _homeTeam,
+              // Contenu principal scrollable
+              Expanded(
+                child: RefreshIndicator(
+                  key: _refreshController,
+                  onRefresh: _refreshData,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Section d'en-tête avec le nom du match
+                        HeaderSection(event: widget.event),
+
+                        // Section des prédictions (seulement pour les matchs à venir)
+                        if (!widget.event.isFinished)
+                          PredictionSectionWidget(
+                            widget: widget,
                             awayTeam: _awayTeam,
-                            onToggleView: () {
-                              setState(() {
-                                _showTactics = false;
-                              });
-                            },
-                          )
-                          : Column(
-                            children: [
-                              // Bouton pour basculer vers la vue tactique
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8.0,
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _showTactics = true;
-                                    });
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text(
-                                    'Voir les formations tactiques',
-                                  ),
-                                ),
+                            homeTeam: _homeTeam,
+                          ),
+
+                        // Message "TERMINÉ" pour les matchs finis
+                        if (widget.event.isFinished)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Text(
+                              'TERMINÉ',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.blackOpsOne(
+                                fontSize: 32,
+                                color: Colors.black,
                               ),
-                              // Liste des événements
-                              eventsAsync.when(
-                                data:
-                                    (events) => EventsListWidget(
-                                      events: events,
-                                      homeTeam: _homeTeam,
-                                      awayTeam: _awayTeam,
-                                    ),
-                                loading:
-                                    () => const Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(20.0),
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    ),
-                                error:
-                                    (error, stack) => Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(16.0),
-                                        child: Column(
-                                          children: [
-                                            Text(
-                                              'Erreur de chargement des événements: $error',
-                                            ),
-                                            ElevatedButton(
-                                              onPressed: _refreshData,
-                                              child: const Text('Réessayer'),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
+                            ),
+                          ),
+
+                        // Section d'information sur le match (score, heure, etc.)
+                        MatchInfoSectionWidget(
+                          date: formattedDate,
+                          time: formattedTime,
+                          awayTeam: _awayTeam,
+                          homeTeam: _homeTeam,
+                          isFinished: widget.event.isFinished,
+                          scores: widget.event.score,
+                          showEvents:
+                              true, // Modifié pour être toujours visible avec les onglets
+                          onToggleEvents:
+                              () {}, // Fonction vide car remplacée par les onglets
+                        ),
+
+                        // Barre d'onglets dans le contenu scrollable
+                        Container(
+                          color: Colors.white,
+                          child: TabBar(
+                            controller: _tabController,
+                            labelColor: Colors.black,
+                            unselectedLabelColor: Colors.grey,
+                            indicatorColor: Colors.black,
+                            tabs: const [
+                              Tab(
+                                text: 'ÉVÉNEMENTS',
+                                icon: Icon(Icons.sports_soccer),
                               ),
+                              Tab(text: 'COMPOSITION', icon: Icon(Icons.group)),
                             ],
                           ),
+                        ),
+
+                        // Contenu des onglets
+                        SizedBox(
+                          // Hauteur fixe pour le contenu des onglets
+                          height: MediaQuery.of(context).size.height * 0.6,
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              // Tab 1: Événements du match
+                              _buildEventsTab(),
+
+                              // Tab 2: Compositions des équipes
+                              _buildTacticsTab(),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                SliverToBoxAdapter(child: SizedBox(height: 50)),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  // Construit l'onglet des événements
+  Widget _buildEventsTab() {
+    // Récupération des événements depuis le provider
+    final eventsAsync = ref.watch(matchEventsProvider);
+
+    return eventsAsync.when(
+      data:
+          (events) => EventsListWidget(
+            events: events,
+            homeTeam: _homeTeam,
+            awayTeam: _awayTeam,
+          ),
+      loading:
+          () => const SizedBox(
+            height: 200,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+      error:
+          (error, stack) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Text('Erreur de chargement des événements: $error'),
+                  ElevatedButton(
+                    onPressed: _refreshData,
+                    child: const Text('Réessayer'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  // Construit l'onglet des tactiques
+  Widget _buildTacticsTab() {
+    return TacticsView(
+      event: widget.event,
+      homeTeam: _homeTeam,
+      awayTeam: _awayTeam,
+      onToggleView: () {
+        // Basculer vers l'onglet des événements
+        _tabController.animateTo(0);
+      },
     );
   }
 

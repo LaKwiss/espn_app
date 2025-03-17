@@ -133,104 +133,89 @@ class TacticsView extends ConsumerWidget {
         final homeSubstitutions = _createSubstitutions(homeEnrichedPlayers);
         final awaySubstitutions = _createSubstitutions(awayEnrichedPlayers);
 
-        return SingleChildScrollView(
-          child: Column(
-            children: [
-              // Bouton pour basculer entre la vue tactique et la vue des événements
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: ElevatedButton(
-                  onPressed: onToggleView,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
+        return Column(
+          children: [
+            // Formation de l'équipe à domicile
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
-                  child: const Text('Voir les événements du match'),
-                ),
+                ],
               ),
-
-              // Formation de l'équipe à domicile
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: FormationVisualizer(
-                  formation: homeFormation.formationName,
-                  players: homeStarters,
-                  teamColor: homeColor,
-                  teamName: homeTeam.name,
-                  isHomeTeam: true,
-                  onPlayerTap: (player) {
-                    _showPlayerDetails(context, player, homeColor);
-                  },
-                ),
-              ),
-
-              // Remplaçants de l'équipe à domicile
-              SubstitutesList(
-                substitutes: homeSubstitutes,
-                substitutions: homeSubstitutions,
+              child: FormationVisualizer(
+                formation: homeFormation.formationName,
+                players: homeStarters,
                 teamColor: homeColor,
                 teamName: homeTeam.name,
+                isHomeTeam: true,
                 onPlayerTap: (player) {
                   _showPlayerDetails(context, player, homeColor);
                 },
               ),
+            ),
 
-              const SizedBox(height: 24),
+            // Remplaçants de l'équipe à domicile
+            SubstitutesList(
+              substitutes: homeSubstitutes,
+              substitutions: homeSubstitutions,
+              teamColor: homeColor,
+              teamName: homeTeam.name,
+              onPlayerTap: (player) {
+                _showPlayerDetails(context, player, homeColor);
+              },
+            ),
 
-              // Formation de l'équipe à l'extérieur
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: FormationVisualizer(
-                  formation: awayFormation.formationName,
-                  players: awayStarters,
-                  teamColor: awayColor,
-                  teamName: awayTeam.name,
-                  isHomeTeam: false,
-                  onPlayerTap: (player) {
-                    _showPlayerDetails(context, player, awayColor);
-                  },
-                ),
+            const SizedBox(height: 24),
+
+            // Formation de l'équipe à l'extérieur
+            Container(
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-
-              // Remplaçants de l'équipe à l'extérieur
-              SubstitutesList(
-                substitutes: awaySubstitutes,
-                substitutions: awaySubstitutions,
+              child: FormationVisualizer(
+                formation: awayFormation.formationName,
+                players: awayStarters,
                 teamColor: awayColor,
                 teamName: awayTeam.name,
+                isHomeTeam: false,
                 onPlayerTap: (player) {
                   _showPlayerDetails(context, player, awayColor);
                 },
               ),
+            ),
 
-              // Espace en bas pour le défilement
-              const SizedBox(height: 32),
-            ],
-          ),
+            // Remplaçants de l'équipe à l'extérieur
+            SubstitutesList(
+              substitutes: awaySubstitutes,
+              substitutions: awaySubstitutions,
+              teamColor: awayColor,
+              teamName: awayTeam.name,
+              onPlayerTap: (player) {
+                _showPlayerDetails(context, player, awayColor);
+              },
+            ),
+
+            // Espace en bas pour le défilement
+            const SizedBox(height: 32),
+          ],
         );
       },
       loading:
