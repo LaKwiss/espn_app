@@ -23,8 +23,8 @@ class PlayerMarker extends StatelessWidget {
     final double yPos = isHomeTeam ? player.y : 1 - player.y;
 
     return Positioned(
-      left: player.x * 100, // En pourcentage de la largeur
-      top: yPos * 100, // En pourcentage de la hauteur
+      left: player.x * 350, // En pourcentage de la largeur
+      top: yPos * 150, // En pourcentage de la hauteur
       child: GestureDetector(
         onTap: onTap,
         child: Column(

@@ -203,8 +203,8 @@ class EnrichedPlayerEntry extends PlayerEntry {
   final String lastName;
   final String positionName;
   final String positionAbbreviation;
-  final double x; // Position X sur le terrain (0-1)
-  final double y; // Position Y sur le terrain (0-1)
+  final double x;
+  final double y;
 
   const EnrichedPlayerEntry({
     required super.playerId,

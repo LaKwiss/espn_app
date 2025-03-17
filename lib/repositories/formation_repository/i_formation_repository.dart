@@ -10,5 +10,6 @@ abstract class IFormationRepository {
 
   Future<List<EnrichedPlayerEntry>> enrichPlayersData(
     List<PlayerEntry> players,
+    String formationName,
   );
 }
