@@ -1,11 +1,7 @@
-// lib/widgets/formation_visualizer.dart
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/formation_response.dart';
-import 'package:espn_app/widgets/soccer_field.dart';
-import 'package:espn_app/widgets/player_marker.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Widget de visualisation de formation tactique
 class FormationVisualizer extends StatelessWidget {
   final String formation;
   final List<EnrichedPlayerEntry> players;
@@ -28,7 +24,6 @@ class FormationVisualizer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Formation label
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
@@ -36,110 +31,228 @@ class FormationVisualizer extends StatelessWidget {
             style: GoogleFonts.blackOpsOne(fontSize: 18, color: teamColor),
           ),
         ),
-        // Terrain avec joueurs
-        SoccerField(child: _buildFormationLayout()),
+        AspectRatio(
+          aspectRatio: 1.5,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.green[800],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: _buildFormationLayout(context),
+          ),
+        ),
       ],
     );
   }
 
-  /// Construit la disposition des joueurs selon la formation
-  Widget _buildFormationLayout() {
-    // Filtrer pour n'avoir que les titulaires
+  Widget _buildFormationLayout(BuildContext context) {
     final starters = players.where((p) => p.isStarter).toList();
 
-    // Si pas de données ou format invalide, retourner une vue vide
-    if (starters.isEmpty || !_isValidFormation(formation)) {
+    if (starters.isEmpty) {
       return const SizedBox();
     }
 
-    // Analyser la formation (ex: "4-4-2" -> [4, 4, 2])
-    final formationParts = formation.split('-').map(int.parse).toList();
+    final Size size = MediaQuery.of(context).size;
 
-    // Conserver une référence au gardien (toujours en position 1)
-    final goalkeeper = starters.firstWhere(
-      (p) => p.formationPlace == 1,
-      orElse: () => starters.first,
-    );
-
-    // Trier les joueurs par position sur le terrain
-    final fieldPlayers = List<EnrichedPlayerEntry>.from(starters);
-    fieldPlayers.removeWhere(
-      (p) => p.formationPlace == 1,
-    ); // Enlever le gardien
-    fieldPlayers.sort((a, b) => a.formationPlace.compareTo(b.formationPlace));
-
-    // Répartir les joueurs selon les lignes de la formation
-    final lines = _distributePlayersToLines(fieldPlayers, formationParts);
-
-    // Inverser l'ordre si c'est l'équipe qui joue vers le haut
-    final displayLines = isHomeTeam ? lines : lines.reversed.toList();
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Stack(
       children: [
-        // Le gardien est toujours en première ou dernière position selon l'équipe
-        if (!isHomeTeam) _buildPlayerRow([goalkeeper]),
-
-        // Afficher les lignes de joueurs
-        ...displayLines.map((linePlayers) => _buildPlayerRow(linePlayers)),
-
-        // Le gardien est toujours en première ou dernière position selon l'équipe
-        if (isHomeTeam) _buildPlayerRow([goalkeeper]),
+        CustomPaint(size: Size.infinite, painter: SoccerFieldPainter()),
+        ...starters.map((player) {
+          final position = _calculatePlayerPosition(
+            player,
+            starters,
+            formation,
+          );
+          return Positioned(
+            left: position.$1 * size.width * 0.8,
+            top: position.$2 * size.width * 0.5,
+            child: _buildPlayerMarker(player, context),
+          );
+        }),
       ],
     );
   }
 
-  /// Répartit les joueurs en lignes selon la formation
-  List<List<EnrichedPlayerEntry>> _distributePlayersToLines(
-    List<EnrichedPlayerEntry> fieldPlayers,
-    List<int> formationParts,
-  ) {
-    final lines = <List<EnrichedPlayerEntry>>[];
-    int startIndex = 0;
-
-    // Pour chaque partie de la formation (ex: 4-3-3), créer une ligne
-    for (var i = 0; i < formationParts.length; i++) {
-      final count = formationParts[i];
-      if (startIndex + count <= fieldPlayers.length) {
-        final line = fieldPlayers.sublist(startIndex, startIndex + count);
-        lines.add(line);
-        startIndex += count;
-      }
-    }
-
-    return lines;
-  }
-
-  /// Construit une rangée de joueurs
-  Widget _buildPlayerRow(List<EnrichedPlayerEntry> linePlayers) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children:
-            linePlayers.map((player) {
-              return PlayerMarker(
-                player: player,
-                teamColor: teamColor,
-                isHomeTeam: isHomeTeam,
-                onTap: onPlayerTap != null ? () => onPlayerTap!(player) : null,
-              );
-            }).toList(),
+  Widget _buildPlayerMarker(EnrichedPlayerEntry player, BuildContext context) {
+    return GestureDetector(
+      onTap: onPlayerTap != null ? () => onPlayerTap!(player) : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: teamColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: Center(
+              child: Text(
+                player.jerseyNumber,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            margin: const EdgeInsets.only(top: 2),
+            decoration: BoxDecoration(
+              color: Colors.black54,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              _getShortName(player.displayName),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  /// Vérifie si la formation est valide
-  bool _isValidFormation(String formation) {
-    // Vérifier le format (ex: "4-4-2")
-    final regex = RegExp(r'^\d+(-\d+)+$');
-    if (!regex.hasMatch(formation)) {
-      return false;
+  (double, double) _calculatePlayerPosition(
+    EnrichedPlayerEntry player,
+    List<EnrichedPlayerEntry> starters,
+    String formation,
+  ) {
+    double x = 0.5, y = 0.5;
+
+    if (player.formationPlace == 1) {
+      // Goalkeeper
+      y = isHomeTeam ? 0.9 : 0.1;
+      x = 0.5;
+      return (x, y);
     }
 
-    // Vérifier que le nombre total correspond à 10 joueurs de champ (+ 1 gardien)
-    final parts = formation.split('-').map(int.parse);
-    final sum = parts.fold<int>(0, (sum, count) => sum + count);
-    return sum == 10; // 10 joueurs de champ (le gardien n'est pas compté ici)
+    try {
+      final parts = formation.split('-').map(int.parse).toList();
+      if (parts.isEmpty) return (x, y);
+
+      final defenders = parts[0];
+      final midfielders = parts.length > 1 ? parts[1] : 0;
+      final forwards = parts.length > 2 ? parts[2] : 0;
+
+      final defenseEnd = 1 + defenders;
+      final midfieldEnd = defenseEnd + midfielders;
+
+      if (player.formationPlace > 1 && player.formationPlace <= defenseEnd) {
+        // Defenders
+        y = isHomeTeam ? 0.75 : 0.25;
+        final position = player.formationPlace - 2;
+        final totalInLine = defenders;
+        x = _getXPositionInLine(position, totalInLine);
+      } else if (player.formationPlace > defenseEnd &&
+          player.formationPlace <= midfieldEnd) {
+        // Midfielders
+        y = 0.5;
+        final position = player.formationPlace - defenseEnd - 1;
+        final totalInLine = midfielders;
+        x = _getXPositionInLine(position, totalInLine);
+      } else {
+        // Forwards
+        y = isHomeTeam ? 0.25 : 0.75;
+        final position = player.formationPlace - midfieldEnd - 1;
+        final totalInLine = forwards;
+        x = _getXPositionInLine(position, totalInLine);
+      }
+    } catch (e) {
+      // Fall back to default position
+    }
+
+    return (x, y);
   }
+
+  double _getXPositionInLine(int position, int totalInLine) {
+    if (totalInLine <= 1) return 0.5;
+
+    // Calculate distributed positions
+    final step = 0.8 / (totalInLine - 1);
+    final x = 0.1 + (position * step);
+    return x.clamp(0.1, 0.9);
+  }
+
+  String _getShortName(String fullName) {
+    if (fullName.isEmpty) return '';
+
+    final parts = fullName.split(' ');
+    if (parts.length <= 1) return fullName;
+
+    final lastName = parts.last;
+    if (lastName.length <= 7) {
+      return lastName;
+    } else {
+      return lastName.substring(0, 5) + '..';
+    }
+  }
+}
+
+class SoccerFieldPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5;
+
+    // Field outline
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+
+    // Center line
+    canvas.drawLine(
+      Offset(0, size.height / 2),
+      Offset(size.width, size.height / 2),
+      paint,
+    );
+
+    // Center circle
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      size.height / 8,
+      paint,
+    );
+
+    // Top penalty area
+    final penaltyWidth = size.width * 0.5;
+    final penaltyHeight = size.height * 0.2;
+    canvas.drawRect(
+      Rect.fromLTWH(
+        (size.width - penaltyWidth) / 2,
+        0,
+        penaltyWidth,
+        penaltyHeight,
+      ),
+      paint,
+    );
+
+    // Bottom penalty area
+    canvas.drawRect(
+      Rect.fromLTWH(
+        (size.width - penaltyWidth) / 2,
+        size.height - penaltyHeight,
+        penaltyWidth,
+        penaltyHeight,
+      ),
+      paint,
+    );
+
+    // Center spot
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      3,
+      Paint()..color = Colors.white,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
