@@ -17,6 +17,7 @@ class EventsListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Version simplifiée sans StreamBuilder
     if (events.isEmpty) {
       return Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -67,7 +68,6 @@ class EventsListWidget extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
@@ -77,28 +77,26 @@ class EventsListWidget extends StatelessWidget {
             ),
           ),
 
-          // Utiliser LimitedBox avec une hauteur maximale raisonnable
-          LimitedBox(
-            maxHeight: MediaQuery.of(context).size.height * 0.6,
-            child: ListView.builder(
-              shrinkWrap: true,
-              physics: const ClampingScrollPhysics(),
-              itemCount: sortedEvents.length,
-              itemBuilder: (context, index) {
-                final event = sortedEvents[index];
-                if (event.type == MatchEventType.goal) {
-                  return _buildGoalEventItem(event, index, sortedEvents);
-                }
-                return EventWidget(event: event);
-              },
-            ),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sortedEvents.length,
+            itemBuilder: (context, index) {
+              final event = sortedEvents[index];
+              if (event.type == MatchEventType.goal) {
+                return _buildGoalEventItem(event, index, sortedEvents);
+              }
+              return EventWidget(event: event);
+            },
           ),
         ],
       ),
     );
   }
 
+  // Méthodes de tri et d'affichage (inchangées)
   List<MatchEvent> _sortEventsByMatchTime(List<MatchEvent> events) {
+    // Même implémentation que dans ton code original
     try {
       final sortedEvents = List<MatchEvent>.from(events)..sort((a, b) {
         int weightA = _calculateMatchTimeWeight(a.time);
@@ -108,11 +106,16 @@ class EventsListWidget extends StatelessWidget {
       return sortedEvents;
     } catch (e) {
       dev.log('Error sorting events: $e');
-      return events;
+      return events; // Return unsorted if sort fails
     }
   }
 
   int _calculateMatchTimeWeight(String timeString) {
+    // Même implémentation que dans ton code original
+    // ...
+    // (Code repris de ta version originale)
+
+    // First check for specific strings
     if (timeString.contains("First Half ends") || timeString == "45'") {
       return 4500;
     }
@@ -127,6 +130,7 @@ class EventsListWidget extends StatelessWidget {
       return 9900;
     }
 
+    // Then handle regular minute formats
     try {
       bool isSecondHalf = false;
       int minute = 0;
@@ -158,7 +162,7 @@ class EventsListWidget extends StatelessWidget {
       }
     } catch (e) {
       dev.log('Error calculating match time weight: $e');
-      return 0;
+      return 0; // Default weight if parsing fails
     }
   }
 
@@ -167,17 +171,26 @@ class EventsListWidget extends StatelessWidget {
     int index,
     List<MatchEvent> allEvents,
   ) {
+    // Même implémentation que dans ton code original
+    // ...
+    // (Code repris de ta version originale)
+
     try {
+      // Compare with String or int based on what's available
       final homeTeamId = homeTeam.id.toString();
       final awayTeamId = awayTeam.id.toString();
 
+      // Check if the event's teamId matches either home or away team
       final isHomeTeamGoal = event.teamId == homeTeamId;
       final isAwayTeamGoal = event.teamId == awayTeamId;
+
+      // If we can't determine the team, default to home team
       final effectiveTeamGoal = isHomeTeamGoal || !isAwayTeamGoal;
 
       int homeGoals = 0;
       int awayGoals = 0;
 
+      // Calculate score after this goal
       for (int i = 0; i <= index; i++) {
         final currentEvent = allEvents[i];
         if (currentEvent.type == MatchEventType.goal) {
@@ -192,6 +205,7 @@ class EventsListWidget extends StatelessWidget {
         }
       }
 
+      // Extract player name from event text
       String playerName = "Joueur";
       if (event.shortText != null && event.shortText!.isNotEmpty) {
         final nameParts = event.shortText!.split(" ");
@@ -222,21 +236,21 @@ class EventsListWidget extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 40,
+              width: 50,
               alignment: Alignment.center,
               child: Text(
                 event.time,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 14,
+                  fontSize: 16,
                   color: Colors.green,
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: Colors.green.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
@@ -244,7 +258,7 @@ class EventsListWidget extends StatelessWidget {
               child: const Icon(
                 Icons.sports_soccer,
                 color: Colors.green,
-                size: 18,
+                size: 20,
               ),
             ),
             const SizedBox(width: 12),
@@ -255,7 +269,7 @@ class EventsListWidget extends StatelessWidget {
                   Text(
                     'BUT! $playerName a marqué',
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
                     ),
@@ -264,7 +278,7 @@ class EventsListWidget extends StatelessWidget {
                   Text(
                     teamScore,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: Colors.black.withValues(alpha: 0.7),
                     ),
@@ -277,6 +291,7 @@ class EventsListWidget extends StatelessWidget {
       );
     } catch (e) {
       dev.log('Error building goal event: $e');
+      // Fallback goal event display
       return ListTile(
         leading: const Icon(Icons.sports_soccer, color: Colors.green),
         title: Text('Goal at ${event.time}'),

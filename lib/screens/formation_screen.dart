@@ -1,41 +1,56 @@
+import 'package:espn_app/models/event.dart';
+import 'package:espn_app/models/formation_response.dart';
+import 'package:espn_app/models/team.dart';
+import 'package:espn_app/providers/formation_async_notifier.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:espn_app/models/formation_response.dart';
-import 'package:espn_app/providers/formation_async_notifier.dart';
-import 'package:espn_app/widgets/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class FormationScreen extends ConsumerWidget {
-  final String matchId;
-  final String teamId;
-  final String teamName;
-  final String leagueId;
+class TacticsView extends ConsumerWidget {
+  final Event event;
+  final Team homeTeam;
+  final Team awayTeam;
+  final VoidCallback onToggleView;
 
-  const FormationScreen({
-    Key? key,
-    required this.matchId,
-    required this.teamId,
-    required this.teamName,
-    required this.leagueId,
-  }) : super(key: key);
+  const TacticsView({
+    super.key,
+    required this.event,
+    required this.homeTeam,
+    required this.awayTeam,
+    required this.onToggleView,
+  });
+
+  String _extractLeagueId(String leagueUrl) {
+    final uriParts = leagueUrl.split('/');
+    for (int i = 0; i < uriParts.length; i++) {
+      if (uriParts[i] == 'leagues' && i + 1 < uriParts.length) {
+        String leagueWithParams = uriParts[i + 1];
+        return leagueWithParams.split('?').first;
+      }
+    }
+    return 'uefa.champions';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Observer les données de formation
-    final formationAsync = ref.watch(formationAsyncProvider);
+    final leagueId = _extractLeagueId(event.league);
+    final matchId = event.id;
+    final homeTeamId = event.idTeam.$1;
+    final awayTeamId = event.idTeam.$2;
+    final homeFormationKey = '$matchId-$homeTeamId';
+    final awayFormationKey = '$matchId-$awayTeamId';
+    final formationState = ref.watch(formationAsyncProvider);
 
-    // Clé de cache pour cette formation spécifique
-    final cacheKey = '$matchId-$teamId';
-
-    // Vérifier si nous avons déjà les données, sinon déclencher la récupération
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (formationAsync.value == null ||
-          !formationAsync.value!.formationCache.containsKey(cacheKey)) {
+      if (formationState.value == null ||
+          !formationState.value!.formationCache.containsKey(homeFormationKey) ||
+          !formationState.value!.formationCache.containsKey(awayFormationKey)) {
         ref
             .read(formationAsyncProvider.notifier)
-            .fetchFormation(
+            .fetchMatchFormations(
               matchId: matchId,
-              teamId: teamId,
+              homeTeamId: homeTeamId,
+              awayTeamId: awayTeamId,
               leagueId: leagueId,
             );
 
@@ -43,132 +58,166 @@ class FormationScreen extends ConsumerWidget {
             .read(formationAsyncProvider.notifier)
             .fetchEnrichedPlayers(
               matchId: matchId,
-              teamId: teamId,
+              teamId: homeTeamId,
+              leagueId: leagueId,
+            );
+
+        ref
+            .read(formationAsyncProvider.notifier)
+            .fetchEnrichedPlayers(
+              matchId: matchId,
+              teamId: awayTeamId,
               leagueId: leagueId,
             );
       }
     });
 
-    return formationAsync.when(
+    return formationState.when(
       data: (state) {
-        // Récupérer les données de formation et joueurs enrichis
-        final formation = state.formationCache[cacheKey];
-        final enrichedPlayers = state.enrichedPlayersCache[cacheKey] ?? [];
+        final homeFormation = state.formationCache[homeFormationKey];
+        final awayFormation = state.formationCache[awayFormationKey];
+        final homeEnrichedPlayers =
+            state.enrichedPlayersCache[homeFormationKey] ?? [];
+        final awayEnrichedPlayers =
+            state.enrichedPlayersCache[awayFormationKey] ?? [];
 
-        // Si pas encore de données
-        if (formation == null || enrichedPlayers.isEmpty) {
+        if (homeFormation == null ||
+            awayFormation == null ||
+            homeEnrichedPlayers.isEmpty ||
+            awayEnrichedPlayers.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // Séparer les titulaires et remplaçants
-        final starters = enrichedPlayers.where((p) => p.isStarter).toList();
-        final substitutes = enrichedPlayers.where((p) => !p.isStarter).toList();
-        final substitutions = _createSubstitutions(enrichedPlayers);
+        final homeColor = Colors.blue;
+        final awayColor = Colors.red;
+        final homeStarters =
+            homeEnrichedPlayers.where((p) => p.isStarter).toList();
+        final awayStarters =
+            awayEnrichedPlayers.where((p) => p.isStarter).toList();
+        final homeSubstitutes =
+            homeEnrichedPlayers.where((p) => !p.isStarter).toList();
+        final awaySubstitutes =
+            awayEnrichedPlayers.where((p) => !p.isStarter).toList();
 
-        // Déterminer la couleur de l'équipe (peut être paramétré)
-        final teamColor = _getTeamColor(teamId);
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              '$teamName - ${formation.formationName}',
-              style: GoogleFonts.blackOpsOne(fontSize: 18),
-            ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-          // Utiliser un ListView pour permettre le défilement
-          body: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+        // Utiliser un seul SingleChildScrollView pour toute la vue
+        return SingleChildScrollView(
+          child: Column(
             children: [
-              // Section Titulaires - Formation sur le terrain
+              // En-têtes des équipes et formations
               Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _buildFormationSection(
-                  starters,
-                  formation.formationName,
-                  teamColor,
-                  teamName,
-                  context,
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "${awayTeam.name}\n${awayFormation.formationName}",
+                        style: GoogleFonts.blackOpsOne(
+                          fontSize: 14,
+                          color: awayColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "VS",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "${homeTeam.name}\n${homeFormation.formationName}",
+                        style: GoogleFonts.blackOpsOne(
+                          fontSize: 14,
+                          color: homeColor,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              // Section Remplaçants
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _buildSubstitutesSection(
-                  substitutes,
-                  substitutions,
-                  teamColor,
-                  teamName,
-                  context,
+              // Terrain unique avec les deux équipes face à face
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    // Terrain avec les deux équipes
+                    AspectRatio(
+                      aspectRatio: 0.66, // 2:3 ratio pour avoir assez d'espace
+                      child: _buildCombinedField(
+                        homeStarters,
+                        awayStarters,
+                        homeFormation.formationName,
+                        awayFormation.formationName,
+                        homeColor,
+                        awayColor,
+                        context,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              // Ajouter un espace en bas pour éviter que le FAB ne cache du contenu
-              const SizedBox(height: 80),
+              const SizedBox(height: 16),
+
+              // Remplaçants de l'équipe visiteuse (away)
+              _buildSubstitutesSection(
+                awayTeam.name,
+                awayColor,
+                awaySubstitutes,
+                _createSubstitutions(awayEnrichedPlayers),
+                context,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Remplaçants de l'équipe à domicile (home)
+              _buildSubstitutesSection(
+                homeTeam.name,
+                homeColor,
+                homeSubstitutes,
+                _createSubstitutions(homeEnrichedPlayers),
+                context,
+              ),
+
+              const SizedBox(height: 24), // Espace supplémentaire en bas
             ],
           ),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Center(child: Text('Erreur: $error')),
+      error: (error, stack) => Center(child: Text('Error: $error')),
     );
   }
 
-  // Widget pour afficher la formation tactique
-  Widget _buildFormationSection(
-    List<EnrichedPlayerEntry> starters,
-    String formationName,
-    Color teamColor,
-    String teamName,
+  // Widget pour construire le terrain avec les deux équipes
+  Widget _buildCombinedField(
+    List<EnrichedPlayerEntry> homeStarters,
+    List<EnrichedPlayerEntry> awayStarters,
+    String homeFormation,
+    String awayFormation,
+    Color homeColor,
+    Color awayColor,
     BuildContext context,
   ) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'TITULAIRES',
-                style: GoogleFonts.blackOpsOne(fontSize: 20, color: teamColor),
-              ),
-            ),
-            const Divider(),
-            // Formation visualizer avec taille adaptable
-            SizedBox(
-              height: 300, // Hauteur fixe pour éviter les overflows
-              child: _buildFormationVisualizer(
-                starters,
-                formationName,
-                teamColor,
-                teamName,
-                context,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    final screenWidth = MediaQuery.of(context).size.width;
 
-  // Widget pour afficher la visualisation de formation
-  Widget _buildFormationVisualizer(
-    List<EnrichedPlayerEntry> starters,
-    String formationName,
-    Color teamColor,
-    String teamName,
-    BuildContext context,
-  ) {
-    // Utiliser un widget personnalisé pour dessiner la formation
-    // Vous pouvez adapter celui-ci ou utiliser celui de votre projet
     return Container(
       decoration: BoxDecoration(
         color: Colors.green[800],
@@ -176,17 +225,234 @@ class FormationScreen extends ConsumerWidget {
       ),
       child: Stack(
         children: [
-          // Terrain de football stylisé
-          Positioned.fill(child: CustomPaint(painter: SoccerFieldPainter())),
+          // Terrain de football
+          CustomPaint(size: Size.infinite, painter: SoccerFieldPainter()),
 
-          // Joueurs positionnés selon la formation
-          ...starters.map(
-            (player) => _positionPlayerOnField(
+          // Ligne médiane plus visible
+          Positioned(
+            left: 0,
+            top: screenWidth * 1.25 * 0.5,
+            right: 0,
+            child: Container(height: 2, color: Colors.white.withOpacity(0.8)),
+          ),
+
+          // Joueurs de l'équipe à domicile (en bas)
+          ...homeStarters.map((player) {
+            final position = _calculatePlayerPosition(
               player,
-              teamColor,
-              context,
-              starters.length,
-              formationName,
+              homeFormation,
+              true, // isHomeTeam
+            );
+
+            return Positioned(
+              left: position.$1 * screenWidth * 0.85,
+              top: position.$2 * screenWidth * 1.25,
+              child: _buildPlayerMarker(player, homeColor, context),
+            );
+          }),
+
+          // Joueurs de l'équipe visiteuse (en haut)
+          ...awayStarters.map((player) {
+            final position = _calculatePlayerPosition(
+              player,
+              awayFormation,
+              false, // isHomeTeam
+            );
+
+            return Positioned(
+              left: position.$1 * screenWidth * 0.85,
+              top: position.$2 * screenWidth * 1.25,
+              child: _buildPlayerMarker(player, awayColor, context),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // Calcule la position d'un joueur sur le terrain
+  (double, double) _calculatePlayerPosition(
+    EnrichedPlayerEntry player,
+    String formation,
+    bool isHomeTeam,
+  ) {
+    try {
+      // Parse the formation string into an array of lines
+      final formationLines = formation.split('-').map(int.parse).toList();
+
+      // Handle goalkeeper separately (always position 1)
+      if (player.formationPlace == 1) {
+        return (0.5, isHomeTeam ? 0.92 : 0.08); // Position at goal line
+      }
+
+      // Special handling for complex formations
+      int playerIndex =
+          player.formationPlace -
+          2; // Adjust for 0-indexing and exclude goalkeeper
+
+      // Calculate which line this player belongs to
+      int currentLine = 0;
+      int positionInCurrentLine = playerIndex;
+
+      // Find which line the player belongs to
+      while (currentLine < formationLines.length &&
+          positionInCurrentLine >= formationLines[currentLine]) {
+        positionInCurrentLine -= formationLines[currentLine];
+        currentLine++;
+      }
+
+      // If we somehow ran out of lines, default to midfield
+      if (currentLine >= formationLines.length) {
+        return (0.5, 0.5);
+      }
+
+      // Number of players in the current line
+      int playersInLine = formationLines[currentLine];
+
+      // Calculate x-position (horizontal placement)
+      double x;
+      if (playersInLine == 1) {
+        // Single player in line should be centered
+        x = 0.5;
+      } else {
+        // Calculate horizontal position with better edge spacing
+        double edgeMargin = 0.15; // 15% margin from each edge
+        double usableWidth =
+            1.0 - (2 * edgeMargin); // Width available for positioning
+        double spacing =
+            usableWidth / (playersInLine - 1); // Space between players
+
+        if (playersInLine == 2) {
+          // Special case for 2 players - position them at 1/3 and 2/3 width
+          x = edgeMargin + (positionInCurrentLine * spacing * 1.5);
+        } else if (playersInLine == 3) {
+          // For 3 players, ensure they're evenly spaced across the width
+          x = edgeMargin + (positionInCurrentLine * spacing);
+        } else if (playersInLine >= 4) {
+          // For 4+ players, create smaller clusters with proper spacing
+          x = edgeMargin + (positionInCurrentLine * spacing);
+        } else {
+          // Fallback (shouldn't happen)
+          x = 0.5;
+        }
+      }
+
+      // Calculate y-position (vertical placement)
+      double y;
+
+      // Total number of vertical sections (including goalkeeper)
+      int totalLines = formationLines.length + 1;
+
+      // Calculate vertical spacing with proper distribution
+      if (isHomeTeam) {
+        // Home team - bottom half (0.5-1.0)
+        // Reverse the lines for the home team (goalkeeper at bottom)
+        int reversedLine = formationLines.length - currentLine - 1;
+
+        // Calculate position with better spacing between lines
+        // More complex formations need better vertical distribution
+        if (totalLines <= 4) {
+          // 3 line formations like 4-4-2
+          double sectionHeight =
+              0.4 /
+              (totalLines - 1); // Divide bottom half excluding GK position
+          y = 0.5 + 0.02 + (reversedLine * sectionHeight);
+        } else {
+          // 4+ line formations like 4-2-3-1
+          double sectionHeight = 0.4 / (totalLines - 1);
+
+          // Adjust lines to avoid crowding with complex formations
+          y = 0.5 + 0.02 + (reversedLine * sectionHeight);
+
+          // Special adjustment for the attacking line in home formations
+          if (reversedLine == 0) {
+            // Front line
+            y -= 0.04; // Move attacking line down slightly
+          }
+        }
+      } else {
+        // Away team - top half (0.0-0.5)
+        if (totalLines <= 4) {
+          // 3 line formations
+          double sectionHeight = 0.4 / (totalLines - 1);
+          y = 0.08 + (currentLine * sectionHeight);
+        } else {
+          // 4+ line formations
+          double sectionHeight = 0.4 / (totalLines - 1);
+
+          // Better spacing for complex formations
+          y = 0.08 + (currentLine * sectionHeight);
+
+          // Special adjustment for the attacking line in away formations
+          if (currentLine == formationLines.length - 1) {
+            // Front line
+            y += 0.04; // Move attacking line up slightly
+          }
+        }
+      }
+
+      // Ensure coordinates are within bounds
+      x = x.clamp(0.05, 0.95);
+      y = y.clamp(0.05, 0.95);
+
+      return (x, y);
+    } catch (e) {
+      // Fallback positions if calculation fails
+      return (0.5, isHomeTeam ? 0.7 : 0.3);
+    }
+  }
+
+  // Widget pour afficher un joueur sur le terrain
+  Widget _buildPlayerMarker(
+    EnrichedPlayerEntry player,
+    Color teamColor,
+    BuildContext context,
+  ) {
+    return GestureDetector(
+      onTap: () => _showPlayerDetails(context, player, teamColor),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: teamColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 3,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                player.jerseyNumber,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            margin: const EdgeInsets.only(top: 2),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              _getShortName(player.displayName),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -194,123 +460,67 @@ class FormationScreen extends ConsumerWidget {
     );
   }
 
-  // Positionner un joueur sur le terrain selon ses coordonnées
-  Widget _positionPlayerOnField(
-    EnrichedPlayerEntry player,
-    Color teamColor,
-    BuildContext context,
-    int totalPlayers,
-    String formationName,
-  ) {
-    // Calculer la position à partir des coordonnées x, y (entre 0 et 1)
-    // Si les coordonnées sont manquantes, les calculer à partir de formationPlace
-    final (double x, double y) = _calculatePlayerPosition(
-      player.formationPlace,
-      totalPlayers,
-      formationName,
-    );
-
-    return Positioned(
-      left: x * MediaQuery.of(context).size.width * 0.8,
-      top: y * 280, // La hauteur du conteneur est 300
-      child: GestureDetector(
-        onTap: () => _showPlayerDetails(context, player, teamColor),
-        child: Column(
-          children: [
-            // Cercle avec numéro de maillot
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: teamColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  player.jerseyNumber,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-            // Nom du joueur
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              margin: const EdgeInsets.only(top: 2),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                _getShortName(player.displayName),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // Widget pour afficher la section des remplaçants
   Widget _buildSubstitutesSection(
+    String teamName,
+    Color teamColor,
     List<EnrichedPlayerEntry> substitutes,
     List<Substitution> substitutions,
-    Color teamColor,
-    String teamName,
     BuildContext context,
   ) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$teamName - Remplaçants",
+            style: GoogleFonts.blackOpsOne(fontSize: 16, color: teamColor),
+          ),
+          const SizedBox(height: 8),
+          // Utiliser Wrap pour les remplaçants pour gérer automatiquement les sauts de ligne
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children:
+                substitutes
+                    .map(
+                      (player) =>
+                          _buildSubstituteChip(player, teamColor, context),
+                    )
+                    .toList(),
+          ),
+
+          if (substitutions.isNotEmpty) ...[
+            const Divider(height: 24),
             Text(
-              'REMPLAÇANTS',
-              style: GoogleFonts.blackOpsOne(fontSize: 20, color: teamColor),
+              "Changements",
+              style: GoogleFonts.blackOpsOne(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
             ),
-            const Divider(),
-            // Liste des joueurs remplaçants
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
+            const SizedBox(height: 4),
+            Column(
               children:
-                  substitutes
-                      .map(
-                        (player) =>
-                            _buildSubstituteChip(player, teamColor, context),
-                      )
+                  substitutions
+                      .map((sub) => _buildSubstitutionItem(sub, teamColor))
                       .toList(),
             ),
-
-            // Afficher les substitutions si présentes
-            if (substitutions.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              const Divider(),
-              Text(
-                'CHANGEMENTS',
-                style: GoogleFonts.blackOpsOne(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...substitutions.map(
-                (sub) => _buildSubstitutionItem(sub, teamColor),
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -326,13 +536,13 @@ class FormationScreen extends ConsumerWidget {
     return GestureDetector(
       onTap: () => _showPlayerDetails(context, player, teamColor),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
           color:
               isSubbedIn
                   ? teamColor.withOpacity(0.2)
                   : Colors.grey.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16.0),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSubbedIn ? teamColor : Colors.grey,
             width: 1,
@@ -342,22 +552,22 @@ class FormationScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
-              radius: 12,
+              radius: 10,
               backgroundColor: isSubbedIn ? teamColor : Colors.grey,
               child: Text(
                 player.jerseyNumber,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 10,
+                  fontSize: 8,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 3),
             Text(
-              player.displayName,
+              _getShortName(player.displayName),
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 10,
                 fontWeight: FontWeight.w500,
                 color: isSubbedIn ? teamColor : Colors.black87,
               ),
@@ -365,16 +575,16 @@ class FormationScreen extends ConsumerWidget {
             // Indicateurs de cartons
             if (player.hasYellowCard)
               Container(
-                margin: const EdgeInsets.only(left: 4),
-                width: 8,
-                height: 12,
+                margin: const EdgeInsets.only(left: 3),
+                width: 6,
+                height: 9,
                 color: Colors.yellow,
               ),
             if (player.hasRedCard)
               Container(
-                margin: const EdgeInsets.only(left: 4),
-                width: 8,
-                height: 12,
+                margin: const EdgeInsets.only(left: 3),
+                width: 6,
+                height: 9,
                 color: Colors.red,
               ),
           ],
@@ -386,12 +596,11 @@ class FormationScreen extends ConsumerWidget {
   // Widget pour afficher une substitution
   Widget _buildSubstitutionItem(Substitution sub, Color teamColor) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          // Indicateur minute
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             decoration: BoxDecoration(
               color: teamColor,
               borderRadius: BorderRadius.circular(4),
@@ -400,31 +609,29 @@ class FormationScreen extends ConsumerWidget {
               sub.minute,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 12,
+                fontSize: 9,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          // Flèche d'entrée
-          const Icon(Icons.arrow_upward, color: Colors.green, size: 16),
           const SizedBox(width: 4),
+          const Icon(Icons.arrow_upward, color: Colors.green, size: 12),
+          const SizedBox(width: 2),
           Text(
-            "${sub.playerIn.jerseyNumber} ${sub.playerIn is EnrichedPlayerEntry ? _getShortName((sub.playerIn as EnrichedPlayerEntry).displayName) : ''}",
+            "${sub.playerIn.jerseyNumber} ${_getPlayerName(sub.playerIn)}",
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
               color: Colors.black87,
             ),
           ),
-          const SizedBox(width: 16),
-          // Flèche de sortie
-          const Icon(Icons.arrow_downward, color: Colors.red, size: 16),
-          const SizedBox(width: 4),
+          const SizedBox(width: 8),
+          const Icon(Icons.arrow_downward, color: Colors.red, size: 12),
+          const SizedBox(width: 2),
           Text(
-            "${sub.playerOut.jerseyNumber} ${sub.playerOut is EnrichedPlayerEntry ? _getShortName((sub.playerOut as EnrichedPlayerEntry).displayName) : ''}",
+            "${sub.playerOut.jerseyNumber} ${_getPlayerName(sub.playerOut)}",
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 10,
               fontWeight: FontWeight.w500,
               color: Colors.black87,
             ),
@@ -432,6 +639,58 @@ class FormationScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  // Obtenir un nom court pour l'affichage
+  String _getShortName(String fullName) {
+    if (fullName.isEmpty) return '';
+
+    final parts = fullName.split(' ');
+
+    // For single-part names, just return it
+    if (parts.length <= 1) return fullName;
+
+    // Get last name
+    String lastName = parts.last;
+
+    // Truncate long names with ellipsis
+    if (lastName.length > 6) {
+      return lastName.substring(0, 5) + '.';
+    }
+
+    return lastName;
+  }
+
+  // Helper pour obtenir le nom d'un joueur en substitution
+  String _getPlayerName(PlayerEntry player) {
+    if (player is EnrichedPlayerEntry) {
+      return _getShortName(player.displayName);
+    }
+    return '';
+  }
+
+  // Créer la liste des substitutions à partir des joueurs
+  List<Substitution> _createSubstitutions(List<EnrichedPlayerEntry> players) {
+    final substitutions = <Substitution>[];
+    for (var player in players) {
+      if (player.subbedOut && player.replacementId != null) {
+        final replacement = players.firstWhere(
+          (p) => p.playerId == player.replacementId,
+          orElse:
+              () => EnrichedPlayerEntry.fromPlayerEntry(PlayerEntry.empty()),
+        );
+        if (replacement.playerId != 0) {
+          substitutions.add(
+            Substitution(
+              playerOut: player,
+              playerIn: replacement,
+              minute: player.subMinute,
+            ),
+          );
+        }
+      }
+    }
+    return substitutions;
   }
 
   // Afficher les détails d'un joueur dans une boîte de dialogue
@@ -502,134 +761,9 @@ class FormationScreen extends ConsumerWidget {
           ),
     );
   }
-
-  // Déterminer la couleur de l'équipe (à adapter selon votre logique)
-  Color _getTeamColor(String teamId) {
-    // Vous pouvez implémenter une logique plus sophistiquée basée sur l'ID
-    // Pour simplifier, on utilise un hash code pour obtenir des couleurs stables
-    final int hash = teamId.hashCode;
-
-    // Liste de couleurs pour équipes
-    const colors = [
-      Colors.blue,
-      Colors.red,
-      Colors.green,
-      Colors.purple,
-      Colors.orange,
-      Colors.teal,
-    ];
-
-    return colors[hash.abs() % colors.length];
-  }
-
-  // Calculer la position d'un joueur selon son rôle dans la formation
-  (double, double) _calculatePlayerPosition(
-    int formationPlace,
-    int totalPlayers,
-    String formationName,
-  ) {
-    // Par défaut, position centrée
-    double x = 0.5;
-    double y = 0.5;
-
-    // Vérifier les formats standards
-    if (totalPlayers != 11 || formationName.isEmpty) {
-      y = formationPlace / totalPlayers.toDouble();
-      return (x, y);
-    }
-
-    // Gardien (toujours formationPlace = 1)
-    if (formationPlace == 1) {
-      return (0.5, 0.9); // En bas du terrain
-    }
-
-    // Parser la formation (ex. "4-4-2" -> [4, 4, 2])
-    final formationParts = formationName.split('-').map(int.parse).toList();
-    if (formationParts.length < 2) {
-      return (x, y); // Formation invalide, retour par défaut
-    }
-
-    // Calculer les seuils pour chaque ligne
-    int defenders = formationParts[0]; // Défenseurs
-    int midfielders = formationParts[1]; // Milieux
-    int forwards =
-        formationParts.length > 2 ? formationParts[2] : 0; // Attaquants
-
-    // Ajuster si nécessaire pour correspondre au total de 10 joueurs (+ 1 gardien)
-    if (defenders + midfielders + forwards != 10) {
-      forwards = 10 - defenders - midfielders;
-    }
-
-    // Définir les limites de chaque zone
-    int defenseEnd = 1 + defenders;
-    int midfieldEnd = defenseEnd + midfielders;
-
-    // Défenseurs
-    if (formationPlace > 1 && formationPlace <= defenseEnd) {
-      y = 0.7; // Près du gardien
-      double spacing = 0.8 / (defenders + 1);
-      x = 0.1 + (formationPlace - 1) * spacing;
-    }
-    // Milieux
-    else if (formationPlace > defenseEnd && formationPlace <= midfieldEnd) {
-      y = 0.4; // Zone médiane
-      double spacing = 0.8 / (midfielders + 1);
-      x = 0.1 + (formationPlace - defenseEnd) * spacing;
-    }
-    // Attaquants
-    else if (formationPlace > midfieldEnd) {
-      y = 0.1; // Zone offensive (haut du terrain)
-      double spacing = 0.8 / (forwards + 1);
-      x = 0.1 + (formationPlace - midfieldEnd) * spacing;
-    }
-
-    return (x, y);
-  }
-
-  // Créer une liste de substitutions à partir des joueurs
-  List<Substitution> _createSubstitutions(List<EnrichedPlayerEntry> players) {
-    final substitutions = <Substitution>[];
-
-    for (var player in players) {
-      if (player.subbedOut && player.replacementId != null) {
-        final replacement = players.firstWhere(
-          (p) => p.playerId == player.replacementId,
-          orElse:
-              () => EnrichedPlayerEntry.fromPlayerEntry(PlayerEntry.empty()),
-        );
-
-        if (replacement.playerId != 0) {
-          substitutions.add(
-            Substitution(
-              playerOut: player,
-              playerIn: replacement,
-              minute: player.subMinute,
-            ),
-          );
-        }
-      }
-    }
-
-    return substitutions;
-  }
-
-  // Obtenir un nom court pour l'affichage
-  String _getShortName(String fullName) {
-    if (fullName.isEmpty) return '';
-
-    final parts = fullName.split(' ');
-    if (parts.length <= 1) return fullName;
-
-    // Utiliser le nom de famille, ou un nom court
-    if (parts.last.length <= 8) {
-      return parts.last;
-    } else {
-      return parts.last.substring(0, 6) + '...';
-    }
-  }
 }
 
-// Classe pour dessiner un terrain de football
+// Painter pour dessiner le terrain de football
 class SoccerFieldPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -637,53 +771,76 @@ class SoccerFieldPainter extends CustomPainter {
         Paint()
           ..color = Colors.white
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.5;
+          ..strokeWidth = 2.0;
 
-    // Ligne médiane
+    // Draw field outline
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+
+    // Draw center line
     canvas.drawLine(
       Offset(0, size.height / 2),
       Offset(size.width, size.height / 2),
       paint,
     );
 
-    // Rond central
+    // Draw center circle
     canvas.drawCircle(
       Offset(size.width / 2, size.height / 2),
-      size.height / 8,
+      size.width * 0.1,
       paint,
     );
 
-    // Surface de réparation haut
-    final penaltyAreaWidth = size.width * 0.5;
-    final penaltyAreaHeight = size.height * 0.2;
+    // Draw penalty areas
+    final penaltyWidth = size.width * 0.6;
+    final penaltyHeight = size.height * 0.15;
+
+    // Top penalty area (away team)
     canvas.drawRect(
       Rect.fromLTWH(
-        (size.width - penaltyAreaWidth) / 2,
+        (size.width - penaltyWidth) / 2,
         0,
-        penaltyAreaWidth,
-        penaltyAreaHeight,
+        penaltyWidth,
+        penaltyHeight,
       ),
       paint,
     );
 
-    // Surface de réparation bas
+    // Bottom penalty area (home team)
     canvas.drawRect(
       Rect.fromLTWH(
-        (size.width - penaltyAreaWidth) / 2,
-        size.height - penaltyAreaHeight,
-        penaltyAreaWidth,
-        penaltyAreaHeight,
+        (size.width - penaltyWidth) / 2,
+        size.height - penaltyHeight,
+        penaltyWidth,
+        penaltyHeight,
       ),
       paint,
     );
 
-    // Point central
-    final paintFill =
-        Paint()
-          ..color = Colors.white
-          ..style = PaintingStyle.fill;
+    // Draw center spot
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      3,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill,
+    );
 
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 3, paintFill);
+    // Draw penalty spots
+    canvas.drawCircle(
+      Offset(size.width / 2, penaltyHeight * 0.6),
+      3,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill,
+    );
+
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height - (penaltyHeight * 0.6)),
+      3,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill,
+    );
   }
 
   @override

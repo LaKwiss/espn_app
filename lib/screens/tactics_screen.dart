@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:espn_app/models/event.dart';
 import 'package:espn_app/models/formation_response.dart';
 import 'package:espn_app/models/team.dart';

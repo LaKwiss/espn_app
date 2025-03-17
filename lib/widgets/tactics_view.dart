@@ -223,10 +223,10 @@ class TacticsView extends ConsumerWidget {
       ),
       child: Stack(
         children: [
-          // Terrain de football
+          // Soccer field background
           CustomPaint(size: Size.infinite, painter: SoccerFieldPainter()),
 
-          // Joueurs de l'équipe à domicile (en bas)
+          // Home team players (bottom half)
           ...homeStarters.map((player) {
             final position = _calculatePlayerPosition(
               player,
@@ -241,7 +241,7 @@ class TacticsView extends ConsumerWidget {
             );
           }),
 
-          // Joueurs de l'équipe visiteuse (en haut)
+          // Away team players (top half)
           ...awayStarters.map((player) {
             final position = _calculatePlayerPosition(
               player,
@@ -255,6 +255,17 @@ class TacticsView extends ConsumerWidget {
               child: _buildPlayerMarker(player, awayColor, context),
             );
           }),
+
+          // Add a midfield line indicator for visual clarity
+          Positioned(
+            left: 0,
+            top: MediaQuery.of(context).size.width * 1.25 * 0.5,
+            child: Container(
+              width: MediaQuery.of(context).size.width * 0.82,
+              height: 2,
+              color: Colors.white.withOpacity(0.7),
+            ),
+          ),
         ],
       ),
     );
