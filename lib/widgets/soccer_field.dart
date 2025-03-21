@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 class SoccerField extends StatelessWidget {
   final Widget? child;
 
-  const SoccerField({Key? key, this.child}) : super(key: key);
+  const SoccerField({super.key, this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +16,7 @@ class SoccerField extends StatelessWidget {
       ),
       child: AspectRatio(
         aspectRatio:
-            2 / 1, // Le terrain est généralement 2 fois plus large que haut
+            1 / 2, // Le terrain est généralement 2 fois plus large que haut
         child: Stack(
           fit: StackFit.expand,
           children: [
