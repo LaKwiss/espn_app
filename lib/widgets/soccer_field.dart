@@ -15,8 +15,7 @@ class SoccerField extends StatelessWidget {
         border: Border.all(color: Colors.white, width: 2),
       ),
       child: AspectRatio(
-        aspectRatio:
-            1 / 2, // Le terrain est généralement 2 fois plus large que haut
+        aspectRatio: 1 / 2,
         child: Stack(
           fit: StackFit.expand,
           children: [

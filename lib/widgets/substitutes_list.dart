@@ -155,7 +155,6 @@ class SubstitutesList extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         children: [
-          // Indicateur minute
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
@@ -175,24 +174,32 @@ class SubstitutesList extends StatelessWidget {
           // Flèche d'entrée
           const Icon(Icons.arrow_upward, color: Colors.green, size: 16),
           const SizedBox(width: 4),
-          Text(
-            "${sub.playerIn.jerseyNumber} ${sub.playerIn is EnrichedPlayerEntry ? (sub.playerIn as EnrichedPlayerEntry).displayName : ''}",
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
+          Expanded(
+            flex: 1,
+            child: Text(
+              "${sub.playerIn.jerseyNumber} ${sub.playerIn is EnrichedPlayerEntry ? (sub.playerIn as EnrichedPlayerEntry).displayName : ''}",
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
             ),
           ),
           const SizedBox(width: 16),
           // Flèche de sortie
           const Icon(Icons.arrow_downward, color: Colors.red, size: 16),
           const SizedBox(width: 4),
-          Text(
-            "${sub.playerOut.jerseyNumber} ${sub.playerOut is EnrichedPlayerEntry ? (sub.playerOut as EnrichedPlayerEntry).displayName : ''}",
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
+          Expanded(
+            flex: 1,
+            child: Text(
+              "${sub.playerOut.jerseyNumber} ${sub.playerOut is EnrichedPlayerEntry ? (sub.playerOut as EnrichedPlayerEntry).displayName : ''}",
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
             ),
           ),
         ],
