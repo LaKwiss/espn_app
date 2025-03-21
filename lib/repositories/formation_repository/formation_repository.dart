@@ -54,7 +54,6 @@ class FormationRepository implements IFormationRepository {
   @override
   Future<List<EnrichedPlayerEntry>> enrichPlayersData(
     List<PlayerEntry> players,
-    String formationName,
   ) async {
     final enrichedPlayers = <EnrichedPlayerEntry>[];
 
@@ -82,7 +81,6 @@ class FormationRepository implements IFormationRepository {
         final (double x, double y) = _calculatePositionCoordinates(
           player.formationPlace,
           players.length,
-          formationName,
         );
 
         enrichedPlayers.add(
@@ -166,69 +164,42 @@ class FormationRepository implements IFormationRepository {
     }
   }
 
-  /// Calcule les coordonnées x, y sur le terrain basées sur formationPlace, totalPlayers et formationName
+  /// Calcule les coordonnées x, y sur le terrain basées sur formationPlace
   (double, double) _calculatePositionCoordinates(
     int formationPlace,
     int totalPlayers,
-    String? formationName,
   ) {
-    // Normalisation des coordonnées entre 0 et 1
-    // 0,0 = coin inférieur gauche, 1,1 = coin supérieur droit
+    // Cette méthode peut être améliorée pour mieux correspondre à la formation réelle
+    // Pour l'instant, une implémentation simple basée sur formationPlace
+
+    // Valeurs par défaut au centre du terrain
     double x = 0.5;
     double y = 0.5;
 
-    // Vérification du nombre total de joueurs et formation par défaut
-    if (totalPlayers != 11 || formationName == null || formationName.isEmpty) {
-      y = formationPlace / totalPlayers.toDouble();
-      return (x, y);
-    }
-
-    // Gardien (toujours formationPlace = 1)
+    // Si le joueur est un gardien (généralement formationPlace = 1)
     if (formationPlace == 1) {
-      return (0.5, 0.05); // Près du but
+      x = 0.5;
+      y = 0.1; // Bas du terrain
+    }
+    // Défenseurs (formationPlace 2-5 généralement)
+    else if (formationPlace >= 2 && formationPlace <= 5) {
+      y = 0.25;
+      // Répartir horizontalement
+      x = 0.2 + ((formationPlace - 2) * 0.2);
+    }
+    // Milieux (formationPlace 6-8 généralement)
+    else if (formationPlace >= 6 && formationPlace <= 8) {
+      y = 0.5;
+      // Répartir horizontalement
+      x = 0.25 + ((formationPlace - 6) * 0.25);
+    }
+    // Attaquants (formationPlace 9-11 généralement)
+    else if (formationPlace >= 9 && formationPlace <= 11) {
+      y = 0.75;
+      // Répartir horizontalement
+      x = 0.25 + ((formationPlace - 9) * 0.25);
     }
 
-    // Parser la formation (ex. "4-4-2" -> [4, 4, 2])
-    final formationParts = formationName.split('-').map(int.parse).toList();
-    if (formationParts.length < 2) {
-      return (x, y); // Formation invalide, retour par défaut
-    }
-
-    // Calculer les seuils pour chaque ligne (défense, milieu, attaque)
-    int defenders = formationParts[0]; // Nombre de défenseurs
-    int midfielders = formationParts[1]; // Nombre de milieux
-    int forwards =
-        totalPlayers - 1 - defenders - midfielders; // Attaquants restants
-
-    // Plages de formationPlace pour chaque ligne
-    int defenseEnd = 1 + defenders; // 2 à 5 pour 4 défenseurs
-    int midfieldEnd = defenseEnd + midfielders; // 6 à 9 pour 4 milieux
-
-    // Défenseurs
-    if (formationPlace > 1 && formationPlace <= defenseEnd) {
-      y = 0.25; // Zone défensive
-      double spacing = 0.8 / (defenders - 1); // Espacement horizontal
-      x = 0.1 + (formationPlace - 2) * spacing; // Répartition égale
-    }
-    // Milieux
-    else if (formationPlace > defenseEnd && formationPlace <= midfieldEnd) {
-      y = 0.5; // Zone médiane
-      double spacing = 0.7 / (midfielders - 1); // Espacement horizontal
-      x = 0.15 + (formationPlace - defenseEnd - 1) * spacing;
-    }
-    // Attaquants
-    else if (formationPlace > midfieldEnd) {
-      y = 0.75; // Zone offensive
-      double spacing = forwards > 1 ? 0.6 / (forwards - 1) : 0.0;
-      x =
-          forwards == 1
-              ? 0.5 // Centré si un seul attaquant
-              : 0.2 + (formationPlace - midfieldEnd - 1) * spacing;
-    }
-
-    // S'assurer que les coordonnées restent dans les limites
-    x = x.clamp(0.0, 1.0);
-    y = y.clamp(0.0, 1.0);
     return (x, y);
   }
 }

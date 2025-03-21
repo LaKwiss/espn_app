@@ -105,7 +105,6 @@ class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
       // Ensuite enrichir les données des joueurs
       final enrichedPlayers = await _repository.enrichPlayersData(
         formation.players,
-        formation.formationName,
       );
 
       // Mettre à jour le cache
