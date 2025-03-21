@@ -203,8 +203,6 @@ class EnrichedPlayerEntry extends PlayerEntry {
   final String lastName;
   final String positionName;
   final String positionAbbreviation;
-  final double x; // Position X sur le terrain (0-1)
-  final double y; // Position Y sur le terrain (0-1)
 
   const EnrichedPlayerEntry({
     required super.playerId,
@@ -223,8 +221,6 @@ class EnrichedPlayerEntry extends PlayerEntry {
     required this.lastName,
     required this.positionName,
     required this.positionAbbreviation,
-    required this.x,
-    required this.y,
   });
 
   /// Crée un EnrichedPlayerEntry à partir d'un PlayerEntry de base
@@ -246,8 +242,6 @@ class EnrichedPlayerEntry extends PlayerEntry {
       lastName: 'Player ${player.playerId}',
       positionName: 'Unknown',
       positionAbbreviation: '',
-      x: 0.5, // Valeur par défaut au centre
-      y: 0.5, // Valeur par défaut au centre
     );
   }
 
@@ -259,8 +253,6 @@ class EnrichedPlayerEntry extends PlayerEntry {
     lastName,
     positionName,
     positionAbbreviation,
-    x,
-    y,
   ];
 }
 

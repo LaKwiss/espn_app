@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'package:espn_app/models/formation_response.dart';
+import 'package:espn_app/models/position.dart';
 import 'package:espn_app/repositories/formation_repository/i_formation_repository.dart';
 import 'package:espn_app/services/api_service.dart';
 import 'package:espn_app/services/error_handler_service.dart';
@@ -65,23 +66,25 @@ class FormationRepository implements IFormationRepository {
         final String displayName = playerDetails['displayName'] ?? 'Unknown';
         final String firstName = playerDetails['firstName'] ?? '';
         final String lastName = playerDetails['lastName'] ?? '';
-        final String positionRef = playerDetails['position']?['\$ref'] ?? '';
+        final String positionRefUrl = playerDetails['position']?['\$ref'] ?? '';
 
         // Récupérer les détails de position si disponibles
         String positionName = 'Unknown';
         String positionAbbreviation = '';
 
-        if (positionRef.isNotEmpty) {
-          final positionDetails = await _getPositionDetails(positionRef);
-          positionName = positionDetails['name'] ?? 'Unknown';
-          positionAbbreviation = positionDetails['abbreviation'] ?? '';
-        }
+        if (positionRefUrl.isNotEmpty) {
+          // Extract the position ID from the URL (last digits before any query parameters)
+          final uri = Uri.parse(positionRefUrl);
+          final pathSegments = uri.pathSegments;
+          final positionId =
+              pathSegments.isNotEmpty ? int.tryParse(pathSegments.last) : null;
 
-        // Calculer les coordonnées x, y sur le terrain basées sur formationPlace
-        final (double x, double y) = _calculatePositionCoordinates(
-          player.formationPlace,
-          players.length,
-        );
+          if (positionId != null) {
+            final positionDetails = await _getPositionDetails(positionId);
+            positionName = positionDetails.name;
+            positionAbbreviation = positionDetails.abbreviation;
+          }
+        }
 
         enrichedPlayers.add(
           EnrichedPlayerEntry(
@@ -99,8 +102,6 @@ class FormationRepository implements IFormationRepository {
             lastName: lastName,
             positionName: positionName,
             positionAbbreviation: positionAbbreviation,
-            x: x,
-            y: y,
           ),
         );
       } catch (e) {
@@ -141,8 +142,17 @@ class FormationRepository implements IFormationRepository {
   }
 
   /// Récupère les détails de position du joueur
-  Future<Map<String, dynamic>> _getPositionDetails(String positionRef) async {
+  Future<Position> _getPositionDetails(int position) async {
     try {
+      final positionRef =
+          'http://sports.core.api.espn.com/v2/sports/soccer/leagues/ger.1/positions/$position';
+
+      switch (position) {
+        case 1:
+          return Position.GK();
+        default:
+      }
+
       dev.log('Fetching position details from: $positionRef');
 
       final response = await _apiService.get(positionRef);
@@ -153,53 +163,14 @@ class FormationRepository implements IFormationRepository {
         );
       }
 
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      return Position.fromJson(jsonDecode(response.body));
     } catch (e, stack) {
-      return _errorHandler.handleError<Map<String, dynamic>>(
+      return _errorHandler.handleError<Position>(
         e,
         stack,
         'getPositionDetails',
-        defaultValue: {},
+        defaultValue: Position.empty(),
       );
     }
-  }
-
-  /// Calcule les coordonnées x, y sur le terrain basées sur formationPlace
-  (double, double) _calculatePositionCoordinates(
-    int formationPlace,
-    int totalPlayers,
-  ) {
-    // Cette méthode peut être améliorée pour mieux correspondre à la formation réelle
-    // Pour l'instant, une implémentation simple basée sur formationPlace
-
-    // Valeurs par défaut au centre du terrain
-    double x = 0.5;
-    double y = 0.5;
-
-    // Si le joueur est un gardien (généralement formationPlace = 1)
-    if (formationPlace == 1) {
-      x = 0.5;
-      y = 0.1; // Bas du terrain
-    }
-    // Défenseurs (formationPlace 2-5 généralement)
-    else if (formationPlace >= 2 && formationPlace <= 5) {
-      y = 0.25;
-      // Répartir horizontalement
-      x = 0.2 + ((formationPlace - 2) * 0.2);
-    }
-    // Milieux (formationPlace 6-8 généralement)
-    else if (formationPlace >= 6 && formationPlace <= 8) {
-      y = 0.5;
-      // Répartir horizontalement
-      x = 0.25 + ((formationPlace - 6) * 0.25);
-    }
-    // Attaquants (formationPlace 9-11 généralement)
-    else if (formationPlace >= 9 && formationPlace <= 11) {
-      y = 0.75;
-      // Répartir horizontalement
-      x = 0.25 + ((formationPlace - 9) * 0.25);
-    }
-
-    return (x, y);
   }
 }
