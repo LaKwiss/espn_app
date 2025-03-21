@@ -79,16 +79,15 @@ class FormationVisualizer extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              if (isHomeTeam) _buildPlayerRow([goalkeeper]),
               // Déterminer l'ordre en fonction de l'équipe (domicile/extérieur)
-              if (!isHomeTeam) _buildPlayerRow([goalkeeper]),
 
               // Afficher les lignes dans le bon ordre
               ...isHomeTeam
                   ? lines.map((line) => _buildPlayerRow(line))
                   : lines.reversed.map((line) => _buildPlayerRow(line)),
 
-              // Placer le gardien en fonction de l'équipe
-              if (isHomeTeam) _buildPlayerRow([goalkeeper]),
+              if (!isHomeTeam) _buildPlayerRow([goalkeeper]),
             ],
           ),
         ),
