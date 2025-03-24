@@ -95,6 +95,8 @@ class FormationVisualizer extends StatelessWidget {
     );
   }
 
+  //git test
+
   // Construit une rangée de joueurs
   Widget _buildPlayerRow(List<EnrichedPlayerEntry> rowPlayers) {
     return Row(
