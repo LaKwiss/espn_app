@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:espn_app/models/event.dart';
 import 'package:espn_app/models/club.dart';
 import 'package:espn_app/models/team.dart';
+import 'package:espn_app/models/match_event.dart';
 import 'package:espn_app/providers/match_events_notifier.dart';
 import 'package:espn_app/widgets/call_to_action.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
@@ -16,6 +17,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
+enum MatchStatus { notStarted, inProgress, finished }
 
 class MatchDetailScreen extends ConsumerStatefulWidget {
   static const route = '/match-detail';
@@ -36,7 +39,7 @@ class MatchDetailScreen extends ConsumerStatefulWidget {
 class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
   bool _showEvents = false;
   String _leagueId = '';
-  bool _showTactics = false;
+  MatchStatus _matchStatus = MatchStatus.notStarted;
 
   // Contrôleur pour le RefreshIndicator
   final _refreshController = GlobalKey<RefreshIndicatorState>();
@@ -66,8 +69,11 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
 
     _leagueName = _getLeagueNameById(_leagueId);
 
-    // Initialiser les scores à partir des données si match terminé
-    if (widget.event.isFinished) {
+    // Déterminer le statut du match
+    _determineMatchStatus();
+
+    // Initialiser les scores si match terminé
+    if (_matchStatus == MatchStatus.finished) {
       _initializeScores();
     }
 
@@ -78,15 +84,53 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
         MatchParams(
           matchId: widget.event.id,
           leagueId: _leagueId,
-          isFinished: widget.event.isFinished,
+          isFinished: _matchStatus == MatchStatus.finished,
         ),
       );
     });
   }
 
+  void _determineMatchStatus() {
+    // Convertir la date du match
+    final matchDateTime = DateTime.tryParse(widget.event.date);
+    if (matchDateTime == null) {
+      _matchStatus = MatchStatus.notStarted;
+      return;
+    }
+
+    final now = DateTime.now();
+
+    // Match pas encore commencé
+    if (matchDateTime.isAfter(now)) {
+      _matchStatus = MatchStatus.notStarted;
+      return;
+    }
+
+    // Vérifier si le match est marqué comme terminé explicitement
+    if (widget.event.isFinished) {
+      _matchStatus = MatchStatus.finished;
+      return;
+    }
+
+    // Match en cours - si le match a commencé il y a moins de 135 minutes
+    final matchEndEstimate = matchDateTime.add(const Duration(minutes: 135));
+    if (now.isBefore(matchEndEstimate)) {
+      _matchStatus = MatchStatus.inProgress;
+      return;
+    }
+
+    // Par défaut, supposer qu'il est terminé si plus de 135 minutes sont passées
+    _matchStatus = MatchStatus.finished;
+  }
+
   // Fonction pour rafraîchir les données
   Future<void> _refreshData() async {
     log('Rafraîchissement des données du match ${widget.event.id}');
+
+    // Mettre à jour le statut du match
+    setState(() {
+      _determineMatchStatus();
+    });
 
     // Rafraîchir les événements du match
     ref.read(matchEventsProvider.notifier).refresh();
@@ -196,7 +240,9 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                   ),
                 ),
                 SliverToBoxAdapter(child: HeaderSection(event: widget.event)),
-                if (!widget.event.isFinished)
+
+                // Affichage conditionnel en fonction du statut du match
+                if (_matchStatus == MatchStatus.notStarted)
                   SliverToBoxAdapter(
                     child: PredictionSectionWidget(
                       widget: widget,
@@ -204,7 +250,21 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                       homeTeam: _homeTeam,
                     ),
                   ),
-                if (widget.event.isFinished)
+                if (_matchStatus == MatchStatus.inProgress)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'EN COURS',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.blackOpsOne(
+                          fontSize: 32,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (_matchStatus == MatchStatus.finished)
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -218,13 +278,14 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                       ),
                     ),
                   ),
+
                 SliverToBoxAdapter(
                   child: MatchInfoSectionWidget(
                     date: formattedDate,
                     time: formattedTime,
                     awayTeam: _awayTeam,
                     homeTeam: _homeTeam,
-                    isFinished: widget.event.isFinished,
+                    isFinished: _matchStatus == MatchStatus.finished,
                     scores: widget.event.score,
                     showEvents: _showEvents,
                     onToggleEvents: () {
@@ -234,43 +295,19 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                     },
                   ),
                 ),
-                // Afficher les événements conditionnellement
-                if (_showEvents || !widget.event.isFinished)
-                  SliverToBoxAdapter(
-                    child: eventsAsync.when(
-                      data:
-                          (events) => EventsListWidget(
-                            events: events,
-                            homeTeam: _homeTeam,
-                            awayTeam: _awayTeam,
-                          ),
-                      loading:
-                          () => const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(20.0),
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                      error:
-                          (error, stack) => Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Erreur de chargement des événements: $error',
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: _refreshData,
-                                    child: const Text('Réessayer'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                    ),
+
+                // Widget de bascule entre formations et événements
+                SliverToBoxAdapter(
+                  child: MatchContentToggle(
+                    event: widget.event,
+                    homeTeam: _homeTeam,
+                    awayTeam: _awayTeam,
+                    eventsAsync: eventsAsync,
                   ),
-                if (!widget.event.isFinished)
+                ),
+
+                // Call to action seulement pour les matchs à venir
+                if (_matchStatus == MatchStatus.notStarted)
                   SliverToBoxAdapter(
                     child: CallToActionWidget(
                       text: 'CHOISIR LE GAGNANT',
@@ -285,77 +322,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                       },
                     ),
                   ),
-                SliverToBoxAdapter(
-                  child:
-                      _showTactics
-                          ? TacticsView(
-                            event: widget.event,
-                            homeTeam: _homeTeam,
-                            awayTeam: _awayTeam,
-                            onToggleView: () {
-                              setState(() {
-                                _showTactics = false;
-                              });
-                            },
-                          )
-                          : Column(
-                            children: [
-                              // Bouton pour basculer vers la vue tactique
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8.0,
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _showTactics = true;
-                                    });
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text(
-                                    'Voir les formations tactiques',
-                                  ),
-                                ),
-                              ),
-                              // Liste des événements
-                              eventsAsync.when(
-                                data:
-                                    (events) => EventsListWidget(
-                                      events: events,
-                                      homeTeam: _homeTeam,
-                                      awayTeam: _awayTeam,
-                                    ),
-                                loading:
-                                    () => const Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(20.0),
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                    ),
-                                error:
-                                    (error, stack) => Center(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(16.0),
-                                        child: Column(
-                                          children: [
-                                            Text(
-                                              'Erreur de chargement des événements: $error',
-                                            ),
-                                            ElevatedButton(
-                                              onPressed: _refreshData,
-                                              child: const Text('Réessayer'),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                              ),
-                            ],
-                          ),
-                ),
+
                 SliverToBoxAdapter(child: SizedBox(height: 50)),
               ],
             ),
@@ -407,5 +374,126 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
       default:
         return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
     }
+  }
+}
+
+class MatchContentToggle extends StatefulWidget {
+  final Event event;
+  final Team homeTeam;
+  final Team awayTeam;
+  final AsyncValue<List<MatchEvent>> eventsAsync;
+
+  const MatchContentToggle({
+    Key? key,
+    required this.event,
+    required this.homeTeam,
+    required this.awayTeam,
+    required this.eventsAsync,
+  }) : super(key: key);
+
+  @override
+  State<MatchContentToggle> createState() => _MatchContentToggleState();
+}
+
+class _MatchContentToggleState extends State<MatchContentToggle> {
+  bool _showTactics = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Barre de bascule
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _showTactics = false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _showTactics ? Colors.transparent : Colors.black,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Text(
+                      'ÉVÉNEMENTS',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.blackOpsOne(
+                        fontSize: 16,
+                        color: _showTactics ? Colors.black : Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _showTactics = true),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _showTactics ? Colors.black : Colors.transparent,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Text(
+                      'FORMATIONS',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.blackOpsOne(
+                        fontSize: 16,
+                        color: _showTactics ? Colors.white : Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Contenu selon la sélection
+        _showTactics
+            ? TacticsView(
+              event: widget.event,
+              homeTeam: widget.homeTeam,
+              awayTeam: widget.awayTeam,
+              onToggleView: () => setState(() => _showTactics = false),
+            )
+            : widget.eventsAsync.when(
+              data:
+                  (events) => EventsListWidget(
+                    events: events,
+                    homeTeam: widget.homeTeam,
+                    awayTeam: widget.awayTeam,
+                  ),
+              loading:
+                  () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+              error:
+                  (error, stack) => Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          Text('Erreur de chargement des événements: $error'),
+                          ElevatedButton(
+                            onPressed: () {},
+                            child: const Text('Réessayer'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+            ),
+      ],
+    );
   }
 }
