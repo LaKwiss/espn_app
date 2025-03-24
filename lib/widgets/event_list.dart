@@ -58,6 +58,7 @@ class EventsListWidget extends StatelessWidget {
 
     // Trier les événements par heure de match
     final sortedEvents = _sortEventsByMatchTime(events);
+    dev.log('${events.first}');
     dev.log('Affichage de ${sortedEvents.length} événements triés');
 
     return Container(

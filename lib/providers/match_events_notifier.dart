@@ -18,39 +18,60 @@ class MatchParams {
   @override
   String toString() =>
       'MatchParams(matchId: $matchId, leagueId: $leagueId, isFinished: $isFinished)';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MatchParams &&
+          runtimeType == other.runtimeType &&
+          matchId == other.matchId &&
+          leagueId == other.leagueId;
+
+  @override
+  int get hashCode => matchId.hashCode ^ leagueId.hashCode;
 }
 
 // AsyncNotifier pour gérer les événements du match
 class MatchEventsNotifier extends AsyncNotifier<List<MatchEvent>> {
-  late MatchParams _params;
+  MatchParams? _params;
   late final IMatchEventRepository _repository;
   bool _isInitialized = false;
 
   // Initialiser le notifier avec les paramètres spécifiques
   void initialize(MatchParams params) {
-    if (!_isInitialized) {
+    // Vérifier si les paramètres sont différents pour éviter des rechargements inutiles
+    if (!_isInitialized || _params != params) {
+      dev.log('Initializing events notifier with params: $params');
       _params = params;
       _repository = ref.read(matchEventRepositoryProvider);
       // Charger les données immédiatement
       _fetchEvents();
       _isInitialized = true;
+    } else {
+      dev.log('Skipping initialization, params unchanged: $params');
     }
   }
 
   // Récupérer les événements depuis le repository
   Future<void> _fetchEvents() async {
+    if (_params == null) {
+      dev.log('Cannot fetch events: params are null');
+      state = const AsyncValue.data([]);
+      return;
+    }
+
     state = const AsyncValue.loading();
     try {
-      dev.log('Fetching events for match ${_params.matchId}');
+      dev.log('Fetching events for match ${_params!.matchId}');
       final events = await _repository.fetchMatchEvents(
-        matchId: _params.matchId,
-        leagueId: _params.leagueId,
+        matchId: _params!.matchId,
+        leagueId: _params!.leagueId,
       );
 
       if (events.isEmpty) {
-        dev.log('No events found for match ${_params.matchId}');
+        dev.log('No events found for match ${_params!.matchId}');
       } else {
-        dev.log('Loaded ${events.length} events for match ${_params.matchId}');
+        dev.log('Loaded ${events.length} events for match ${_params!.matchId}');
       }
 
       state = AsyncValue.data(events);
@@ -62,13 +83,23 @@ class MatchEventsNotifier extends AsyncNotifier<List<MatchEvent>> {
 
   // Rafraîchir les données manuellement
   Future<void> refresh() async {
-    _fetchEvents();
+    dev.log('Manually refreshing events');
+    return _fetchEvents();
   }
 
   @override
   Future<List<MatchEvent>> build() async {
-    // Sera remplacé par initialize() quand on l'appelle
-    return [];
+    // Si _params n'est pas encore défini, retourner une liste vide
+    if (_params == null) {
+      dev.log('Building with empty state: params not set');
+      return [];
+    }
+
+    // Utiliser _fetchEvents pour charger les données
+    await _fetchEvents();
+
+    // Récupérer les données de l'état actuel
+    return state.valueOrNull ?? [];
   }
 }
 
@@ -80,5 +111,6 @@ final matchEventsProvider =
 
 // Pour utiliser le provider avec des paramètres spécifiques
 void initializeMatchEvents(WidgetRef ref, MatchParams params) {
+  dev.log('Initializing match events with: $params');
   ref.read(matchEventsProvider.notifier).initialize(params);
 }
