@@ -48,7 +48,6 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
   void initState() {
     super.initState();
 
-    // S'assurer que le provider est bien initialisé lors de la création du widget
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final leagueId = _extractLeagueId(widget.event.league);
       final params = MatchParams(
@@ -57,7 +56,8 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
         isFinished: widget.event.isFinished,
       );
 
-      // Réinitialiser explicitement le provider d'événements
+      // Force refresh before initializing with new match parameters
+      ref.invalidate(matchEventsProvider);
       initializeMatchEvents(ref, params);
     });
   }
