@@ -32,10 +32,8 @@ class MatchEventRepository implements IMatchEventRepository {
         dev.log(
           'Error response: ${response.statusCode}, body: ${response.body}',
         );
-        // Instead of throwing, return mock data for non-200 responses
-        final teamIds = await fetchTeamIds(matchId, leagueId);
-        dev.log('Using mock data due to non-200 response');
-        return _generateMockEvents(teamIds);
+        dev.log('Non-200 response');
+        return Future.value([]);
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -44,15 +42,13 @@ class MatchEventRepository implements IMatchEventRepository {
       // Check if items exist in the response
       if (!json.containsKey('items') || json['items'] == null) {
         dev.log('No items found in response, using mock data');
-        final teamIds = await fetchTeamIds(matchId, leagueId);
-        return _generateMockEvents(teamIds);
+        return Future.value([]);
       }
 
       final items = json['items'] as List?;
       if (items == null || items.isEmpty) {
         dev.log('Items list is empty or null, using mock data');
-        final teamIds = await fetchTeamIds(matchId, leagueId);
-        return _generateMockEvents(teamIds);
+        return Future.value([]);
       }
 
       dev.log('Found ${items.length} events in response');
@@ -69,7 +65,7 @@ class MatchEventRepository implements IMatchEventRepository {
         // If no events were parsed, use mock data
         if (events.isEmpty) {
           dev.log('No events were parsed, using mock data');
-          return _generateMockEvents(teamIds);
+          return Future.value([]);
         }
 
         return events;
@@ -78,17 +74,15 @@ class MatchEventRepository implements IMatchEventRepository {
           e,
           stack,
           'parsing events',
-          defaultValue: _generateMockEvents(teamIds),
+          defaultValue: [],
         );
       }
     } catch (e, stack) {
-      // Return mock events instead of rethrowing
-      final teamIds = await fetchTeamIds(matchId, leagueId);
       return _errorHandler.handleError<List<MatchEvent>>(
         e,
         stack,
         'fetchMatchEvents',
-        defaultValue: _generateMockEvents(teamIds),
+        defaultValue: [],
       );
     }
   }
@@ -167,75 +161,5 @@ class MatchEventRepository implements IMatchEventRepository {
         defaultValue: ('0', '0'),
       );
     }
-  }
-
-  /// Generate mock events for testing
-  List<MatchEvent> _generateMockEvents((String away, String home) teams) {
-    final now = DateTime.now();
-    dev.log('Generating mock events with team IDs: ${teams.$1}, ${teams.$2}');
-
-    return [
-      MatchEvent(
-        id: '1',
-        type: MatchEventType.kickoff,
-        text: 'Kickoff',
-        alternateText: 'Coup d\'envoi',
-        time: '1\'',
-        period: MatchEventPeriod.firstHalf,
-        score: (0, 0),
-        teams: teams,
-        isScoring: false,
-        isPriority: true,
-        wallClock: now.subtract(const Duration(minutes: 45)),
-        participants: [],
-      ),
-      MatchEvent(
-        id: '2',
-        type: MatchEventType.goal,
-        text: 'Goal! Player 1',
-        alternateText: 'But! Joueur 1',
-        shortText: 'Player 1 Goal',
-        time: '23\'',
-        period: MatchEventPeriod.firstHalf,
-        score: (1, 0),
-        teams: teams,
-        teamId: teams.$1, // Away team scored
-        isScoring: true,
-        isPriority: true,
-        wallClock: now.subtract(const Duration(minutes: 22)),
-        participants: [],
-      ),
-      MatchEvent(
-        id: '3',
-        type: MatchEventType.yellowCard,
-        text: 'Yellow Card for Player 2',
-        alternateText: 'Carton jaune pour Joueur 2',
-        time: '38\'',
-        period: MatchEventPeriod.firstHalf,
-        score: (1, 0),
-        teams: teams,
-        teamId: teams.$2, // Home team got card
-        isScoring: false,
-        isPriority: false,
-        wallClock: now.subtract(const Duration(minutes: 7)),
-        participants: [],
-      ),
-      MatchEvent(
-        id: '4',
-        type: MatchEventType.goal,
-        text: 'Goal! Player 3',
-        alternateText: 'But! Joueur 3',
-        shortText: 'Player 3 Goal',
-        time: '52\'',
-        period: MatchEventPeriod.secondHalf,
-        score: (1, 1),
-        teams: teams,
-        teamId: teams.$2, // Home team scored
-        isScoring: true,
-        isPriority: true,
-        wallClock: now.subtract(const Duration(minutes: 38)),
-        participants: [],
-      ),
-    ];
   }
 }

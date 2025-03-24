@@ -1,3 +1,4 @@
+// lib/widgets/event_list.dart
 import 'dart:developer' as dev;
 import 'package:espn_app/models/match_event.dart';
 import 'package:espn_app/models/team.dart';
@@ -17,7 +18,7 @@ class EventsListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Version simplifiée sans StreamBuilder
+    // Vérification si la liste est vide
     if (events.isEmpty) {
       return Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -76,7 +77,6 @@ class EventsListWidget extends StatelessWidget {
               style: GoogleFonts.blackOpsOne(fontSize: 24, color: Colors.black),
             ),
           ),
-
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -94,9 +94,7 @@ class EventsListWidget extends StatelessWidget {
     );
   }
 
-  // Méthodes de tri et d'affichage (inchangées)
   List<MatchEvent> _sortEventsByMatchTime(List<MatchEvent> events) {
-    // Même implémentation que dans ton code original
     try {
       final sortedEvents = List<MatchEvent>.from(events)..sort((a, b) {
         int weightA = _calculateMatchTimeWeight(a.time);
@@ -111,10 +109,6 @@ class EventsListWidget extends StatelessWidget {
   }
 
   int _calculateMatchTimeWeight(String timeString) {
-    // Même implémentation que dans ton code original
-    // ...
-    // (Code repris de ta version originale)
-
     // First check for specific strings
     if (timeString.contains("First Half ends") || timeString == "45'") {
       return 4500;
@@ -171,10 +165,6 @@ class EventsListWidget extends StatelessWidget {
     int index,
     List<MatchEvent> allEvents,
   ) {
-    // Même implémentation que dans ton code original
-    // ...
-    // (Code repris de ta version originale)
-
     try {
       // Compare with String or int based on what's available
       final homeTeamId = homeTeam.id.toString();
