@@ -4,15 +4,12 @@ import 'dart:developer';
 import 'package:espn_app/models/event.dart';
 import 'package:espn_app/models/club.dart';
 import 'package:espn_app/models/team.dart';
-import 'package:espn_app/models/match_event.dart';
 import 'package:espn_app/providers/match_events_notifier.dart';
-import 'package:espn_app/widgets/call_to_action.dart';
 import 'package:espn_app/widgets/custom_app_bar.dart';
-import 'package:espn_app/widgets/event_list.dart';
 import 'package:espn_app/widgets/header_section.dart';
+import 'package:espn_app/widgets/match_content_toggle.dart';
 import 'package:espn_app/widgets/match_info_section.dart';
 import 'package:espn_app/widgets/prediction_section.dart';
-import 'package:espn_app/widgets/tactics_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -278,6 +275,20 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                       ),
                     ),
                   ),
+                if (_matchStatus == MatchStatus.notStarted)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'PROCHAINEMENT',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.blackOpsOne(
+                          fontSize: 32,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
 
                 SliverToBoxAdapter(
                   child: MatchInfoSectionWidget(
@@ -303,25 +314,9 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                     homeTeam: _homeTeam,
                     awayTeam: _awayTeam,
                     eventsAsync: eventsAsync,
+                    hasStarted: _matchStatus != MatchStatus.notStarted,
                   ),
                 ),
-
-                // Call to action seulement pour les matchs à venir
-                if (_matchStatus == MatchStatus.notStarted)
-                  SliverToBoxAdapter(
-                    child: CallToActionWidget(
-                      text: 'CHOISIR LE GAGNANT',
-                      onTap: () {
-                        // Action à effectuer lors du clic
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Fonctionnalité à venir...'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
 
                 SliverToBoxAdapter(child: SizedBox(height: 50)),
               ],
@@ -374,126 +369,5 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
       default:
         return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
     }
-  }
-}
-
-class MatchContentToggle extends StatefulWidget {
-  final Event event;
-  final Team homeTeam;
-  final Team awayTeam;
-  final AsyncValue<List<MatchEvent>> eventsAsync;
-
-  const MatchContentToggle({
-    Key? key,
-    required this.event,
-    required this.homeTeam,
-    required this.awayTeam,
-    required this.eventsAsync,
-  }) : super(key: key);
-
-  @override
-  State<MatchContentToggle> createState() => _MatchContentToggleState();
-}
-
-class _MatchContentToggleState extends State<MatchContentToggle> {
-  bool _showTactics = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Barre de bascule
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _showTactics = false),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _showTactics ? Colors.transparent : Colors.black,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Text(
-                      'ÉVÉNEMENTS',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 16,
-                        color: _showTactics ? Colors.black : Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _showTactics = true),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _showTactics ? Colors.black : Colors.transparent,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Text(
-                      'FORMATIONS',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 16,
-                        color: _showTactics ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // Contenu selon la sélection
-        _showTactics
-            ? TacticsView(
-              event: widget.event,
-              homeTeam: widget.homeTeam,
-              awayTeam: widget.awayTeam,
-              onToggleView: () => setState(() => _showTactics = false),
-            )
-            : widget.eventsAsync.when(
-              data:
-                  (events) => EventsListWidget(
-                    events: events,
-                    homeTeam: widget.homeTeam,
-                    awayTeam: widget.awayTeam,
-                  ),
-              loading:
-                  () => const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-              error:
-                  (error, stack) => Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          Text('Erreur de chargement des événements: $error'),
-                          ElevatedButton(
-                            onPressed: () {},
-                            child: const Text('Réessayer'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-            ),
-      ],
-    );
   }
 }

@@ -1,15 +1,18 @@
+import 'package:espn_app/models/event.dart';
 import 'package:espn_app/models/match_event.dart';
 import 'package:espn_app/models/team.dart';
+import 'package:espn_app/widgets/event_list.dart';
 import 'package:espn_app/widgets/tactics_view.dart';
-import 'package:espn_app/widgets/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/event.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MatchContentToggle extends StatefulWidget {
   final Event event;
   final Team homeTeam;
   final Team awayTeam;
   final AsyncValue<List<MatchEvent>> eventsAsync;
+  final bool hasStarted;
 
   const MatchContentToggle({
     super.key,
@@ -17,68 +20,21 @@ class MatchContentToggle extends StatefulWidget {
     required this.homeTeam,
     required this.awayTeam,
     required this.eventsAsync,
+    required this.hasStarted,
   });
 
   @override
   State<MatchContentToggle> createState() => _MatchContentToggleState();
 }
 
-class _MatchContentToggleState extends State<MatchContentToggle>
-    with SingleTickerProviderStateMixin {
+class _MatchContentToggleState extends State<MatchContentToggle> {
   bool _showTactics = false;
-  late AnimationController _animationController;
-  late Animation<Offset> _eventsSlideAnimation;
-  late Animation<Offset> _tacticsSlideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3400),
-    );
-
-    _eventsSlideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(-1.0, 0.0),
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-
-    _tacticsSlideAnimation = Tween<Offset>(
-      begin: const Offset(1.0, 0.0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  void _toggleView() {
-    setState(() {
-      if (_showTactics) {
-        _animationController.reverse().then((_) {
-          setState(() {
-            _showTactics = false;
-          });
-        });
-      } else {
-        _showTactics = true;
-        _animationController.forward();
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Toggle bar
+        // Barre de bascule
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
@@ -89,9 +45,7 @@ class _MatchContentToggleState extends State<MatchContentToggle>
             children: [
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    if (_showTactics) _toggleView();
-                  },
+                  onTap: () => setState(() => _showTactics = false),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
@@ -111,9 +65,7 @@ class _MatchContentToggleState extends State<MatchContentToggle>
               ),
               Expanded(
                 child: GestureDetector(
-                  onTap: () {
-                    if (!_showTactics) _toggleView();
-                  },
+                  onTap: () => setState(() => _showTactics = true),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
@@ -135,63 +87,71 @@ class _MatchContentToggleState extends State<MatchContentToggle>
           ),
         ),
 
-        // Content with animation
-        Container(
-          height: 500,
-          child: Stack(
-            clipBehavior: Clip.none, // Allow content to overflow
-            children: [
-              // Events view
-              SlideTransition(
-                position: _eventsSlideAnimation,
-                child: widget.eventsAsync.when(
-                  data:
-                      (events) => EventsListWidget(
-                        events: events,
-                        homeTeam: widget.homeTeam,
-                        awayTeam: widget.awayTeam,
+        // Contenu selon la sélection
+        !widget.hasStarted
+            ? Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.upcoming, size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Les informations suivront',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.blackOpsOne(
+                        fontSize: 24,
+                        color: Colors.grey[700],
                       ),
-                  loading:
-                      () => const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(20.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
-                  error:
-                      (error, stack) => Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: [
-                              Text(
-                                'Erreur de chargement des événements: $error',
-                              ),
-                              ElevatedButton(
-                                onPressed: () {},
-                                child: const Text('Réessayer'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Revenez après le début du match pour consulter les détails',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ),
+                  ],
                 ),
               ),
-
-              // Tactics view
-              if (_showTactics)
-                SlideTransition(
-                  position: _tacticsSlideAnimation,
-                  child: TacticsView(
-                    event: widget.event,
+            )
+            : _showTactics
+            ? TacticsView(
+              event: widget.event,
+              homeTeam: widget.homeTeam,
+              awayTeam: widget.awayTeam,
+              onToggleView: () => setState(() => _showTactics = false),
+            )
+            : widget.eventsAsync.when(
+              data:
+                  (events) => EventsListWidget(
+                    events: events,
                     homeTeam: widget.homeTeam,
                     awayTeam: widget.awayTeam,
-                    onToggleView: _toggleView,
                   ),
-                ),
-            ],
-          ),
-        ),
+              loading:
+                  () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+              error:
+                  (error, stack) => Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          Text('Erreur de chargement des événements: $error'),
+                          ElevatedButton(
+                            onPressed: () {},
+                            child: const Text('Réessayer'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+            ),
       ],
     );
   }

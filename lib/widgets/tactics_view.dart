@@ -137,17 +137,6 @@ class TacticsView extends ConsumerWidget {
           child: Column(
             children: [
               // Bouton pour basculer entre la vue tactique et la vue des événements
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: ElevatedButton(
-                  onPressed: onToggleView,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Voir les événements du match'),
-                ),
-              ),
 
               // Formation de l'équipe à domicile
               Container(
