@@ -1,0 +1,67 @@
+{
+  "@@locale": "en",
+  
+  "appTitle": "ESPN App",
+  "homeTitle": "HOME",
+  "calendarTitle": "CALENDAR",
+  "settingsTitle": "SETTINGS",
+  
+  "leagueSelector": "Select a league",
+  "bundesliga": "Bundesliga",
+  "laLiga": "LALIGA",
+  "ligue1": "French Ligue 1",
+  "premierLeague": "Premier League",
+  "serieA": "Italian Serie A",
+  "europaLeague": "UEFA Europa League",
+  "championsLeague": "Champions League",
+  
+  "matchEvents": "EVENTS",
+  "matchFormations": "FORMATIONS",
+  "upcoming": "UPCOMING",
+  "inProgress": "IN PROGRESS",
+  "finished": "FINISHED",
+  
+  "noEventsAvailable": "No events available for this league",
+  "loadingEvents": "Loading events...",
+  "errorLoadingEvents": "Error loading events",
+  "tryAgain": "Try Again",
+  
+  "notifications": "Notifications",
+  "notificationsDescription": "Get the latest updates about matches",
+  "darkMode": "Dark Mode",
+  "darkModeDescription": "Switch between light and dark theme",
+  "language": "Language",
+  "languageDescription": "Select your preferred language",
+  "cacheData": "Cache Data",
+  "cacheDataDescription": "Store data locally for faster loading",
+  "clearCache": "Clear Cache",
+  "clearCacheDescription": "Delete all stored data",
+  "colorPicker": "Color Picker",
+  "colorPickerDescription": "Select a color for the match widget",
+  "about": "About",
+  "aboutDescription": "Learn more about the app",
+  "visitEspn": "Visit ESPN",
+  "visitEspnDescription": "Go to the official ESPN website",
+  
+  "pastGames": "Past Games",
+  "win": "Win",
+  "draw": "Draw",
+  "loss": "Loss",
+  
+  "goal": "GOAL!",
+  "goalsFor": "for",
+  "scored": "scored",
+  
+  "substitutes": "Substitutes",
+  "changes": "Changes",
+  
+  "clearCacheQuestion": "Are you sure you want to clear all cached data?",
+  "cancel": "CANCEL",
+  "clear": "CLEAR",
+  "clearingCache": "Clearing cache...",
+  "cacheCleared": "Cache cleared successfully",
+  
+  "version": "Version",
+  "build": "Build",
+  "developedWith": "Developed with Flutter"
+}

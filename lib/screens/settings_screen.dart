@@ -5,6 +5,7 @@ import 'package:espn_app/providers/selected_league_notifier.dart';
 import 'package:espn_app/providers/settings_provider.dart';
 import 'package:espn_app/screens/color_picker_screen.dart';
 import 'package:espn_app/widgets/widgets.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -40,6 +41,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Obtenir les traductions localisées
+    final l10n = AppLocalizations.of(context)!;
+
     final selectedLeagueState = ref.watch(selectedLeagueProvider);
     final String leagueName = selectedLeagueState.$1;
     final assetService = ref.read(assetServiceProvider);
@@ -50,12 +54,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Obtenir le notifier pour mettre à jour les paramètres
     final settingsNotifier = ref.read(settingsProvider.notifier);
 
-    final List<String> languages = [
-      'English',
-      'Français',
-      'Español',
-      'Deutsch',
-    ];
+    final List<String> languageCodes = ['en', 'fr', 'es', 'de'];
+    final Map<String, String> languageDisplayNames = {
+      'en': 'English',
+      'fr': 'Français',
+      'es': 'Español',
+      'de': 'Deutsch',
+    };
 
     return Scaffold(
       body: Column(
@@ -76,8 +81,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               vertical: 8.0,
             ),
             child: Text(
-              'SETTINGS',
-              style: TextTheme.of(context).headlineMedium,
+              l10n.settingsTitle,
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
           ),
 
@@ -90,7 +95,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 GestureDetector(
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Text(
                           'Notifications are still under development',
                         ),
@@ -98,8 +103,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     );
                   },
                   child: _buildSettingSwitch(
-                    'Notifications',
-                    'Get the latest updates about matches',
+                    l10n.notifications,
+                    l10n.notificationsDescription,
                     Icons.notifications_none,
                     settings.notificationsEnabled,
                     (value) {
@@ -113,8 +118,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 // Dark Mode
                 _buildSettingSwitch(
-                  'Dark Mode',
-                  'Switch between light and dark theme',
+                  l10n.darkMode,
+                  l10n.darkModeDescription,
                   Icons.brightness_6,
                   settings.darkModeEnabled,
                   (value) {
@@ -126,11 +131,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 // Language
                 _buildSettingDropdown(
-                  'Language',
-                  'Select your preferred language',
+                  l10n.language,
+                  l10n.languageDescription,
                   Icons.language,
-                  settings.language,
-                  languages,
+                  settings.languageCode,
+                  languageCodes,
+                  languageDisplayNames,
                   Theme.of(context).textTheme,
                   (value) {
                     if (value != null) {
@@ -143,8 +149,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 // Cache Data
                 _buildSettingSwitch(
-                  'Cache Data',
-                  'Store data locally for faster loading',
+                  l10n.cacheData,
+                  l10n.cacheDataDescription,
                   Icons.storage,
                   settings.cacheEnabled,
                   (value) {
@@ -156,8 +162,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 // Clear Cache
                 _buildSettingAction(
-                  'Clear Cache',
-                  'Delete all stored data',
+                  l10n.clearCache,
+                  l10n.clearCacheDescription,
                   Icons.cleaning_services,
                   () {
                     _showClearCacheDialog(context, settingsNotifier);
@@ -168,13 +174,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 // Color Picker
                 _buildSettingAction(
-                  'Color Picker',
-                  'Select a color for the match widget',
+                  l10n.colorPicker,
+                  l10n.colorPickerDescription,
                   Icons.color_lens,
                   () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => ColorPickerScreen(),
+                        builder: (context) => const ColorPickerScreen(),
                       ),
                     );
                   },
@@ -184,8 +190,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 // About
                 _buildSettingAction(
-                  'About',
-                  'Learn more about the app',
+                  l10n.about,
+                  l10n.aboutDescription,
                   Icons.info_outline,
                   () {
                     _showAboutDialog(context);
@@ -196,8 +202,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 // Visit ESPN
                 _buildSettingAction(
-                  'Visit ESPN',
-                  'Go to the official ESPN website',
+                  l10n.visitEspn,
+                  l10n.visitEspnDescription,
                   Icons.sports_soccer,
                   () {
                     _launchUrl('https://www.espn.com/soccer/');
@@ -213,12 +219,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'Version $_version (Build $_buildNumber)',
+                        '${l10n.version} $_version (${l10n.build} $_buildNumber)',
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Developed with Flutter',
+                        l10n.developedWith,
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 12,
@@ -268,6 +274,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     IconData icon,
     String value,
     List<String> options,
+    Map<String, String> displayNames,
     TextTheme textTheme,
     Function(String?) onChanged,
   ) {
@@ -284,7 +291,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             options.map((String option) {
               return DropdownMenuItem<String>(
                 value: option,
-                child: Text(option, style: textTheme.bodyMedium),
+                child: Text(
+                  displayNames[option] ?? option,
+                  style: textTheme.bodyMedium,
+                ),
               );
             }).toList(),
         onChanged: onChanged,
@@ -315,29 +325,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     BuildContext context,
     SettingsNotifier settingsNotifier,
   ) {
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Clear Cache'),
-            content: const Text(
-              'Are you sure you want to clear all cached data?',
-            ),
+            title: Text(l10n.clearCache),
+            content: Text(l10n.clearCacheQuestion),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: const Text('CANCEL'),
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () async {
                   Navigator.of(context).pop();
                   // Afficher un indicateur de chargement
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Clearing cache...'),
-                      duration: Duration(seconds: 1),
+                    SnackBar(
+                      content: Text(l10n.clearingCache),
+                      duration: const Duration(seconds: 1),
                     ),
                   );
 
@@ -347,14 +357,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   // Afficher un message de confirmation
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Cache cleared successfully'),
-                        duration: Duration(seconds: 2),
+                      SnackBar(
+                        content: Text(l10n.cacheCleared),
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                   }
                 },
-                child: const Text('CLEAR'),
+                child: Text(l10n.clear),
               ),
             ],
           ),
@@ -362,11 +372,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _showAboutDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     showDialog(
       context: context,
       builder:
           (context) => AboutDialog(
-            applicationName: 'ESPN Soccer App',
+            applicationName: l10n.appTitle,
             applicationVersion: '$_version',
             applicationIcon: Image.network(
               'https://a.espncdn.com/i/espn/misc_logos/500/espn_red.png',
@@ -382,9 +394,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 'Get live scores, match details, team statistics, and more.',
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 '© 2025 Yann Bälli. All rights reserved.',
-                style: TextStyle(fontStyle: FontStyle.italic),
+                style: const TextStyle(fontStyle: FontStyle.italic),
               ),
             ],
           ),

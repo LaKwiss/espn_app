@@ -32,13 +32,6 @@ final dateFormatterServiceProvider = Provider<DateFormatterService>(
 
 final assetServiceProvider = Provider<AssetService>((ref) => AssetService());
 
-// Settings Provider
-final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
-  ref,
-) {
-  return SettingsNotifier();
-});
-
 // Repository Providers
 final eventRepositoryProvider = Provider<IEventRepository>((ref) {
   return EventRepository(
@@ -88,3 +81,10 @@ final formationRepositoryProvider = Provider<IFormationRepository>((ref) {
 final colorsProvider = StateNotifierProvider<ColorsNotifier, List<Color>>(
   (ref) => ColorsNotifier(),
 );
+
+// Modifier le provider pour utiliser le code de langue
+final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
+  ref,
+) {
+  return SettingsNotifier();
+});

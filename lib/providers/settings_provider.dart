@@ -1,3 +1,4 @@
+import 'package:espn_app/providers/provider_factory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,13 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class AppSettings {
   final bool notificationsEnabled;
   final bool darkModeEnabled;
-  final String language;
+  final String languageCode;
   final bool cacheEnabled;
 
   AppSettings({
     this.notificationsEnabled = true,
     this.darkModeEnabled = false,
-    this.language = 'English',
+    this.languageCode = 'en',
     this.cacheEnabled = true,
   });
 
@@ -19,13 +20,13 @@ class AppSettings {
   AppSettings copyWith({
     bool? notificationsEnabled,
     bool? darkModeEnabled,
-    String? language,
+    String? languageCode,
     bool? cacheEnabled,
   }) {
     return AppSettings(
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       darkModeEnabled: darkModeEnabled ?? this.darkModeEnabled,
-      language: language ?? this.language,
+      languageCode: languageCode ?? this.languageCode,
       cacheEnabled: cacheEnabled ?? this.cacheEnabled,
     );
   }
@@ -43,8 +44,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = state.copyWith(darkModeEnabled: value);
   }
 
-  void setLanguage(String language) {
-    state = state.copyWith(language: language);
+  void setLanguage(String languageCode) {
+    state = state.copyWith(languageCode: languageCode);
   }
 
   void toggleCacheEnabled(bool value) {
@@ -61,3 +62,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     // mais vous pourriez le faire si nécessaire
   }
 }
+
+// Ajouter un provider pour la locale actuelle
+final localeProvider = Provider<Locale>((ref) {
+  final settings = ref.watch(settingsProvider);
+  return Locale(settings.languageCode);
+});
