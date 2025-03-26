@@ -49,6 +49,7 @@ dependencies:
   lock_orientation_screen: ^0.0.4
   url_launcher: ^6.3.1
   package_info_plus: ^8.3.0
+  flutter_colorpicker: ^1.1.0
 
 dev_dependencies:
   flutter_test:
