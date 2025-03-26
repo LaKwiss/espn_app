@@ -5,7 +5,6 @@ import 'package:espn_app/providers/selected_league_notifier.dart';
 import 'package:espn_app/providers/settings_provider.dart';
 import 'package:espn_app/screens/color_picker_screen.dart';
 import 'package:espn_app/widgets/widgets.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -309,22 +308,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
-    );
-  }
-
-  void _showColorPickerDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Select a color'),
-            content: MaterialPicker(
-              pickerColor: Colors.red,
-              onColorChanged: (color) {
-                print(color);
-              },
-            ),
-          ),
     );
   }
 
