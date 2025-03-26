@@ -1,6 +1,7 @@
 import 'package:espn_app/models/event.dart';
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
+import 'package:espn_app/providers/theme_provider.dart';
 import 'package:espn_app/repositories/event_repository/i_event_repository.dart';
 import 'package:espn_app/services/asset_service.dart';
 import 'package:espn_app/services/date_formatter_service.dart';
@@ -129,7 +130,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     // Obtenir le thème courant
     final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
+    final textTheme = ref.watch(themeProvider).textTheme;
     final colorScheme = theme.colorScheme;
 
     // Observer les changements dans la ligue sélectionnée

@@ -64,7 +64,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: CustomAppBar(
               url: assetService.getLeagueLogoUrl(leagueName),
-              backgroundColor: Colors.white,
+              backgroundColor: AppBarTheme.of(context).backgroundColor,
             ),
           ),
 
@@ -76,11 +76,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             child: Text(
               'SETTINGS',
-              style: GoogleFonts.blackOpsOne(
-                fontSize: 45,
-                color: Colors.black,
-                height: 1,
-              ),
+              style: TextTheme.of(context).headlineMedium,
             ),
           ),
 
@@ -123,6 +119,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Icons.language,
                   settings.language,
                   languages,
+                  Theme.of(context).textTheme,
                   (value) {
                     if (value != null) {
                       settingsNotifier.setLanguage(value);
@@ -243,6 +240,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     IconData icon,
     String value,
     List<String> options,
+    TextTheme textTheme,
     Function(String?) onChanged,
   ) {
     return ListTile(
@@ -258,7 +256,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             options.map((String option) {
               return DropdownMenuItem<String>(
                 value: option,
-                child: Text(option),
+                child: Text(option, style: textTheme.bodyMedium),
               );
             }).toList(),
         onChanged: onChanged,

@@ -122,10 +122,10 @@ final _lightTheme = ThemeData(
 /// Thème sombre de l'application
 final _darkTheme = ThemeData(
   brightness: Brightness.dark,
-  scaffoldBackgroundColor: Color(0xFF121212),
+  scaffoldBackgroundColor: Colors.black,
   primaryColor: Colors.white,
   appBarTheme: const AppBarTheme(
-    color: Color(0xFF1E1E1E),
+    color: Colors.black,
     elevation: 0,
     iconTheme: IconThemeData(color: Colors.white),
   ),
