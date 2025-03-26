@@ -86,15 +86,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               padding: const EdgeInsets.all(16.0),
               children: [
                 // Notifications
-                _buildSettingSwitch(
-                  'Notifications',
-                  'Get the latest updates about matches',
-                  Icons.notifications_none,
-                  settings.notificationsEnabled,
-                  (value) {
-                    settingsNotifier.toggleNotifications(value);
+                GestureDetector(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Notifications are still under development',
+                        ),
+                      ),
+                    );
                   },
-                  isDeactivated: true,
+                  child: _buildSettingSwitch(
+                    'Notifications',
+                    'Get the latest updates about matches',
+                    Icons.notifications_none,
+                    settings.notificationsEnabled,
+                    (value) {
+                      settingsNotifier.toggleNotifications(value);
+                    },
+                    isDeactivated: true,
+                  ),
                 ),
 
                 const Divider(),
