@@ -1,3 +1,4 @@
+import 'package:espn_app/providers/colors_provider.dart';
 import 'package:espn_app/repositories/athlete_repository/athlete_repository.dart';
 import 'package:espn_app/repositories/athlete_repository/i_athlete_repository.dart';
 import 'package:espn_app/repositories/formation_repository/formation_repository.dart';
@@ -5,6 +6,7 @@ import 'package:espn_app/repositories/formation_repository/i_formation_repositor
 import 'package:espn_app/repositories/last_5_repository/i_last_5_repository.dart';
 import 'package:espn_app/repositories/league_picture_repository/i_league_repository.dart';
 import 'package:espn_app/providers/settings_provider.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:espn_app/services/api_service.dart';
 import 'package:espn_app/services/error_handler_service.dart';
@@ -82,3 +84,7 @@ final formationRepositoryProvider = Provider<IFormationRepository>((ref) {
     errorHandler: ref.watch(errorHandlerServiceProvider),
   );
 });
+
+final colorsProvider = StateNotifierProvider<ColorsNotifier, List<Color>>(
+  (ref) => ColorsNotifier(),
+);

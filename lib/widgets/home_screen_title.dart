@@ -1,4 +1,5 @@
 import 'package:espn_app/widgets/widgets.dart';
+import 'package:flutter/material.dart';
 
 class HomeScreenTitle extends StatelessWidget {
   const HomeScreenTitle({
@@ -12,26 +13,23 @@ class HomeScreenTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 7),
+        const SizedBox(height: 7),
         Text(
           titleLine1.toUpperCase(),
-          style: GoogleFonts.blackOpsOne(
-            fontSize: 45,
-            color: Colors.black,
-            height: 1,
-          ),
+          style: theme.textTheme.headlineLarge?.copyWith(height: 1),
         ),
         if (titleLine2 != null)
           Text(
             titleLine2!.toUpperCase(),
-            style: GoogleFonts.blackOpsOne(
-              fontSize: 45,
-              color: Colors.black.withValues(alpha: 0.5),
+            style: theme.textTheme.headlineLarge?.copyWith(
               height: 1,
+              color: theme.colorScheme.onBackground.withOpacity(0.5),
             ),
           ),
       ],

@@ -2,27 +2,29 @@ import 'dart:math';
 
 import 'package:espn_app/models/score.dart';
 import 'package:espn_app/models/team.dart';
+import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/screens/match_detail_screen.dart';
 import 'package:espn_app/widgets/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:espn_app/models/event.dart';
 
-class MatchWidget extends StatelessWidget {
+class MatchWidget extends ConsumerStatefulWidget {
   final Event event;
 
   const MatchWidget({super.key, required this.event});
 
   @override
+  ConsumerState<MatchWidget> createState() => _MatchWidgetState();
+}
+
+class _MatchWidgetState extends ConsumerState<MatchWidget> {
+  @override
   Widget build(BuildContext context) {
-    final parts = event.name.split(" at ");
+    final parts = widget.event.name.split(" at ");
     final awayTeamName = parts.isNotEmpty ? parts.first.trim() : "Équipe A";
     final homeTeamName = parts.length > 1 ? parts.last.trim() : "Équipe B";
-    final possibleColors = [
-      Colors.red,
-      Colors.blue,
-      Colors.green,
-      Colors.yellow,
-    ];
+    final possibleColors = ref.watch(colorsProvider);
 
     // Generate a random color from the possible colors list
     final Random rnd = Random();
@@ -30,18 +32,18 @@ class MatchWidget extends StatelessWidget {
         possibleColors[rnd.nextInt(possibleColors.length)];
 
     final awayTeam = Team(
-      id: event.idTeam.$1,
+      id: widget.event.idTeam.$1,
       name: awayTeamName,
       shortName: awayTeamName,
     );
     final homeTeam = Team(
-      id: event.idTeam.$2,
+      id: widget.event.idTeam.$2,
       name: homeTeamName,
       shortName: homeTeamName,
     );
 
     // Conversion de la date (on suppose ici que event.date est au format ISO8601)
-    final matchDate = DateTime.tryParse(event.date) ?? DateTime.now();
+    final matchDate = DateTime.tryParse(widget.event.date) ?? DateTime.now();
 
     // Pour cet exemple, on considère le match comme planifié (non live)
     return GestureDetector(
@@ -50,8 +52,10 @@ class MatchWidget extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder:
-                (context) =>
-                    MatchDetailScreen(event: event, randomColor: randomColor),
+                (context) => MatchDetailScreen(
+                  event: widget.event,
+                  randomColor: randomColor,
+                ),
           ),
         );
       },
@@ -59,8 +63,8 @@ class MatchWidget extends StatelessWidget {
         context,
         awayTeam,
         homeTeam,
-        event.isFinished,
-        event.score,
+        widget.event.isFinished,
+        widget.event.score,
         matchDate,
         randomColor,
       ),

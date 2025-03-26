@@ -17,6 +17,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: Consumer(
         builder: (context, ref, child) {
@@ -45,10 +47,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   data: (events) {
                     if (events.isEmpty) {
                       dev.log('Events list is empty in UI');
-                      return const Padding(
-                        padding: EdgeInsets.all(20),
+                      return Padding(
+                        padding: const EdgeInsets.all(20),
                         child: Center(
-                          child: Text('No events available for this league'),
+                          child: Text(
+                            'No events available for this league',
+                            style: theme.textTheme.bodyLarge,
+                          ),
                         ),
                       );
                     }
@@ -64,10 +69,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                   loading: () {
                     dev.log('UI shows loading state');
-                    return const Center(
+                    return Center(
                       child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: CircularProgressIndicator(),
+                        padding: const EdgeInsets.all(20),
+                        child: CircularProgressIndicator(
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                     );
                   },
@@ -78,19 +85,27 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.error,
-                              color: Colors.red,
+                              color: theme.colorScheme.error,
                               size: 40,
                             ),
                             const SizedBox(height: 16),
-                            Text('Error: $error'),
+                            Text(
+                              'Error: $error',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.error,
+                              ),
+                            ),
                             TextButton(
                               onPressed: () {
                                 final result = ref.refresh(leagueAsyncProvider);
                                 dev.log('Refresh result: $result');
                               },
-                              child: const Text('Try Again'),
+                              child: Text(
+                                'Try Again',
+                                style: theme.textTheme.labelLarge,
+                              ),
                             ),
                           ],
                         ),
