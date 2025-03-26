@@ -1,3 +1,4 @@
+import 'package:espn_app/providers/theme_provider.dart';
 import 'package:espn_app/screens/home_screen.dart';
 import 'package:espn_app/screens/main_navigation_screen.dart';
 import 'package:flutter/material.dart';
@@ -14,22 +15,18 @@ void main() {
   });
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Utiliser le thème depuis le provider
+    final themeData = ref.watch(themeProvider);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ESPN App',
-      theme: ThemeData(
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          color: Colors.white,
-          elevation: 0,
-          iconTheme: IconThemeData(color: Colors.black),
-        ),
-      ),
+      theme: themeData,
       routes: {
         '/': (context) => const MainNavigationScreen(),
         '/home': (context) => const HomeScreen(),

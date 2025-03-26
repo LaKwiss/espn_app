@@ -127,6 +127,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Obtenir le thème courant
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final colorScheme = theme.colorScheme;
+
     // Observer les changements dans la ligue sélectionnée
     final selectedLeagueState = ref.watch(selectedLeagueProvider);
     final String leagueName = selectedLeagueState.$1;
@@ -146,7 +151,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: CustomAppBar(
               url: _assetService.getLeagueLogoUrl(leagueName),
-              backgroundColor: Colors.white,
+              backgroundColor: theme.scaffoldBackgroundColor,
             ),
           ),
 
@@ -159,24 +164,28 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'CALENDAR',
-                  style: GoogleFonts.blackOpsOne(
-                    fontSize: 45,
-                    color: Colors.black,
-                    height: 1,
-                  ),
-                ),
+                Text('CALENDAR', style: textTheme.headlineLarge),
                 // Year Selector
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color:
+                        theme.brightness == Brightness.light
+                            ? Colors.grey[200]
+                            : Colors.grey[800],
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                   child: DropdownButton<int>(
                     value: _selectedYear,
                     underline: Container(), // Supprimer la ligne par défaut
+                    dropdownColor:
+                        theme.brightness == Brightness.light
+                            ? Colors.grey[200]
+                            : Colors.grey[800],
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      color: colorScheme.primary,
+                    ),
                     onChanged: (value) {
                       if (value != null) {
                         setState(() {
@@ -213,10 +222,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                 value: year,
                                 child: Text(
                                   year.toString(),
-                                  style: GoogleFonts.roboto(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
+                                  style: textTheme.labelLarge,
                                 ),
                               ),
                             )
@@ -232,11 +238,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: _buildCalendar(),
           ),
+
           // Selected day events
           Expanded(
             child:
                 _isLoadingEvents
-                    ? const Center(child: CircularProgressIndicator())
+                    ? Center(
+                      child: CircularProgressIndicator(
+                        color: colorScheme.primary,
+                      ),
+                    )
                     : _errorMessage != null
                     ? _buildErrorWidget()
                     : _eventsForSelectedDate.isEmpty
@@ -249,6 +260,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildErrorWidget() {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -257,17 +271,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           const SizedBox(height: 16),
           Text(
             'Erreur lors du chargement des matchs',
-            style: GoogleFonts.roboto(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.red[700],
-            ),
+            style: textTheme.titleMedium?.copyWith(color: Colors.red[700]),
           ),
           const SizedBox(height: 8),
           Text(
             _errorMessage!,
             textAlign: TextAlign.center,
-            style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey[700]),
+            style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -280,20 +290,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildEmptyEventsWidget() {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.sports_soccer_outlined, size: 48, color: Colors.grey[400]),
+          Icon(
+            Icons.sports_soccer_outlined,
+            size: 48,
+            color: isDark ? Colors.grey[400] : Colors.grey[500],
+          ),
           const SizedBox(height: 16),
           Text(
             'Aucun match le ${_dateFormatter.formatDate(_selectedDay)}',
-            style: GoogleFonts.roboto(fontSize: 18, color: Colors.grey),
+            style: textTheme.bodyLarge?.copyWith(
+              color: isDark ? Colors.grey[300] : Colors.grey[700],
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Essayez de sélectionner une autre date ou ligue',
-            style: GoogleFonts.roboto(fontSize: 14, color: Colors.grey[600]),
+            style: textTheme.bodyMedium,
           ),
         ],
       ),
@@ -303,6 +323,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _buildEventsList() {
     return RefreshIndicator(
       onRefresh: _fetchEventsForSelectedDate,
+      color: Theme.of(context).colorScheme.primary,
       child: ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: _eventsForSelectedDate.length,
@@ -314,13 +335,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildCalendar() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.colorScheme.primary;
+
     return TableCalendar(
-      firstDay: DateTime.utc(
-        1970,
-        1,
-        1,
-      ), // Très ancienne date pour permettre une grande navigation
-      lastDay: DateTime.utc(2050, 12, 31), // Très future date
+      firstDay: DateTime.utc(1970, 1, 1),
+      lastDay: DateTime.utc(2050, 12, 31),
       focusedDay: _focusedDay,
       calendarFormat: _calendarFormat,
       selectedDayPredicate: (day) {
@@ -358,32 +379,90 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         });
       },
       calendarStyle: CalendarStyle(
+        // Jour sélectionné
         selectedDecoration: BoxDecoration(
-          color: Colors.black,
+          color: primaryColor,
           shape: BoxShape.circle,
         ),
+        selectedTextStyle: TextStyle(
+          color: isDark ? Colors.black : Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+
+        // Aujourd'hui
         todayDecoration: BoxDecoration(
-          color: Colors.grey[400],
+          color: isDark ? Colors.grey[800] : Colors.grey[300],
           shape: BoxShape.circle,
         ),
+        todayTextStyle: TextStyle(
+          color: primaryColor,
+          fontWeight: FontWeight.bold,
+        ),
+
+        // Jours normaux
+        defaultTextStyle: TextStyle(color: primaryColor),
+        weekendTextStyle: TextStyle(
+          color: isDark ? Colors.red[200] : Colors.red[700],
+        ),
+        outsideTextStyle: TextStyle(
+          color: isDark ? Colors.grey[600] : Colors.grey[400],
+        ),
+
+        // Marqueurs
         markersMaxCount: 3,
-        markerDecoration: const BoxDecoration(
-          color: Colors.red,
+        markerDecoration: BoxDecoration(
+          color: isDark ? Colors.red[700] : Colors.red,
           shape: BoxShape.circle,
         ),
+        markerSize: 7.0,
       ),
       headerStyle: HeaderStyle(
         formatButtonVisible: true,
         titleCentered: true,
         formatButtonShowsNext: false,
         formatButtonDecoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: isDark ? Colors.grey[800] : Colors.grey[200],
           borderRadius: BorderRadius.circular(12),
         ),
-        titleTextStyle: GoogleFonts.blackOpsOne(
-          fontSize: 20,
-          color: Colors.black,
+        formatButtonTextStyle: theme.textTheme.labelLarge!,
+        titleTextStyle: theme.textTheme.titleMedium!,
+        leftChevronIcon: Icon(Icons.chevron_left, color: primaryColor),
+        rightChevronIcon: Icon(Icons.chevron_right, color: primaryColor),
+        headerMargin: const EdgeInsets.symmetric(vertical: 8.0),
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(16),
         ),
+      ),
+      daysOfWeekStyle: DaysOfWeekStyle(
+        weekdayStyle: TextStyle(
+          color: primaryColor,
+          fontWeight: FontWeight.bold,
+        ),
+        weekendStyle: TextStyle(
+          color: isDark ? Colors.red[300] : Colors.red[700],
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      // Style global
+      calendarBuilders: CalendarBuilders(
+        // Personnalisation du marqueur d'événements
+        markerBuilder: (context, date, events) {
+          if (events.isNotEmpty) {
+            return Positioned(
+              bottom: 1,
+              child: Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isDark ? Colors.red[700] : Colors.red,
+                ),
+              ),
+            );
+          }
+          return null;
+        },
       ),
     );
   }

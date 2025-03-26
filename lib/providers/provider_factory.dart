@@ -4,6 +4,7 @@ import 'package:espn_app/repositories/formation_repository/formation_repository.
 import 'package:espn_app/repositories/formation_repository/i_formation_repository.dart';
 import 'package:espn_app/repositories/last_5_repository/i_last_5_repository.dart';
 import 'package:espn_app/repositories/league_picture_repository/i_league_repository.dart';
+import 'package:espn_app/providers/settings_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:espn_app/services/api_service.dart';
 import 'package:espn_app/services/error_handler_service.dart';
@@ -28,6 +29,13 @@ final dateFormatterServiceProvider = Provider<DateFormatterService>(
 );
 
 final assetServiceProvider = Provider<AssetService>((ref) => AssetService());
+
+// Settings Provider
+final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
+  ref,
+) {
+  return SettingsNotifier();
+});
 
 // Repository Providers
 final eventRepositoryProvider = Provider<IEventRepository>((ref) {
