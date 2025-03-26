@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:espn_app/screens/calendar_screen.dart';
 import 'package:espn_app/screens/home_screen.dart';
 import 'package:espn_app/providers/page_index_provider.dart';
+import 'package:espn_app/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -48,10 +49,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
           ref.read(pageIndexProvider.notifier).state = index;
           log("Page changée vers: $index"); // Debug
         },
-        children: const [
-          HomeScreen(),
-          CalendarScreen(), // Troisième page pour tester le 3ème point
-        ],
+        children: const [HomeScreen(), CalendarScreen(), SettingsScreen()],
       ),
     );
   }

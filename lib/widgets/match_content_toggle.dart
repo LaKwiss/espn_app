@@ -48,6 +48,7 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
   void initState() {
     super.initState();
 
+    // Ensure we initialize after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final leagueId = _extractLeagueId(widget.event.league);
       final params = MatchParams(
@@ -56,9 +57,8 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
         isFinished: widget.event.isFinished,
       );
 
-      // Force refresh before initializing with new match parameters
-      ref.invalidate(matchEventsProvider);
-      initializeMatchEvents(ref, params);
+      // Initialize with new parameters (avoid recreating provider)
+      ref.read(matchEventsProvider.notifier).initialize(params);
     });
   }
 

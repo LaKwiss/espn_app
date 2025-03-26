@@ -39,13 +39,20 @@ class MatchEventsNotifier extends AsyncNotifier<List<MatchEvent>> {
 
   // Initialiser le notifier avec les paramètres spécifiques
   void initialize(MatchParams params) {
-    dev.log('Initializing events notifier with params: $params');
-    // Always update parameters and reload
-    _params = params;
-    _repository = ref.read(matchEventRepositoryProvider);
-    // Always load data immediately
-    _fetchEvents();
-    _isInitialized = true;
+    // Only update params if they've changed
+    if (_params != params) {
+      dev.log('Initializing events notifier with params: $params');
+      _params = params;
+
+      // Only initialize repository once
+      if (!_isInitialized) {
+        _repository = ref.read(matchEventRepositoryProvider);
+        _isInitialized = true;
+      }
+
+      // Always fetch events when params change
+      _fetchEvents();
+    }
   }
 
   // Récupérer les événements depuis le repository
