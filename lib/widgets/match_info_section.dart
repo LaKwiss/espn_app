@@ -15,6 +15,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
   final (Future<Score> away, Future<Score> home) scores;
   final bool showEvents;
   final VoidCallback onToggleEvents;
+  final Color randomColor;
 
   const MatchInfoSectionWidget({
     super.key,
@@ -26,6 +27,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
     required this.scores,
     required this.showEvents,
     required this.onToggleEvents,
+    required this.randomColor,
   });
 
   @override
@@ -34,7 +36,10 @@ class MatchInfoSectionWidget extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color:
+            Theme.of(context).brightness == Brightness.dark
+                ? Colors.black
+                : Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -46,7 +51,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                 date,
                 style: GoogleFonts.blackOpsOne(
                   fontSize: 24,
-                  color: const Color(0xFF5A7DF3),
+                  color: randomColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -54,7 +59,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                 IconButton(
                   icon: Icon(
                     showEvents ? Icons.expand_less : Icons.expand_more,
-                    color: const Color(0xFF5A7DF3),
+                    color: randomColor,
                     size: 28,
                   ),
                   onPressed: onToggleEvents,
@@ -71,18 +76,14 @@ class MatchInfoSectionWidget extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    TeamLogoWidget(
-                      team: awayTeam,
-                      radius: 30,
-                      borderColor: Colors.red.withValues(alpha: 0.7),
-                    ),
+                    TeamLogoWidget(team: awayTeam, radius: 30),
                     const SizedBox(height: 8),
                     Text(
                       awayTeam.firstName,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 20,
-                        color: const Color(0xFF5A7DF3),
+                        color: randomColor,
                       ),
                     ),
                     if (awayTeam.secondName.isNotEmpty)
@@ -100,18 +101,17 @@ class MatchInfoSectionWidget extends StatelessWidget {
               Expanded(
                 child: Column(
                   children: [
-                    TeamLogoWidget(
-                      team: homeTeam,
-                      radius: 30,
-                      borderColor: Colors.blue.withValues(alpha: 0.7),
-                    ),
+                    TeamLogoWidget(team: homeTeam, radius: 30),
                     const SizedBox(height: 8),
                     Text(
                       homeTeam.firstName,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 20,
-                        color: Colors.black,
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white
+                                : Colors.black,
                       ),
                     ),
                     if (homeTeam.secondName.isNotEmpty)
@@ -120,7 +120,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.blackOpsOne(
                           fontSize: 20,
-                          color: const Color(0xFF5A7DF3),
+                          color: randomColor,
                         ),
                       ),
                   ],
@@ -168,7 +168,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                   return const SizedBox(height: 60);
                 },
               )
-              : TimeDisplay(time: time),
+              : TimeDisplay(time: time, randomColor: randomColor),
     );
   }
 }

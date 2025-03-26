@@ -1,9 +1,10 @@
 import 'package:espn_app/widgets/widgets.dart';
 
 class TimeDisplay extends StatelessWidget {
-  const TimeDisplay({super.key, required this.time});
+  const TimeDisplay({super.key, required this.time, required this.randomColor});
 
   final String time;
+  final Color randomColor;
 
   @override
   Widget build(BuildContext context) {
@@ -13,14 +14,17 @@ class TimeDisplay extends StatelessWidget {
       children: [
         Text(
           '${timeParts[0]}:',
-          style: GoogleFonts.blackOpsOne(fontSize: 60, color: Colors.black),
+          style: GoogleFonts.blackOpsOne(
+            fontSize: 60,
+            color:
+                Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
+          ),
         ),
         Text(
           timeParts[1],
-          style: GoogleFonts.blackOpsOne(
-            fontSize: 60,
-            color: const Color(0xFF5A7DF3),
-          ),
+          style: GoogleFonts.blackOpsOne(fontSize: 60, color: randomColor),
         ),
       ],
     );

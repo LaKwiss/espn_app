@@ -15,6 +15,7 @@ class MatchContentToggle extends ConsumerStatefulWidget {
   final Team awayTeam;
   final AsyncValue<List<MatchEvent>> eventsAsync;
   final bool hasStarted;
+  final bool isWhite;
 
   const MatchContentToggle({
     super.key,
@@ -23,6 +24,7 @@ class MatchContentToggle extends ConsumerStatefulWidget {
     required this.awayTeam,
     required this.eventsAsync,
     required this.hasStarted,
+    required this.isWhite,
   });
 
   @override
@@ -73,7 +75,7 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.grey[200],
+            color: Colors.white,
             borderRadius: BorderRadius.circular(30),
           ),
           child: Row(
@@ -130,21 +132,28 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.upcoming, size: 64, color: Colors.grey[400]),
+                    Icon(
+                      Icons.upcoming,
+                      size: 64,
+                      color: widget.isWhite ? Colors.white : Colors.black,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Les informations suivront',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 24,
-                        color: Colors.grey[700],
+                        color: widget.isWhite ? Colors.white : Colors.black,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Revenez après le début du match pour consulter les détails',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: widget.isWhite ? Colors.white : Colors.black,
+                      ),
                     ),
                   ],
                 ),

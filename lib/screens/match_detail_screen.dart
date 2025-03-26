@@ -304,6 +304,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                         _showEvents = !_showEvents;
                       });
                     },
+                    randomColor: widget.randomColor,
                   ),
                 ),
 
@@ -315,6 +316,10 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                     awayTeam: _awayTeam,
                     eventsAsync: eventsAsync,
                     hasStarted: _matchStatus != MatchStatus.notStarted,
+                    isWhite:
+                        widget.randomColor.computeLuminance() > 0.5
+                            ? false
+                            : true,
                   ),
                 ),
 
