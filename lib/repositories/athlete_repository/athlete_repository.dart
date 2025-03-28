@@ -1,4 +1,3 @@
-// lib/repositories/athletes_repository/athletes_repository.dart
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'package:espn_app/models/athlete.dart';
@@ -11,6 +10,10 @@ import 'package:espn_app/services/error_handler_service.dart';
 class AthletesRepository implements IAthletesRepository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
+
+  // Athlete data doesn't change frequently, so we can cache it for a day
+  static const Duration _athleteCacheDuration = Duration(days: 1);
+  static const Duration _teamAthletesCacheDuration = Duration(hours: 12);
 
   AthletesRepository({
     required ApiService apiService,
@@ -25,7 +28,11 @@ class AthletesRepository implements IAthletesRepository {
           'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueId/seasons/2024/teams/$teamId/athletes?limit=1000';
 
       dev.log('Fetching athletes from: $url');
-      final response = await _apiService.get(url);
+      // Use cache with team athletes duration
+      final response = await _apiService.get(
+        url,
+        cacheDuration: _teamAthletesCacheDuration,
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -40,7 +47,11 @@ class AthletesRepository implements IAthletesRepository {
             if (item.containsKey('\$ref')) {
               final String athleteUrl = item['\$ref'];
               try {
-                final athleteResponse = await _apiService.get(athleteUrl);
+                // Use cache for individual athlete data
+                final athleteResponse = await _apiService.get(
+                  athleteUrl,
+                  cacheDuration: _athleteCacheDuration,
+                );
                 if (athleteResponse.statusCode == 200) {
                   final athleteData = jsonDecode(athleteResponse.body);
                   athletes.add(Athlete.fromJson(athleteData));
@@ -73,7 +84,11 @@ class AthletesRepository implements IAthletesRepository {
           'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueId/seasons/2024/athletes/$athleteId?lang=en&region=us';
 
       dev.log('Fetching athlete from: $url');
-      final response = await _apiService.get(url);
+      // Use cache with athlete cache duration
+      final response = await _apiService.get(
+        url,
+        cacheDuration: _athleteCacheDuration,
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

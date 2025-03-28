@@ -1,4 +1,3 @@
-// lib/repositories/formation_repository/formation_repository.dart
 import 'dart:convert';
 import 'dart:developer' as dev;
 import 'package:espn_app/models/formation_response.dart';
@@ -10,6 +9,17 @@ import 'package:espn_app/services/error_handler_service.dart';
 class FormationRepository implements IFormationRepository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
+
+  // Cache durations for different types of data
+  static const Duration _formationCacheDuration = Duration(
+    hours: 2,
+  ); // Formations don't change once set
+  static const Duration _playerDetailsCacheDuration = Duration(
+    hours: 12,
+  ); // Player details change infrequently
+  static const Duration _positionCacheDuration = Duration(
+    days: 30,
+  ); // Position data is essentially static
 
   FormationRepository({
     required ApiService apiService,
@@ -29,7 +39,11 @@ class FormationRepository implements IFormationRepository {
 
       dev.log('Fetching team formation from: $url');
 
-      final response = await _apiService.get(url);
+      // Use cache for formation data
+      final response = await _apiService.get(
+        url,
+        cacheDuration: _formationCacheDuration,
+      );
 
       if (response.statusCode != 200) {
         throw Exception(
@@ -122,7 +136,11 @@ class FormationRepository implements IFormationRepository {
     try {
       dev.log('Fetching player details from: $athleteRef');
 
-      final response = await _apiService.get(athleteRef);
+      // Use cache for player details
+      final response = await _apiService.get(
+        athleteRef,
+        cacheDuration: _playerDetailsCacheDuration,
+      );
 
       if (response.statusCode != 200) {
         throw Exception(
@@ -149,7 +167,11 @@ class FormationRepository implements IFormationRepository {
 
       dev.log('Fetching position details from: $positionRef');
 
-      final response = await _apiService.get(positionRef);
+      // Use long cache duration for position data as it's static
+      final response = await _apiService.get(
+        positionRef,
+        cacheDuration: _positionCacheDuration,
+      );
 
       if (response.statusCode != 200) {
         throw Exception(

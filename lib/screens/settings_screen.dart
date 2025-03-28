@@ -1,9 +1,9 @@
-// espn_app/lib/screens/settings_screen.dart
 import 'dart:developer';
 
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
 import 'package:espn_app/providers/settings_provider.dart';
+import 'package:espn_app/screens/cache_analytics_screen.dart';
 import 'package:espn_app/screens/color_picker_screen.dart';
 import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -173,6 +173,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Icons.cleaning_services,
                   () {
                     _showClearCacheDialog(context, settingsNotifier);
+                  },
+                ),
+
+                const Divider(),
+
+                // NEW: Cache Analytics
+                _buildSettingAction(
+                  'Cache Analytics',
+                  'View detailed cache usage statistics and entries',
+                  Icons.analytics_outlined,
+                  () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const CacheAnalyticsScreen(),
+                      ),
+                    );
                   },
                 ),
 

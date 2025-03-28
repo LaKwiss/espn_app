@@ -13,6 +13,7 @@ import 'package:espn_app/services/api_service.dart';
 import 'package:espn_app/services/error_handler_service.dart';
 import 'package:espn_app/services/date_formatter_service.dart';
 import 'package:espn_app/services/asset_service.dart';
+import 'package:espn_app/services/hive_cache_service.dart';
 import 'package:espn_app/repositories/event_repository/event_repository.dart';
 import 'package:espn_app/repositories/event_repository/i_event_repository.dart';
 import 'package:espn_app/repositories/match_event_repository/match_event_repository.dart';
@@ -20,8 +21,67 @@ import 'package:espn_app/repositories/match_event_repository/i_match_event_repos
 import 'package:espn_app/repositories/last_5_repository/last_5_repository.dart';
 import 'package:espn_app/repositories/league_picture_repository/league_picture_repository.dart';
 
+/// A class to track cache hit statistics
+class CacheStatsTracker {
+  int cacheHits = 0;
+  int cacheMisses = 0;
+  int cacheExpired = 0;
+  int networkRequests = 0;
+  int totalStorage = 0; // In bytes
+
+  void trackCacheHit() {
+    cacheHits++;
+  }
+
+  void trackCacheMiss() {
+    cacheMisses++;
+  }
+
+  void trackCacheExpired() {
+    cacheExpired++;
+  }
+
+  void trackNetworkRequest() {
+    networkRequests++;
+  }
+
+  void updateTotalStorage(int bytes) {
+    totalStorage = bytes;
+  }
+
+  void reset() {
+    cacheHits = 0;
+    cacheMisses = 0;
+    cacheExpired = 0;
+    networkRequests = 0;
+  }
+
+  double get hitRatio => totalRequests > 0 ? cacheHits / totalRequests : 0;
+  int get totalRequests => cacheHits + cacheMisses + cacheExpired;
+}
+
 // Services Providers
-final apiServiceProvider = Provider<ApiService>((ref) => ApiService());
+final hiveCacheServiceProvider = Provider<HiveCacheService>((ref) {
+  return HiveCacheService();
+});
+
+final cacheStatsProvider = Provider<CacheStatsTracker>((ref) {
+  return CacheStatsTracker();
+});
+
+final apiServiceProvider = Provider<ApiService>((ref) {
+  final settings = ref.watch(settingsProvider);
+  final cacheService = ref.watch(hiveCacheServiceProvider);
+
+  return ApiService(
+    cacheService: cacheService,
+    cacheEnabled: settings.cacheEnabled,
+    defaultCacheDuration: const Duration(hours: 4),
+    logCacheHits: true, // Enable cache hit logging
+    providerRef:
+        ref, // Pass ProviderReference to allow access to cacheStatsProvider
+  );
+});
 
 final errorHandlerServiceProvider = Provider<ErrorHandlerService>(
   (ref) => ErrorHandlerService(),
@@ -71,7 +131,7 @@ final athletesRepositoryProvider = Provider<IAthletesRepository>((ref) {
   );
 });
 
-// Repository Provider pour Formation
+// Repository Provider for Formation
 final formationRepositoryProvider = Provider<IFormationRepository>((ref) {
   return FormationRepository(
     apiService: ref.watch(apiServiceProvider),

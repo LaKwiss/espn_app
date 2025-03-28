@@ -7,6 +7,9 @@ class Last5Repository implements ILast5Repository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
 
+  // Last 5 games data can be cached for a few hours since it doesn't change often
+  static const Duration _last5CacheDuration = Duration(hours: 6);
+
   Last5Repository({
     required ApiService apiService,
     required ErrorHandlerService errorHandler,
@@ -19,7 +22,11 @@ class Last5Repository implements ILast5Repository {
         'http://sports.core.api.espn.com/v2/sports/soccer/leagues/esp.1/seasons/2024/teams/$teamId';
 
     try {
-      final response = await _apiService.get(url);
+      // Use cache for last 5 games data
+      final response = await _apiService.get(
+        url,
+        cacheDuration: _last5CacheDuration,
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);

@@ -9,6 +9,17 @@ class MatchEventRepository implements IMatchEventRepository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
 
+  // Cache durations for different scenarios
+  static const Duration _liveMatchCacheDuration = Duration(
+    seconds: 30,
+  ); // Short cache for live data
+  static const Duration _finishedMatchCacheDuration = Duration(
+    days: 7,
+  ); // Long cache for finished matches
+  static const Duration _teamIdsCacheDuration = Duration(
+    hours: 6,
+  ); // Team IDs don't change for a match
+
   MatchEventRepository({
     required ApiService apiService,
     required ErrorHandlerService errorHandler,
@@ -26,7 +37,18 @@ class MatchEventRepository implements IMatchEventRepository {
     dev.log('Fetching match events from: $url');
 
     try {
-      final response = await _apiService.get(url);
+      // First check if the match is currently live to determine cache duration
+      final bool isLive = await _isMatchLive(matchId, leagueId);
+
+      // Use different cache durations based on whether the match is live
+      final cacheDuration =
+          isLive ? _liveMatchCacheDuration : _finishedMatchCacheDuration;
+
+      final response = await _apiService.get(
+        url,
+        useCache: true,
+        cacheDuration: cacheDuration,
+      );
 
       if (response.statusCode != 200) {
         dev.log(
@@ -92,7 +114,7 @@ class MatchEventRepository implements IMatchEventRepository {
     required String matchId,
     required String leagueId,
   }) async {
-    // Pour le streaming en temps réel, nous utilisons la même méthode mais optimisée pour une utilisation en direct
+    // For live events, use a very short cache duration or no cache
     return fetchMatchEvents(matchId: matchId, leagueId: leagueId);
   }
 
@@ -107,7 +129,11 @@ class MatchEventRepository implements IMatchEventRepository {
     dev.log('Fetching team IDs from: $url');
 
     try {
-      final response = await _apiService.get(url);
+      // Team IDs for a match don't change, so we can cache them
+      final response = await _apiService.get(
+        url,
+        cacheDuration: _teamIdsCacheDuration,
+      );
 
       if (response.statusCode != 200) {
         dev.log('Error response: ${response.statusCode}');
@@ -160,6 +186,62 @@ class MatchEventRepository implements IMatchEventRepository {
         'fetchTeamIds',
         defaultValue: ('0', '0'),
       );
+    }
+  }
+
+  // Helper method to check if a match is currently live
+  Future<bool> _isMatchLive(String matchId, String leagueId) async {
+    try {
+      final url =
+          'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueId/events/$matchId?lang=en&region=us';
+
+      // Use a very short cache duration for this check
+      final response = await _apiService.get(
+        url,
+        cacheDuration: const Duration(seconds: 30),
+      );
+
+      if (response.statusCode != 200) {
+        return false; // Assume not live if there's an error
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+
+      // Check if competitions exist
+      if (!json.containsKey('competitions') ||
+          json['competitions'] == null ||
+          (json['competitions'] as List).isEmpty) {
+        return false;
+      }
+
+      final competitions = json['competitions'] as List;
+      final competition = competitions[0] as Map<String, dynamic>;
+
+      // Check status to determine if match is live
+      if (competition.containsKey('status') &&
+          competition['status'] != null &&
+          competition['status'].containsKey('type') &&
+          competition['status']['type'] != null) {
+        final statusType = competition['status']['type'];
+
+        // Check if status is 'in_progress' or similar
+        if (statusType.containsKey('state') &&
+            statusType['state'] is String &&
+            statusType['state'] == 'in') {
+          return true;
+        }
+
+        // Or check if liveAvailable flag is true
+        if (competition.containsKey('liveAvailable') &&
+            competition['liveAvailable'] == true) {
+          return true;
+        }
+      }
+
+      return false; // Default to not live
+    } catch (e) {
+      dev.log('Error checking if match is live: $e');
+      return false; // Assume not live if there's an error
     }
   }
 }

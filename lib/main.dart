@@ -1,15 +1,28 @@
 // espn_app/lib/main.dart
+import 'package:espn_app/models/hive_cache_entry.dart';
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/providers/settings_provider.dart';
 import 'package:espn_app/screens/home_screen.dart';
 import 'package:espn_app/screens/main_navigation_screen.dart';
+import 'package:espn_app/services/hive_cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
+import 'package:hive_flutter/hive_flutter.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive for local storage
+  await Hive.initFlutter();
+
+  // Register adapters for Hive
+  Hive.registerAdapter(HiveCacheEntryAdapter());
+
+  // Initialize the cache service
+  await HiveCacheService.init();
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

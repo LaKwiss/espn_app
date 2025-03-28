@@ -9,6 +9,20 @@ class EventRepository implements IEventRepository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
 
+  // Cache durations based on data staleness
+  static const Duration _leagueCacheDuration = Duration(
+    days: 3,
+  ); // League info rarely changes
+  static const Duration _eventsCacheDuration = Duration(
+    hours: 1,
+  ); // Schedule may update
+  static const Duration _finishedEventCacheDuration = Duration(
+    days: 7,
+  ); // Completed events won't change
+  static const Duration _upcomingEventCacheDuration = Duration(
+    hours: 2,
+  ); // Upcoming events might have minor changes
+
   EventRepository({
     required ApiService apiService,
     required ErrorHandlerService errorHandler,
@@ -24,7 +38,11 @@ class EventRepository implements IEventRepository {
     dev.log('Fetching from URL: $url');
 
     try {
-      final response = await _apiService.get(url);
+      // Use cache for league events
+      final response = await _apiService.get(
+        url,
+        cacheDuration: _eventsCacheDuration,
+      );
 
       dev.log('Response status code: ${response.statusCode}');
 
@@ -53,7 +71,7 @@ class EventRepository implements IEventRepository {
               dev.log('Fetching event details from: $url');
 
               try {
-                // Fetch event data
+                // Fetch event data with appropriate cache duration
                 final eventResponse = await _apiService.get(url);
                 if (eventResponse.statusCode != 200) {
                   throw Exception(
@@ -64,6 +82,9 @@ class EventRepository implements IEventRepository {
                 final Map<String, dynamic> eventJson = jsonDecode(
                   eventResponse.body,
                 );
+
+                // Determine if event is finished to use appropriate cache duration
+                bool isFinished = _isEventFinished(eventJson);
 
                 // Get competition data
                 if (!eventJson.containsKey('competitions') ||
@@ -101,8 +122,17 @@ class EventRepository implements IEventRepository {
                 final String oddsUrl = competition['odds']['\$ref'] as String;
                 dev.log('Fetching odds from: $oddsUrl');
 
-                // Fetch odds data
-                final oddsResponse = await _apiService.get(oddsUrl);
+                // Fetch odds data - cache duration depends on event status
+                final Duration oddsCacheDuration =
+                    isFinished
+                        ? _finishedEventCacheDuration
+                        : _upcomingEventCacheDuration;
+
+                final oddsResponse = await _apiService.get(
+                  oddsUrl,
+                  cacheDuration: oddsCacheDuration,
+                );
+
                 if (oddsResponse.statusCode != 200) {
                   throw Exception(
                     'Failed to load odds from $oddsUrl, status: ${oddsResponse.statusCode}',
@@ -154,8 +184,10 @@ class EventRepository implements IEventRepository {
     dev.log('Fetching league name for: $leagueName');
 
     try {
+      // League names rarely change, so we can cache them for longer
       final response = await _apiService.get(
         'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueName',
+        cacheDuration: _leagueCacheDuration,
       );
 
       if (response.statusCode == 200) {
@@ -190,7 +222,14 @@ class EventRepository implements IEventRepository {
     dev.log('Fetching from URL: $url');
 
     try {
-      final response = await _apiService.get(url);
+      // Use cache with appropriate duration based on date
+      final bool isDateInPast = date.isBefore(
+        DateTime.now().subtract(const Duration(days: 1)),
+      );
+      final cacheDuration =
+          isDateInPast ? _finishedEventCacheDuration : _eventsCacheDuration;
+
+      final response = await _apiService.get(url, cacheDuration: cacheDuration);
 
       dev.log('Response status code: ${response.statusCode}');
 
@@ -223,7 +262,7 @@ class EventRepository implements IEventRepository {
               dev.log('Fetching event details from: $url');
 
               try {
-                // Fetch event data
+                // Fetch event data with cache
                 final eventResponse = await _apiService.get(url);
                 if (eventResponse.statusCode != 200) {
                   throw Exception(
@@ -234,6 +273,9 @@ class EventRepository implements IEventRepository {
                 final Map<String, dynamic> eventJson = jsonDecode(
                   eventResponse.body,
                 );
+
+                // Determine if event is finished for caching purposes
+                bool isFinished = _isEventFinished(eventJson);
 
                 // Get competition data
                 if (!eventJson.containsKey('competitions') ||
@@ -271,8 +313,18 @@ class EventRepository implements IEventRepository {
                 final String oddsUrl = competition['odds']['\$ref'] as String;
                 dev.log('Fetching odds from: $oddsUrl');
 
+                // Cache duration based on whether the event is finished
+                final Duration oddsCacheDuration =
+                    isFinished
+                        ? _finishedEventCacheDuration
+                        : _upcomingEventCacheDuration;
+
                 // Fetch odds data
-                final oddsResponse = await _apiService.get(oddsUrl);
+                final oddsResponse = await _apiService.get(
+                  oddsUrl,
+                  cacheDuration: oddsCacheDuration,
+                );
+
                 if (oddsResponse.statusCode != 200) {
                   throw Exception(
                     'Failed to load odds from $oddsUrl, status: ${oddsResponse.statusCode}',
@@ -317,5 +369,47 @@ class EventRepository implements IEventRepository {
         defaultValue: [],
       );
     }
+  }
+
+  // Helper method to determine if an event is finished
+  bool _isEventFinished(Map<String, dynamic> eventJson) {
+    // Check competition status if available
+    if (eventJson.containsKey('competitions') &&
+        eventJson['competitions'] is List &&
+        eventJson['competitions'].isNotEmpty) {
+      final competition = eventJson['competitions'][0];
+
+      // Check explicit status indicators
+      if (competition['status']?['type']?['name'] == "STATUS_FINAL" ||
+          competition['status']?['type']?['state'] == "post") {
+        return true;
+      }
+
+      // Check recap availability
+      if (competition['recapAvailable'] == true) {
+        return true;
+      }
+
+      // Check if live is no longer available
+      if (competition['liveAvailable'] == false) {
+        return true;
+      }
+    }
+
+    // Check date - if more than 3 hours in the past, consider finished
+    if (eventJson.containsKey('date')) {
+      try {
+        final eventDate = DateTime.parse(eventJson['date']);
+        if (eventDate.isBefore(
+          DateTime.now().subtract(const Duration(hours: 3)),
+        )) {
+          return true;
+        }
+      } catch (e) {
+        // Date parsing error, fall back to default
+      }
+    }
+
+    return false;
   }
 }

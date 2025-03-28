@@ -1,4 +1,5 @@
 import 'package:espn_app/providers/provider_factory.dart';
+import 'package:espn_app/services/hive_cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -52,14 +53,21 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = state.copyWith(cacheEnabled: value);
   }
 
-  // Méthode pour simuler la suppression du cache
+  // Méthode pour supprimer le cache
   Future<void> clearCache() async {
-    // Ici, vous pourriez implémenter la logique réelle de suppression du cache
-    // Pour l'instant, c'est juste une simulation
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      // Get the HiveCacheService instance
+      final hiveCacheService = HiveCacheService();
 
-    // On ne modifie pas l'état ici car cela n'affecte pas les paramètres,
-    // mais vous pourriez le faire si nécessaire
+      // Clear all cache
+      await hiveCacheService.clearAll();
+
+      // Wait for a small delay for UI feedback
+      await Future.delayed(const Duration(milliseconds: 500));
+    } catch (e) {
+      // Handle any error that might occur during cache clearing
+      print('Error clearing cache: $e');
+    }
   }
 }
 
