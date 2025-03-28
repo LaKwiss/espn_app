@@ -96,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              l10n.errorLoadingEvents,
+                              l10n.errorLoadingMatches,
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 color: theme.colorScheme.error,
                               ),

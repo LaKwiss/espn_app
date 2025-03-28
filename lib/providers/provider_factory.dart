@@ -1,4 +1,5 @@
 import 'package:espn_app/providers/colors_provider.dart';
+import 'package:espn_app/providers/theme_provider.dart';
 import 'package:espn_app/repositories/athlete_repository/athlete_repository.dart';
 import 'package:espn_app/repositories/athlete_repository/i_athlete_repository.dart';
 import 'package:espn_app/repositories/formation_repository/formation_repository.dart';
@@ -87,4 +88,10 @@ final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
   ref,
 ) {
   return SettingsNotifier();
+});
+
+final themeProvider = Provider<ThemeData>((ref) {
+  final settings = ref.watch(settingsProvider);
+
+  return settings.darkModeEnabled ? darkTheme : lightTheme;
 });

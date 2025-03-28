@@ -1,5 +1,7 @@
+// espn_app/lib/widgets/last_matches.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
 
 class LastMatches extends StatelessWidget {
   final String formString;
@@ -8,6 +10,9 @@ class LastMatches extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // Get localizations
+    final theme = Theme.of(context); // Get theme
+
     // Convert form string to list (e.g., "WDWLW" -> ["W", "D", "W", "L", "W"])
     final formList = formString.split('');
 
@@ -23,8 +28,11 @@ class LastMatches extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'LAST 5 MATCHES',
-              style: GoogleFonts.blackOpsOne(fontSize: 18, color: Colors.black),
+              l10n.last5Matches, // Use localization key
+              style: GoogleFonts.blackOpsOne(
+                fontSize: 18,
+                color: theme.colorScheme.onSurface, // Use theme color
+              ),
             ),
             const SizedBox(height: 16),
             Row(
@@ -39,7 +47,7 @@ class LastMatches extends StatelessWidget {
                         color: colors[result] ?? Colors.grey,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
+                            color: Colors.black.withAlpha(26), // Use withAlpha
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -47,7 +55,7 @@ class LastMatches extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          result,
+                          result, // W, D, L are often kept as is for brevity
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -62,11 +70,26 @@ class LastMatches extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildLegendItem('W', 'Win', Colors.green),
+                _buildLegendItem(
+                  'W',
+                  l10n.legendWin,
+                  Colors.green,
+                  theme,
+                ), // Use localized label
                 const SizedBox(width: 16),
-                _buildLegendItem('D', 'Draw', Colors.orange),
+                _buildLegendItem(
+                  'D',
+                  l10n.legendDraw,
+                  Colors.orange,
+                  theme,
+                ), // Use localized label
                 const SizedBox(width: 16),
-                _buildLegendItem('L', 'Loss', Colors.red),
+                _buildLegendItem(
+                  'L',
+                  l10n.legendLoss,
+                  Colors.red,
+                  theme,
+                ), // Use localized label
               ],
             ),
           ],
@@ -75,7 +98,12 @@ class LastMatches extends StatelessWidget {
     );
   }
 
-  Widget _buildLegendItem(String letter, String label, Color color) {
+  Widget _buildLegendItem(
+    String letter,
+    String label,
+    Color color,
+    ThemeData theme,
+  ) {
     return Row(
       children: [
         Container(
@@ -84,7 +112,10 @@ class LastMatches extends StatelessWidget {
           decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
         const SizedBox(width: 4),
-        Text('$letter = $label', style: const TextStyle(fontSize: 12)),
+        Text(
+          '$letter = $label',
+          style: theme.textTheme.bodySmall, // Use theme text style
+        ),
       ],
     );
   }

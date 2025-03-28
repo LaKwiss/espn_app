@@ -1,4 +1,4 @@
-// lib/widgets/tactics_view.dart
+// espn_app/lib/widgets/tactics_view.dart
 import 'dart:developer';
 
 import 'package:espn_app/models/event.dart';
@@ -10,6 +10,7 @@ import 'package:espn_app/widgets/substitutes_list.dart';
 import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
 
 /// Widget pour afficher les tactiques d'un match
 class TacticsView extends ConsumerWidget {
@@ -40,11 +41,14 @@ class TacticsView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!; // Get localizations
+    final theme = Theme.of(context); // Get theme
+
     // Extraire les identifiants nécessaires
     final leagueId = _extractLeagueId(event.league);
     final matchId = event.id;
-    final homeTeamId = event.idTeam.$1;
-    final awayTeamId = event.idTeam.$2;
+    final homeTeamId = event.idTeam.$1; // Assuming this is correct ID
+    final awayTeamId = event.idTeam.$2; // Assuming this is correct ID
 
     // Clés de cache pour les formations et joueurs
     final homeFormationKey = '$matchId-$homeTeamId';
@@ -119,15 +123,15 @@ class TacticsView extends ConsumerWidget {
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
-                const Text('Chargement des données tactiques...'),
+                Text(l10n.loadingTacticsData), // Use localization key
               ],
             ),
           );
         }
 
         // Déterminer les couleurs des équipes (pourrait être plus sophistiqué)
-        final homeColor = Colors.blue;
-        final awayColor = Colors.red;
+        final homeColor = Colors.blue; // Example color
+        final awayColor = Colors.red; // Example color
 
         // Créer les listes de substitutions
         final homeSubstitutions = _createSubstitutions(homeEnrichedPlayers);
@@ -136,14 +140,14 @@ class TacticsView extends ConsumerWidget {
         return SingleChildScrollView(
           child: Column(
             children: [
-              // Bouton pour basculer entre la vue tactique et la vue des événements
+              // Bouton pour basculer (géré par le parent via onToggleView)
 
               // Formation de l'équipe à domicile
               Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor, // Use theme color
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -154,10 +158,10 @@ class TacticsView extends ConsumerWidget {
                   ],
                 ),
                 child: FormationVisualizer(
-                  formation: homeFormation.formationName,
+                  formation: homeFormation.formationName, // API data
                   players: homeStarters,
                   teamColor: homeColor,
-                  teamName: homeTeam.name,
+                  teamName: homeTeam.name, // API data
                   isHomeTeam: true,
                   onPlayerTap: (player) {
                     _showPlayerDetails(context, player, homeColor);
@@ -170,7 +174,7 @@ class TacticsView extends ConsumerWidget {
                 substitutes: homeSubstitutes,
                 substitutions: homeSubstitutions,
                 teamColor: homeColor,
-                teamName: homeTeam.name,
+                teamName: homeTeam.name, // API data
                 onPlayerTap: (player) {
                   _showPlayerDetails(context, player, homeColor);
                 },
@@ -183,7 +187,7 @@ class TacticsView extends ConsumerWidget {
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor, // Use theme color
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -194,10 +198,10 @@ class TacticsView extends ConsumerWidget {
                   ],
                 ),
                 child: FormationVisualizer(
-                  formation: awayFormation.formationName,
+                  formation: awayFormation.formationName, // API data
                   players: awayStarters,
                   teamColor: awayColor,
-                  teamName: awayTeam.name,
+                  teamName: awayTeam.name, // API data
                   isHomeTeam: false,
                   onPlayerTap: (player) {
                     _showPlayerDetails(context, player, awayColor);
@@ -210,7 +214,7 @@ class TacticsView extends ConsumerWidget {
                 substitutes: awaySubstitutes,
                 substitutions: awaySubstitutions,
                 teamColor: awayColor,
-                teamName: awayTeam.name,
+                teamName: awayTeam.name, // API data
                 onPlayerTap: (player) {
                   _showPlayerDetails(context, player, awayColor);
                 },
@@ -223,13 +227,13 @@ class TacticsView extends ConsumerWidget {
         );
       },
       loading:
-          () => const Center(
+          () => Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Chargement des données tactiques...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(l10n.loadingTacticsData), // Use localization key
               ],
             ),
           ),
@@ -240,7 +244,9 @@ class TacticsView extends ConsumerWidget {
               children: [
                 const Icon(Icons.error_outline, size: 48, color: Colors.red),
                 const SizedBox(height: 16),
-                Text('Erreur: $error'),
+                Text(
+                  l10n.errorLoadingTactics(error.toString()),
+                ), // Use localization key
                 const SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: () {
@@ -248,7 +254,7 @@ class TacticsView extends ConsumerWidget {
                     var data = ref.refresh(formationAsyncProvider);
                     log(data.value.toString());
                   },
-                  child: const Text('Réessayer'),
+                  child: Text(l10n.tryAgain), // Use localization key
                 ),
               ],
             ),
@@ -281,6 +287,14 @@ class TacticsView extends ConsumerWidget {
         }
       }
     }
+    // Sort substitutions by minute
+    substitutions.sort((a, b) {
+      final minuteA =
+          int.tryParse(a.minute.replaceAll(RegExp(r'[^\d]'), '')) ?? 999;
+      final minuteB =
+          int.tryParse(b.minute.replaceAll(RegExp(r'[^\d]'), '')) ?? 999;
+      return minuteA.compareTo(minuteB);
+    });
 
     return substitutions;
   }
@@ -291,6 +305,8 @@ class TacticsView extends ConsumerWidget {
     EnrichedPlayerEntry player,
     Color teamColor,
   ) {
+    final l10n = AppLocalizations.of(context)!; // Get localizations
+
     showDialog(
       context: context,
       builder:
@@ -308,33 +324,42 @@ class TacticsView extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(player.displayName),
+                Expanded(
+                  // Ensure name doesn't overflow
+                  child: Text(
+                    player.displayName, // API data
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Position: ${player.positionName}'),
+                Text(
+                  '${l10n.positionLabel}: ${player.positionName} (${player.positionAbbreviation})',
+                ), // Localized label
                 const SizedBox(height: 8),
-                if (player.subbedOut) Text('Remplacé à la ${player.subMinute}'),
+                if (player.subbedOut)
+                  Text(l10n.substitutedOutAt(player.subMinute)), // Localized
                 if (player.subbedIn)
-                  Text('Entré en jeu à la ${player.subMinute}'),
+                  Text(l10n.substitutedInAt(player.subMinute)), // Localized
                 const SizedBox(height: 8),
                 if (player.hasYellowCard)
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.square, color: Colors.yellow, size: 16),
-                      SizedBox(width: 4),
-                      Text('Carton jaune'),
+                      const Icon(Icons.square, color: Colors.yellow, size: 16),
+                      const SizedBox(width: 4),
+                      Text(l10n.yellowCardLabel), // Localized
                     ],
                   ),
                 if (player.hasRedCard)
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.square, color: Colors.red, size: 16),
-                      SizedBox(width: 4),
-                      Text('Carton rouge'),
+                      const Icon(Icons.square, color: Colors.red, size: 16),
+                      const SizedBox(width: 4),
+                      Text(l10n.redCardLabel), // Localized
                     ],
                   ),
               ],
@@ -342,7 +367,7 @@ class TacticsView extends ConsumerWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Fermer'),
+                child: Text(l10n.closeButton), // Localized
               ),
             ],
           ),

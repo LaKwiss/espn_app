@@ -1,3 +1,4 @@
+// espn_app/lib/screens/main_navigation_screen.dart
 import 'dart:developer';
 
 import 'package:espn_app/screens/calendar_screen.dart';
@@ -6,6 +7,7 @@ import 'package:espn_app/providers/page_index_provider.dart';
 import 'package:espn_app/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Pas de texte directement visible dans ce widget, donc pas besoin d'importer AppLocalizations ici.
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
@@ -47,8 +49,10 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         onPageChanged: (index) {
           // Update the current page index in the provider
           ref.read(pageIndexProvider.notifier).state = index;
-          log("Page changée vers: $index"); // Debug
+          log("Page changed to: $index"); // Debug (pas besoin de localiser)
         },
+        // Les écrans contenus (HomeScreen, CalendarScreen, SettingsScreen)
+        // gèreront leur propre localisation.
         children: const [HomeScreen(), CalendarScreen(), SettingsScreen()],
       ),
     );

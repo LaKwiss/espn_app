@@ -1,8 +1,10 @@
+// espn_app/lib/screens/color_picker_screen.dart
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
 
 class ColorPickerScreen extends ConsumerStatefulWidget {
   const ColorPickerScreen({super.key});
@@ -13,6 +15,7 @@ class ColorPickerScreen extends ConsumerStatefulWidget {
 
 class _ColorState extends ConsumerState<ColorPickerScreen> {
   void _showColorPickerDialog(BuildContext context, {int? indexToUpdate}) {
+    final l10n = AppLocalizations.of(context)!; // Get localizations
     final isEditing = indexToUpdate != null;
     final initialColor =
         isEditing ? ref.read(colorsProvider)[indexToUpdate] : Colors.red;
@@ -23,19 +26,22 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text(isEditing ? 'Edit color' : 'Add new color'),
+            title: Text(
+              isEditing ? l10n.editColor : l10n.addNewColor,
+            ), // Localized title
             content: SingleChildScrollView(
               child: MaterialPicker(
                 pickerColor: initialColor,
                 onColorChanged: (color) {
                   selectedColor = color;
                 },
+                // enableLabel: true, // Optional: shows labels for colors
               ),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
+                child: Text(l10n.cancel), // Localized button
               ),
               TextButton(
                 onPressed: () {
@@ -50,7 +56,9 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
                   }
                   Navigator.of(context).pop();
                 },
-                child: Text(isEditing ? 'Update' : 'Add'),
+                child: Text(
+                  isEditing ? l10n.update : l10n.add,
+                ), // Localized button
               ),
             ],
           ),
@@ -63,12 +71,13 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // Get localizations
     // Obtenir la liste des couleurs du provider
     final colors = ref.watch(colorsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Color Picker'),
+        title: Text(l10n.colorPicker), // Localized AppBar title
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
@@ -79,10 +88,13 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              'COLORS',
+              l10n.colorsTitle, // Localized title
               style: GoogleFonts.blackOpsOne(
                 fontSize: 45,
-                color: Colors.black,
+                color:
+                    Theme.of(
+                      context,
+                    ).colorScheme.onBackground, // Use theme color
                 height: 1.0,
               ),
             ),
@@ -132,7 +144,7 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
                       ),
                     ),
                     title: Text(
-                      'Color #${index + 1}',
+                      l10n.colorIndex(index + 1), // Localized title with index
                       style: GoogleFonts.roboto(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -143,11 +155,15 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
                       children: [
                         const SizedBox(height: 4),
                         Text(
-                          'HEX: ${_colorToHex(color)}',
+                          l10n.hexValue(_colorToHex(color)), // Localized label
                           style: GoogleFonts.roboto(fontSize: 14),
                         ),
                         Text(
-                          'RGB: ${color.red}, ${color.green}, ${color.blue}',
+                          l10n.rgbValue(
+                            color.red,
+                            color.green,
+                            color.blue,
+                          ), // Localized label
                           style: GoogleFonts.roboto(fontSize: 14),
                         ),
                       ],
@@ -157,7 +173,7 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit),
-                          tooltip: 'Edit color',
+                          tooltip: l10n.editColorTooltip, // Localized tooltip
                           onPressed:
                               () => _showColorPickerDialog(
                                 context,
@@ -166,7 +182,7 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete),
-                          tooltip: 'Delete color',
+                          tooltip: l10n.deleteColorTooltip, // Localized tooltip
                           onPressed: () {
                             ref
                                 .read(colorsProvider.notifier)
@@ -184,7 +200,7 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showColorPickerDialog(context),
-        tooltip: 'Add new color',
+        tooltip: l10n.addNewColorTooltip, // Localized tooltip
         child: const Icon(Icons.add),
       ),
     );

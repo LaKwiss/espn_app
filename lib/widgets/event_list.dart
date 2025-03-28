@@ -1,8 +1,9 @@
-// lib/widgets/event_list.dart
+// espn_app/lib/widgets/event_list.dart
 import 'dart:developer' as dev;
 import 'package:espn_app/models/match_event.dart';
 import 'package:espn_app/models/team.dart';
 import 'package:espn_app/widgets/widgets.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
 
 class EventsListWidget extends StatelessWidget {
   final List<MatchEvent> events;
@@ -18,13 +19,16 @@ class EventsListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // Get localizations
+    final theme = Theme.of(context); // Get theme
+
     // Vérification si la liste est vide
     if (events.isEmpty) {
       return Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor, // Use theme color
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
@@ -32,22 +36,26 @@ class EventsListWidget extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                const Icon(
+                Icon(
                   Icons.sports_soccer_outlined,
                   size: 48,
-                  color: Colors.grey,
+                  color: Colors.grey[500], // Adjust color based on theme
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Aucun événement enregistré pour ce match',
+                Text(
+                  l10n.noEventsRecorded, // Use localization key
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Revenez plus tard pour voir les mises à jour',
+                  l10n.checkBackLaterForUpdates, // Use localization key
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
                 ),
               ],
             ),
@@ -59,13 +67,13 @@ class EventsListWidget extends StatelessWidget {
     // Trier les événements par heure de match
     final sortedEvents = _sortEventsByMatchTime(events);
     dev.log('${events.first}');
-    dev.log('Affichage de ${sortedEvents.length} événements triés');
+    dev.log('Displaying ${sortedEvents.length} sorted events');
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor, // Use theme color
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -74,8 +82,11 @@ class EventsListWidget extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Text(
-              'ÉVÉNEMENTS DU MATCH',
-              style: GoogleFonts.blackOpsOne(fontSize: 24, color: Colors.black),
+              l10n.matchEventsTitle, // Use localization key
+              style: GoogleFonts.blackOpsOne(
+                fontSize: 24,
+                color: theme.colorScheme.onBackground, // Use theme color
+              ),
             ),
           ),
           ListView.builder(
@@ -85,7 +96,13 @@ class EventsListWidget extends StatelessWidget {
             itemBuilder: (context, index) {
               final event = sortedEvents[index];
               if (event.type == MatchEventType.goal) {
-                return _buildGoalEventItem(event, index, sortedEvents);
+                return _buildGoalEventItem(
+                  context,
+                  event,
+                  index,
+                  sortedEvents,
+                  l10n,
+                ); // Pass context and l10n
               }
               return EventWidget(event: event);
             },
@@ -162,10 +179,14 @@ class EventsListWidget extends StatelessWidget {
   }
 
   Widget _buildGoalEventItem(
+    BuildContext context, // Add context
     MatchEvent event,
     int index,
     List<MatchEvent> allEvents,
+    AppLocalizations l10n, // Add l10n
   ) {
+    final theme = Theme.of(context); // Get theme
+
     try {
       // Compare with String or int based on what's available
       final homeTeamId = homeTeam.id.toString();
@@ -197,11 +218,12 @@ class EventsListWidget extends StatelessWidget {
       }
 
       // Extract player name from event text
-      String playerName = "Joueur";
+      String playerName = l10n.unknownPlayer; // Localized default
       if (event.shortText != null && event.shortText!.isNotEmpty) {
         final nameParts = event.shortText!.split(" ");
         if (nameParts.isNotEmpty) {
-          playerName = nameParts.first;
+          playerName =
+              nameParts.first; // Assumes first name is enough, adjust if needed
         }
       } else if (event.text.contains("(")) {
         final startIndex = event.text.indexOf("!");
@@ -211,18 +233,23 @@ class EventsListWidget extends StatelessWidget {
         }
       }
 
-      final teamScore =
-          effectiveTeamGoal
-              ? '$homeGoals-$awayGoals pour ${homeTeam.shortName}'
-              : '$homeGoals-$awayGoals pour ${awayTeam.shortName}';
+      final scoringTeamName =
+          effectiveTeamGoal ? homeTeam.shortName : awayTeam.shortName;
+      final teamScore = l10n.goalScoreUpdate(
+        scoringTeamName,
+        homeGoals,
+        awayGoals,
+      ); // Localized score update
 
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha: 0.1),
+          color: Colors.green.withAlpha(26), // Use withAlpha
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: Colors.green.withAlpha(51),
+          ), // Use withAlpha
         ),
         child: Row(
           children: [
@@ -231,9 +258,8 @@ class EventsListWidget extends StatelessWidget {
               alignment: Alignment.center,
               child: Text(
                 event.time,
-                style: const TextStyle(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
                   color: Colors.green,
                 ),
               ),
@@ -243,7 +269,7 @@ class EventsListWidget extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.2),
+                color: Colors.green.withAlpha(51), // Use withAlpha
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -258,9 +284,8 @@ class EventsListWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'BUT! $playerName a marqué',
-                    style: const TextStyle(
-                      fontSize: 16,
+                    l10n.goalScoredBy(playerName), // Localized goal message
+                    style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
                     ),
@@ -268,10 +293,10 @@ class EventsListWidget extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     teamScore,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black.withValues(alpha: 0.7),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withAlpha(
+                        178,
+                      ), // Use theme color
                     ),
                   ),
                 ],
@@ -285,8 +310,10 @@ class EventsListWidget extends StatelessWidget {
       // Fallback goal event display
       return ListTile(
         leading: const Icon(Icons.sports_soccer, color: Colors.green),
-        title: Text('Goal at ${event.time}'),
-        subtitle: Text('Team ID: ${event.teamId ?? "unknown"}'),
+        title: Text(l10n.goalAtTime(event.time)), // Localized fallback
+        subtitle: Text(
+          l10n.teamId(event.teamId ?? l10n.unknown),
+        ), // Localized fallback
       );
     }
   }

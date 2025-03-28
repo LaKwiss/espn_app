@@ -1,3 +1,4 @@
+// espn_app/lib/widgets/match_widget.dart
 import 'dart:math';
 
 import 'package:espn_app/models/score.dart';
@@ -8,6 +9,7 @@ import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:espn_app/models/event.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
 
 class MatchWidget extends ConsumerStatefulWidget {
   final Event event;
@@ -21,9 +23,21 @@ class MatchWidget extends ConsumerStatefulWidget {
 class _MatchWidgetState extends ConsumerState<MatchWidget> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // Get localizations
+    final currentLocale =
+        Localizations.localeOf(context).toString(); // Get current locale
+
     final parts = widget.event.name.split(" at ");
-    final awayTeamName = parts.isNotEmpty ? parts.first.trim() : "Équipe A";
-    final homeTeamName = parts.length > 1 ? parts.last.trim() : "Équipe B";
+    // Les noms d'équipe viennent probablement de l'API et n'ont pas besoin d'être localisés ici.
+    // S'il y a des fallbacks, ils devraient être localisés.
+    final awayTeamName =
+        parts.isNotEmpty
+            ? parts.first.trim()
+            : l10n.defaultAwayTeam; // Localized fallback
+    final homeTeamName =
+        parts.length > 1
+            ? parts.last.trim()
+            : l10n.defaultHomeTeam; // Localized fallback
     final possibleColors = ref.watch(colorsProvider);
 
     // Generate a random color from the possible colors list
@@ -34,12 +48,14 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
     final awayTeam = Team(
       id: widget.event.idTeam.$1,
       name: awayTeamName,
-      shortName: awayTeamName,
+      shortName:
+          awayTeamName, // Utiliser shortName venant de l'Event si disponible
     );
     final homeTeam = Team(
       id: widget.event.idTeam.$2,
       name: homeTeamName,
-      shortName: homeTeamName,
+      shortName:
+          homeTeamName, // Utiliser shortName venant de l'Event si disponible
     );
 
     // Conversion de la date (on suppose ici que event.date est au format ISO8601)
@@ -67,6 +83,8 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
         widget.event.score,
         matchDate,
         randomColor,
+        l10n,
+        currentLocale,
       ),
     );
   }
@@ -79,9 +97,12 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
     (Future<Score> home, Future<Score> away) score,
     DateTime matchDate,
     Color randomColor,
+    AppLocalizations l10n, // Passer l10n
+    String currentLocale, // Passer la locale
   ) {
     final day = matchDate.day;
-    final monthName = DateFormat.MMMM().format(matchDate);
+    // Utiliser DateFormat avec la locale pour le nom du mois
+    final monthName = DateFormat.MMMM(currentLocale).format(matchDate);
     final hourString = "${matchDate.hour.toString().padLeft(2, '0')}:";
     final minuteString = matchDate.minute.toString().padLeft(2, '0');
 
@@ -110,7 +131,7 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                       _buildTeamAvatar(homeTeam),
                     ],
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   SizedBox(
                     width: 105,
                     height: 48,
@@ -125,7 +146,9 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                     child: CircularProgressIndicator(),
                                   );
                                 } else if (snapshot.hasError) {
-                                  return const Center(child: Text('Erreur'));
+                                  return Center(
+                                    child: Text(l10n.error),
+                                  ); // Localized error
                                 } else if (snapshot.hasData) {
                                   final scores = snapshot.data!;
                                   final homeScore = scores.$1.value;
@@ -145,7 +168,7 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                         ),
                                       ),
                                       Text(
-                                        '-',
+                                        '-', // Le tiret est souvent universel
                                         style: GoogleFonts.blackOpsOne(
                                           height: 1.25,
                                           fontSize: 42,
@@ -158,9 +181,9 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                         style: GoogleFonts.blackOpsOne(
                                           height: 1.25,
                                           fontSize: 42,
-                                          color: Colors.black.withValues(
-                                            alpha: 0.5,
-                                          ),
+                                          color: Colors.black.withAlpha(
+                                            128,
+                                          ), // Use withAlpha
                                         ),
                                       ),
                                     ],
@@ -188,7 +211,9 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                   style: GoogleFonts.blackOpsOne(
                                     height: 1.25,
                                     fontSize: 32,
-                                    color: Colors.black.withValues(alpha: 0.5),
+                                    color: Colors.black.withAlpha(
+                                      128,
+                                    ), // Use withAlpha
                                   ),
                                 ),
                               ],
@@ -212,12 +237,12 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                       ),
                     ),
                     Text(
-                      monthName,
+                      monthName, // Nom du mois localisé
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.blackOpsOne(
                         height: 1.2,
                         fontSize: 16,
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: Colors.black.withAlpha(128), // Use withAlpha
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -230,7 +255,7 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  homeTeam.firstName,
+                                  homeTeam.firstName, // Nom de l'API
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.blackOpsOne(
                                     fontSize: 22,
@@ -240,14 +265,14 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                 ),
                                 if (homeTeam.secondName.isNotEmpty)
                                   Text(
-                                    homeTeam.secondName,
+                                    homeTeam.secondName, // Nom de l'API
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.blackOpsOne(
                                       fontSize: 22,
                                       height: 1.15,
-                                      color: Colors.black.withValues(
-                                        alpha: 0.5,
-                                      ),
+                                      color: Colors.black.withAlpha(
+                                        128,
+                                      ), // Use withAlpha
                                     ),
                                   ),
                               ],
@@ -258,17 +283,19 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  awayTeam.firstName,
+                                  awayTeam.firstName, // Nom de l'API
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.blackOpsOne(
                                     fontSize: 22,
                                     height: 1.15,
-                                    color: Colors.black.withValues(alpha: 0.5),
+                                    color: Colors.black.withAlpha(
+                                      128,
+                                    ), // Use withAlpha
                                   ),
                                 ),
                                 if (awayTeam.secondName.isNotEmpty)
                                   Text(
-                                    awayTeam.secondName,
+                                    awayTeam.secondName, // Nom de l'API
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.blackOpsOne(
                                       fontSize: 22,
@@ -298,8 +325,13 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
       radius: 24,
       backgroundColor: Colors.transparent,
       backgroundImage: NetworkImage(
+        // L'URL de l'image n'a pas besoin d'être localisée
         'https://a.espncdn.com/i/teamlogos/soccer/500/${team.id}.png',
       ),
+      onBackgroundImageError: (exception, stackTrace) {
+        // Fallback si l'image ne charge pas
+        // Vous pourriez afficher une icône ou des initiales ici
+      },
     );
   }
 }

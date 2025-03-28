@@ -10,7 +10,6 @@ class L10n {
     const Locale('fr'),
     const Locale('es'),
     const Locale('de'),
-    const Locale('ja'),
   ];
 
   static final List<LocalizationsDelegate> localizationsDelegates = [
@@ -42,8 +41,6 @@ class L10n {
         return 'Español';
       case 'de':
         return 'Deutsch';
-      case 'ja':
-        return '日本語';
       default:
         return 'English';
     }

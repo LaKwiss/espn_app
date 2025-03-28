@@ -147,12 +147,6 @@ class FormationRepository implements IFormationRepository {
       final positionRef =
           'http://sports.core.api.espn.com/v2/sports/soccer/leagues/ger.1/positions/$position';
 
-      switch (position) {
-        case 1:
-          return Position.GK();
-        default:
-      }
-
       dev.log('Fetching position details from: $positionRef');
 
       final response = await _apiService.get(positionRef);
@@ -169,7 +163,6 @@ class FormationRepository implements IFormationRepository {
         e,
         stack,
         'getPositionDetails',
-        defaultValue: Position.empty(),
       );
     }
   }

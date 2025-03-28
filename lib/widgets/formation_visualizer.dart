@@ -1,16 +1,17 @@
-// lib/widgets/formation_visualizer.dart
+// espn_app/lib/widgets/formation_visualizer.dart
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/formation_response.dart';
 import 'package:espn_app/widgets/soccer_field.dart';
 import 'package:espn_app/widgets/player_marker.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
 
 /// Widget de visualisation de formation tactique
 class FormationVisualizer extends StatelessWidget {
-  final String formation;
+  final String formation; // From API
   final List<EnrichedPlayerEntry> players;
   final Color teamColor;
-  final String teamName;
+  final String teamName; // From API or parent
   final bool isHomeTeam;
   final Function(EnrichedPlayerEntry)? onPlayerTap;
 
@@ -26,6 +27,8 @@ class FormationVisualizer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // Get localizations
+
     // Filtrer pour n'avoir que les titulaires
     final starters = players.where((p) => p.isStarter).toList();
 
@@ -35,8 +38,8 @@ class FormationVisualizer extends StatelessWidget {
 
     // Trouver le gardien
     final goalkeeper = starters.firstWhere(
-      (p) => p.formationPlace == 1,
-      orElse: () => starters.first,
+      (p) => p.formationPlace == 1, // Logic based on API data structure
+      orElse: () => starters.first, // Fallback if specific place isn't found
     );
 
     // Extraire les joueurs de champ (tous sauf le gardien)
@@ -70,7 +73,7 @@ class FormationVisualizer extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
-            "$teamName - $formation",
+            l10n.teamFormation(teamName, formation), // Use localized format
             style: GoogleFonts.blackOpsOne(fontSize: 18, color: teamColor),
           ),
         ),
@@ -94,8 +97,6 @@ class FormationVisualizer extends StatelessWidget {
       ],
     );
   }
-
-  //git test
 
   // Construit une rangée de joueurs
   Widget _buildPlayerRow(List<EnrichedPlayerEntry> rowPlayers) {

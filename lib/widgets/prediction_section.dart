@@ -4,6 +4,7 @@ import 'package:espn_app/screens/match_detail_screen.dart';
 import 'package:espn_app/widgets/last_5_row.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
 
 class PredictionSectionWidget extends StatelessWidget {
   const PredictionSectionWidget({
@@ -19,24 +20,30 @@ class PredictionSectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section "Past Games"
           Row(
             children: [
               Text(
-                'Past Games',
+                l10n.pastGames,
                 style: GoogleFonts.blackOpsOne(
                   fontSize: 28,
-                  color: Colors.black,
+                  color: theme.colorScheme.onSurface,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(width: 16),
-              const Icon(Icons.play_arrow, color: Colors.black, size: 32),
+              Icon(
+                Icons.play_arrow,
+                color: theme.colorScheme.onSurface,
+                size: 32,
+              ),
               const Spacer(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -45,7 +52,7 @@ class PredictionSectionWidget extends StatelessWidget {
                     homeTeam.shortName,
                     style: GoogleFonts.blackOpsOne(
                       fontSize: 28,
-                      color: Colors.black,
+                      color: theme.colorScheme.onSurface,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -55,7 +62,6 @@ class PredictionSectionWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          // Section "Away Team Rating"
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -63,7 +69,7 @@ class PredictionSectionWidget extends StatelessWidget {
                 awayTeam.shortName,
                 style: GoogleFonts.blackOpsOne(
                   fontSize: 28,
-                  color: Colors.black.withValues(alpha: 178),
+                  color: theme.colorScheme.onSurface.withAlpha(178),
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -72,88 +78,27 @@ class PredictionSectionWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 48),
-          // Section Probabilités (affichage en texte)
+
           FutureBuilder<List<Probability>>(
             future: Future.wait([
-              widget.event.probability.$3,
-              widget.event.probability.$2,
-              widget.event.probability.$1,
-            ]),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                );
-              } else if (snapshot.hasError) {
-                return Text(
-                  'Error loading probabilities',
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.blackOpsOne(fontSize: 24),
-                );
-              } else if (snapshot.hasData) {
-                final probs = snapshot.data!;
-                final awayPerc = (probs[0].value * 100).toStringAsFixed(0);
-                final drawPerc = (probs[1].value * 100).toStringAsFixed(0);
-                final homePerc = (probs[2].value * 100).toStringAsFixed(0);
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '$awayPerc% ${awayTeam.shortName}',
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 24,
-                        color: Colors.black.withValues(alpha: 255),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      '$drawPerc% DRAW',
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 24,
-                        color: Colors.black.withValues(alpha: 255),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      '$homePerc% ${homeTeam.shortName}',
-                      style: GoogleFonts.blackOpsOne(
-                        fontSize: 24,
-                        color: Colors.black.withValues(alpha: 255),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                );
-              }
-              return const SizedBox();
-            },
-          ),
-          const SizedBox(height: 16),
-          // Section Probabilités (représentation visuelle)
-          FutureBuilder<List<Probability>>(
-            future: Future.wait([
-              widget.event.probability.$3,
-              widget.event.probability.$2,
-              widget.event.probability.$1,
+              widget.event.probability.$3, // away
+              widget.event.probability.$2, // draw
+              widget.event.probability.$1, // home
             ]),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SizedBox(height: 32);
               } else if (snapshot.hasError) {
-                return Text(
-                  'Error loading probabilities',
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.blackOpsOne(fontSize: 24),
-                );
+                return const SizedBox(height: 32);
               } else if (snapshot.hasData) {
                 final probs = snapshot.data!;
                 final int awayFlex = (probs[0].value * 100).round();
                 final int drawFlex = (probs[1].value * 100).round();
                 final int homeFlex = (probs[2].value * 100).round();
+                final bool isDark =
+                    Theme.of(context).brightness == Brightness.dark;
+                final Color barColor = isDark ? Colors.white : Colors.black;
+
                 return Row(
                   children: [
                     Expanded(
@@ -162,17 +107,19 @@ class PredictionSectionWidget extends StatelessWidget {
                         children: [
                           Container(
                             height: 32,
-                            color: Colors.black.withValues(
-                              alpha: probs[0].value,
-                            ),
+                            color: barColor.withValues(alpha: probs[0].value),
                           ),
                           Text(
-                            '${awayTeam.shortName} $awayFlex%',
+                            l10n.probabilityAwayWinShort(
+                              awayTeam.shortName,
+                              probs[0].toString(),
+                            ), // Short version
                             style: GoogleFonts.blackOpsOne(
                               fontSize: 12,
-                              color: Colors.black,
+                              color: theme.colorScheme.onSurface,
                             ),
                             overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
@@ -183,17 +130,18 @@ class PredictionSectionWidget extends StatelessWidget {
                         children: [
                           Container(
                             height: 32,
-                            color: Colors.black.withValues(
-                              alpha: probs[1].value,
-                            ),
+                            color: barColor.withValues(alpha: probs[1].value),
                           ),
                           Text(
-                            'DRAW $drawFlex%',
+                            l10n.probabilityDrawShort(
+                              probs[1].toString(),
+                            ), // Short version
                             style: GoogleFonts.blackOpsOne(
                               fontSize: 12,
-                              color: Colors.black,
+                              color: theme.colorScheme.onSurface,
                             ),
                             overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),
@@ -204,17 +152,19 @@ class PredictionSectionWidget extends StatelessWidget {
                         children: [
                           Container(
                             height: 32,
-                            color: Colors.black.withValues(
-                              alpha: probs[2].value,
-                            ),
+                            color: barColor.withValues(alpha: probs[2].value),
                           ),
                           Text(
-                            '${homeTeam.shortName} $homeFlex%',
+                            l10n.probabilityHomeWinShort(
+                              homeTeam.shortName,
+                              probs[2].toString(),
+                            ),
                             style: GoogleFonts.blackOpsOne(
                               fontSize: 12,
-                              color: Colors.black,
+                              color: theme.colorScheme.onSurface,
                             ),
                             overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),

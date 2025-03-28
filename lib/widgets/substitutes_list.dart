@@ -1,14 +1,15 @@
-// lib/widgets/substitutes_list.dart
+// espn_app/lib/widgets/substitutes_list.dart
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/formation_response.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
 
 /// Widget pour afficher la liste des remplaçants
 class SubstitutesList extends StatelessWidget {
   final List<EnrichedPlayerEntry> substitutes;
   final List<Substitution> substitutions;
   final Color teamColor;
-  final String teamName;
+  final String teamName; // Team name likely from API
   final Function(EnrichedPlayerEntry)? onPlayerTap;
 
   const SubstitutesList({
@@ -22,6 +23,9 @@ class SubstitutesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // Get localizations
+    final theme = Theme.of(context); // Get theme
+
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: Container(
@@ -32,7 +36,7 @@ class SubstitutesList extends StatelessWidget {
           bottom: 8.0,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor, // Use theme color
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
             BoxShadow(
@@ -46,7 +50,9 @@ class SubstitutesList extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "$teamName - Remplaçants",
+              l10n.substitutesTitle(
+                teamName,
+              ), // Use localization key with team name
               style: GoogleFonts.blackOpsOne(fontSize: 18, color: teamColor),
             ),
             const SizedBox(height: 12),
@@ -56,7 +62,9 @@ class SubstitutesList extends StatelessWidget {
               runSpacing: 8.0,
               children:
                   substitutes
-                      .map((player) => _buildSubstituteChip(player))
+                      .map(
+                        (player) => _buildSubstituteChip(player, theme),
+                      ) // Pass theme
                       .toList(),
             ),
             // Séparateur
@@ -67,14 +75,18 @@ class SubstitutesList extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Changements",
+                    l10n.changesTitle, // Use localization key
                     style: GoogleFonts.blackOpsOne(
                       fontSize: 16,
-                      color: Colors.black87,
+                      color: theme.colorScheme.onSurface.withOpacity(
+                        0.87,
+                      ), // Use theme color
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ...substitutions.map((sub) => _buildSubstitutionItem(sub)),
+                  ...substitutions.map(
+                    (sub) => _buildSubstitutionItem(sub, theme),
+                  ), // Pass theme
                 ],
               ),
           ],
@@ -83,8 +95,19 @@ class SubstitutesList extends StatelessWidget {
     );
   }
 
-  Widget _buildSubstituteChip(EnrichedPlayerEntry player) {
+  Widget _buildSubstituteChip(EnrichedPlayerEntry player, ThemeData theme) {
     final isSubbedIn = player.subbedIn;
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color chipBackgroundColor =
+        isSubbedIn
+            ? teamColor.withOpacity(0.2)
+            : (isDark ? Colors.grey.shade800 : Colors.grey.shade200);
+    final Color chipBorderColor = isSubbedIn ? teamColor : Colors.grey.shade400;
+    final Color chipTextColor =
+        isSubbedIn ? teamColor : theme.colorScheme.onSurface.withOpacity(0.87);
+    final Color avatarBackgroundColor =
+        isSubbedIn ? teamColor : Colors.grey.shade600;
+    final Color avatarTextColor = Colors.white;
 
     return GestureDetector(
       onTap: () {
@@ -95,26 +118,20 @@ class SubstitutesList extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
         decoration: BoxDecoration(
-          color:
-              isSubbedIn
-                  ? teamColor.withOpacity(0.2)
-                  : Colors.grey.withOpacity(0.1),
+          color: chipBackgroundColor,
           borderRadius: BorderRadius.circular(16.0),
-          border: Border.all(
-            color: isSubbedIn ? teamColor : Colors.grey,
-            width: 1,
-          ),
+          border: Border.all(color: chipBorderColor, width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(
               radius: 12,
-              backgroundColor: isSubbedIn ? teamColor : Colors.grey,
+              backgroundColor: avatarBackgroundColor,
               child: Text(
-                player.jerseyNumber,
-                style: const TextStyle(
-                  color: Colors.white,
+                player.jerseyNumber, // API data
+                style: TextStyle(
+                  color: avatarTextColor,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),
@@ -122,11 +139,11 @@ class SubstitutesList extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              player.displayName,
+              player.displayName, // API data
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isSubbedIn ? teamColor : Colors.black87,
+                color: chipTextColor,
               ),
             ),
             // Indicateurs de cartons
@@ -150,7 +167,19 @@ class SubstitutesList extends StatelessWidget {
     );
   }
 
-  Widget _buildSubstitutionItem(Substitution sub) {
+  Widget _buildSubstitutionItem(Substitution sub, ThemeData theme) {
+    final Color textColor = theme.colorScheme.onSurface.withOpacity(0.87);
+
+    // Ensure player names are available, provide fallback if necessary
+    final String playerInName =
+        sub.playerIn is EnrichedPlayerEntry
+            ? (sub.playerIn as EnrichedPlayerEntry).displayName
+            : 'Unknown'; // Fallback name
+    final String playerOutName =
+        sub.playerOut is EnrichedPlayerEntry
+            ? (sub.playerOut as EnrichedPlayerEntry).displayName
+            : 'Unknown'; // Fallback name
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
@@ -162,7 +191,7 @@ class SubstitutesList extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              sub.minute,
+              sub.minute, // API data (e.g., "65'")
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
@@ -177,12 +206,12 @@ class SubstitutesList extends StatelessWidget {
           Expanded(
             flex: 1,
             child: Text(
-              "${sub.playerIn.jerseyNumber} ${sub.playerIn is EnrichedPlayerEntry ? (sub.playerIn as EnrichedPlayerEntry).displayName : ''}",
+              "${sub.playerIn.jerseyNumber} $playerInName", // API data
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.black87,
+                color: textColor,
               ),
             ),
           ),
@@ -193,12 +222,12 @@ class SubstitutesList extends StatelessWidget {
           Expanded(
             flex: 1,
             child: Text(
-              "${sub.playerOut.jerseyNumber} ${sub.playerOut is EnrichedPlayerEntry ? (sub.playerOut as EnrichedPlayerEntry).displayName : ''}",
+              "${sub.playerOut.jerseyNumber} $playerOutName", // API data
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.black87,
+                color: textColor,
               ),
             ),
           ),

@@ -21,24 +21,4 @@ class Position extends Equatable {
       abbreviation: json['abbreviation'] as String,
     );
   }
-
-  static Position empty() {
-    return Position(id: '', name: '', abbreviation: '');
-  }
-
-  static Position GK() {
-    return Position(id: '1', name: 'Goalkeeper', abbreviation: 'GK');
-  }
-
-  static Position DF() {
-    return Position(id: '2', name: 'Defender', abbreviation: 'DF');
-  }
-
-  static Position MF() {
-    return Position(id: '3', name: 'Midfielder', abbreviation: 'MF');
-  }
-
-  static Position FW() {
-    return Position(id: '4', name: 'Forward', abbreviation: 'FW');
-  }
 }

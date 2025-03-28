@@ -1,67 +1,630 @@
 {
   "@@locale": "en",
-  
+  "@@last_modified": "2025-03-28T03:08:00.000Z",
   "appTitle": "ESPN App",
-  "homeTitle": "HOME",
-  "calendarTitle": "CALENDAR",
-  "settingsTitle": "SETTINGS",
-  
-  "leagueSelector": "Select a league",
-  "bundesliga": "Bundesliga",
-  "laLiga": "LALIGA",
-  "ligue1": "French Ligue 1",
-  "premierLeague": "Premier League",
-  "serieA": "Italian Serie A",
-  "europaLeague": "UEFA Europa League",
-  "championsLeague": "Champions League",
-  
-  "matchEvents": "EVENTS",
-  "matchFormations": "FORMATIONS",
-  "upcoming": "UPCOMING",
-  "inProgress": "IN PROGRESS",
-  "finished": "FINISHED",
-  
-  "noEventsAvailable": "No events available for this league",
-  "loadingEvents": "Loading events...",
-  "errorLoadingEvents": "Error loading events",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "noEventsAvailable": "No events available",
+  "@noEventsAvailable": {
+    "description": "Text shown when no events/matches are found for the current view"
+  },
+  "errorLoadingEventsGeneric": "Error loading events: {error}",
+  "@errorLoadingEventsGeneric": {
+    "description": "Generic error message when events fail to load",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Network error"
+      }
+    }
+  },
   "tryAgain": "Try Again",
-  
-  "notifications": "Notifications",
-  "notificationsDescription": "Get the latest updates about matches",
-  "darkMode": "Dark Mode",
-  "darkModeDescription": "Switch between light and dark theme",
-  "language": "Language",
-  "languageDescription": "Select your preferred language",
-  "cacheData": "Cache Data",
-  "cacheDataDescription": "Store data locally for faster loading",
-  "clearCache": "Clear Cache",
-  "clearCacheDescription": "Delete all stored data",
-  "colorPicker": "Color Picker",
-  "colorPickerDescription": "Select a color for the match widget",
-  "about": "About",
-  "aboutDescription": "Learn more about the app",
-  "visitEspn": "Visit ESPN",
-  "visitEspnDescription": "Go to the official ESPN website",
-  
+  "@tryAgain": {
+    "description": "Button text to retry an action after an error"
+  },
+  "calendarTitle": "CALENDAR",
+  "@calendarTitle": {
+    "description": "Title for the calendar screen"
+  },
+  "errorLoadingMatches": "Failed to load matches",
+  "@errorLoadingMatches": {
+    "description": "Error message shown specifically in the calendar when matches fail to load"
+  },
+  "noMatchesOnDate": "No matches scheduled on {date}",
+  "@noMatchesOnDate": {
+    "description": "Text shown when no matches are found for the selected date",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "March 28, 2025"
+      }
+    }
+  },
+  "tryAnotherDateOrLeague": "Try selecting another date or league",
+  "@tryAnotherDateOrLeague": {
+    "description": "Suggestion text when no matches are found"
+  },
+  "leagueBundesliga": "Bundesliga",
+  "leagueLaLiga": "LALIGA",
+  "leagueLigue1": "French Ligue 1",
+  "leaguePremierLeague": "Premier League",
+  "leagueSerieA": "Italian Serie A",
+  "leagueEuropaLeague": "UEFA Europa League",
+  "leagueChampionsLeague": "Champions League",
+  "@leagueBundesliga": {
+    "description": "League name"
+  },
+  "@leagueLaLiga": {
+    "description": "League name"
+  },
+  "@leagueLigue1": {
+    "description": "League name"
+  },
+  "@leaguePremierLeague": {
+    "description": "League name"
+  },
+  "@leagueSerieA": {
+    "description": "League name"
+  },
+  "@leagueEuropaLeague": {
+    "description": "League name"
+  },
+  "@leagueChampionsLeague": {
+    "description": "League name"
+  },
+  "matchStatusInProgress": "IN PROGRESS",
+  "@matchStatusInProgress": {
+    "description": "Label indicating a match is currently being played"
+  },
+  "matchStatusFinished": "FINISHED",
+  "@matchStatusFinished": {
+    "description": "Label indicating a match has ended"
+  },
+  "matchStatusUpcoming": "UPCOMING",
+  "@matchStatusUpcoming": {
+    "description": "Label indicating a match has not started yet"
+  },
+  "defaultAwayTeam": "Away Team",
+  "@defaultAwayTeam": {
+    "description": "Default name for the away team if not available from API"
+  },
+  "defaultHomeTeam": "Home Team",
+  "@defaultHomeTeam": {
+    "description": "Default name for the home team if not available from API"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Generic error text"
+  },
   "pastGames": "Past Games",
-  "win": "Win",
-  "draw": "Draw",
-  "loss": "Loss",
-  
-  "goal": "GOAL!",
-  "goalsFor": "for",
-  "scored": "scored",
-  
-  "substitutes": "Substitutes",
-  "changes": "Changes",
-  
-  "clearCacheQuestion": "Are you sure you want to clear all cached data?",
-  "cancel": "CANCEL",
-  "clear": "CLEAR",
+  "@pastGames": {
+    "description": "Title for the section showing past game results"
+  },
+  "errorLoadingProbabilities": "Error loading probabilities",
+  "@errorLoadingProbabilities": {
+    "description": "Error message when win probabilities fail to load"
+  },
+  "probabilityAwayWin": "{teamName} WIN {percentage}",
+  "@probabilityAwayWin": {
+    "description": "Text showing the win probability for the away team",
+    "placeholders": {
+      "teamName": {
+        "type": "String",
+        "example": "FCB"
+      },
+      "percentage": {
+        "type": "String",
+        "example": "35"
+      }
+    }
+  },
+  "probabilityDraw": "DRAW {percentage}",
+  "@probabilityDraw": {
+    "description": "Text showing the probability of a draw",
+    "placeholders": {
+      "percentage": {
+        "type": "String",
+        "example": "25"
+      }
+    }
+  },
+  "probabilityHomeWin": "{teamName} WIN {percentage}",
+  "@probabilityHomeWin": {
+    "description": "Text showing the win probability for the home team",
+    "placeholders": {
+      "teamName": {
+        "type": "String",
+        "example": "RMA"
+      },
+      "percentage": {
+        "type": "String",
+        "example": "40"
+      }
+    }
+  },
+  "probabilityAwayWinShort": "{teamName} {percentage}",
+  "@probabilityAwayWinShort": {
+    "description": "Short text showing the win probability for the away team (used in bar)",
+    "placeholders": {
+      "teamName": {
+        "type": "String",
+        "example": "FCB"
+      },
+      "percentage": {
+        "type": "String",
+        "example": "35"
+      }
+    }
+  },
+  "probabilityDrawShort": "DRAW {percentage}",
+  "@probabilityDrawShort": {
+    "description": "Short text showing the probability of a draw (used in bar)",
+    "placeholders": {
+      "percentage": {
+        "type": "String",
+        "example": "25"
+      }
+    }
+  },
+  "probabilityHomeWinShort": "{teamName} {percentage}",
+  "@probabilityHomeWinShort": {
+    "description": "Short text showing the win probability for the home team (used in bar)",
+    "placeholders": {
+      "teamName": {
+        "type": "String",
+        "example": "RMA"
+      },
+      "percentage": {
+        "type": "String",
+        "example": "40"
+      }
+    }
+  },
+  "noEventsRecorded": "No events recorded for this match yet.",
+  "@noEventsRecorded": {
+    "description": "Message shown when the list of match events is empty"
+  },
+  "checkBackLaterForUpdates": "Check back later for live updates or results.",
+  "@checkBackLaterForUpdates": {
+    "description": "Secondary message shown when the list of match events is empty"
+  },
+  "matchEventsTitle": "MATCH EVENTS",
+  "@matchEventsTitle": {
+    "description": "Title for the match events list"
+  },
+  "unknownPlayer": "Unknown Player",
+  "@unknownPlayer": {
+    "description": "Default text for a player when their name is unknown"
+  },
+  "goalScoreUpdate": "{teamName} takes the lead! Score: {homeGoals} - {awayGoals}",
+  "@goalScoreUpdate": {
+    "description": "Text displayed after a goal, showing the new score",
+    "placeholders": {
+      "teamName": {
+        "type": "String",
+        "example": "FC Barcelona"
+      },
+      "homeGoals": {
+        "type": "int",
+        "example": "1"
+      },
+      "awayGoals": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "goalScoredBy": "GOAL! Scored by {playerName}",
+  "@goalScoredBy": {
+    "description": "Text indicating a goal was scored",
+    "placeholders": {
+      "playerName": {
+        "type": "String",
+        "example": "L. Messi"
+      }
+    }
+  },
+  "goalAtTime": "Goal at {time}",
+  "@goalAtTime": {
+    "description": "Fallback text for a goal event if details are missing",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "45+1'"
+      }
+    }
+  },
+  "teamId": "Team ID: {id}",
+  "@teamId": {
+    "description": "Fallback text showing the team ID for an event",
+    "placeholders": {
+      "id": {
+        "type": "String",
+        "example": "12345"
+      }
+    }
+  },
+  "unknown": "Unknown",
+  "@unknown": {
+    "description": "Generic 'Unknown' text"
+  },
+  "last5Matches": "LAST 5 MATCHES",
+  "@last5Matches": {
+    "description": "Title for the last 5 matches display"
+  },
+  "legendWin": "Win",
+  "@legendWin": {
+    "description": "Legend label for a win"
+  },
+  "legendDraw": "Draw",
+  "@legendDraw": {
+    "description": "Legend label for a draw"
+  },
+  "legendLoss": "Loss",
+  "@legendLoss": {
+    "description": "Legend label for a loss"
+  },
+  "eventsTab": "Events",
+  "@eventsTab": {
+    "description": "Label for the 'Events' tab in match details"
+  },
+  "formationsTab": "Formations",
+  "@formationsTab": {
+    "description": "Label for the 'Formations' tab in match details"
+  },
+  "informationWillFollow": "Information will follow",
+  "@informationWillFollow": {
+    "description": "Message shown for upcoming matches in the events/formations section"
+  },
+  "checkBackAfterKickoff": "Check back after kick-off for live details.",
+  "@checkBackAfterKickoff": {
+    "description": "Secondary message for upcoming matches in the events/formations section"
+  },
+  "refresh": "Refresh",
+  "@refresh": {
+    "description": "Button text to refresh data"
+  },
+  "loadingEvents": "Loading events...",
+  "@loadingEvents": {
+    "description": "Text shown while match events are loading"
+  },
+  "loadingTacticsData": "Loading tactical data...",
+  "@loadingTacticsData": {
+    "description": "Text shown while formation/tactics data is loading"
+  },
+  "errorLoadingTactics": "Error loading tactics: {error}",
+  "@errorLoadingTactics": {
+    "description": "Error message when tactics data fails to load",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Data not found"
+      }
+    }
+  },
+  "positionLabel": "Position",
+  "@positionLabel": {
+    "description": "Label for player position in details dialog"
+  },
+  "substitutedOutAt": "Substituted out at {minute}",
+  "@substitutedOutAt": {
+    "description": "Text indicating when a player was substituted off",
+    "placeholders": {
+      "minute": {
+        "type": "String",
+        "example": "75'"
+      }
+    }
+  },
+  "substitutedInAt": "Substituted in at {minute}",
+  "@substitutedInAt": {
+    "description": "Text indicating when a player was substituted on",
+    "placeholders": {
+      "minute": {
+        "type": "String",
+        "example": "60'"
+      }
+    }
+  },
+  "yellowCardLabel": "Yellow Card",
+  "@yellowCardLabel": {
+    "description": "Label indicating a player received a yellow card"
+  },
+  "redCardLabel": "Red Card",
+  "@redCardLabel": {
+    "description": "Label indicating a player received a red card"
+  },
+  "closeButton": "Close",
+  "@closeButton": {
+    "description": "Text for a close button in dialogs"
+  },
+  "substitutesTitle": "{teamName} - Substitutes",
+  "@substitutesTitle": {
+    "description": "Title for the substitutes list",
+    "placeholders": {
+      "teamName": {
+        "type": "String",
+        "example": "Arsenal"
+      }
+    }
+  },
+  "changesTitle": "Changes",
+  "@changesTitle": {
+    "description": "Title for the list of substitutions made"
+  },
+  "teamFormation": "{teamName} Formation ({formation})",
+  "@teamFormation": {
+    "description": "Text showing the team name and their formation",
+    "placeholders": {
+      "teamName": {
+        "type": "String",
+        "example": "Liverpool"
+      },
+      "formation": {
+        "type": "String",
+        "example": "4-3-3"
+      }
+    }
+  },
+  "hideEventsTooltip": "Hide Events",
+  "@hideEventsTooltip": {
+    "description": "Tooltip for the button to hide match events"
+  },
+  "showEventsTooltip": "Show Events",
+  "@showEventsTooltip": {
+    "description": "Tooltip for the button to show match events"
+  },
+  "errorLoadingScores": "Error loading scores",
+  "@errorLoadingScores": {
+    "description": "Error message when final scores fail to load"
+  },
+  "settingsTitle": "SETTINGS",
+  "@settingsTitle": {
+    "description": "Title for the settings screen"
+  },
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Label for the notifications setting"
+  },
+  "notificationsDescription": "Receive match start and goal alerts (Coming soon)",
+  "@notificationsDescription": {
+    "description": "Description for the notifications setting"
+  },
+  "notificationsUnderDevelopment": "Notifications are still under development.",
+  "@notificationsUnderDevelopment": {
+    "description": "Snackbar message shown when tapping the disabled notifications setting"
+  },
+  "darkMode": "Dark Mode",
+  "@darkMode": {
+    "description": "Label for the dark mode setting"
+  },
+  "darkModeDescription": "Enable dark theme for the app",
+  "@darkModeDescription": {
+    "description": "Description for the dark mode setting"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Label for the language setting"
+  },
+  "languageDescription": "Choose the application language",
+  "@languageDescription": {
+    "description": "Description for the language setting"
+  },
+  "languageName": "{code}",
+  "@languageName": {
+    "description": "Display name for a language, using its code.",
+    "placeholders": {
+      "code": {
+        "type": "String",
+        "example": "en"
+      }
+    }
+  },
+  "languageName_en": "English",
+  "languageName_fr": "Français",
+  "languageName_es": "Español",
+  "languageName_de": "Deutsch",
+  "cacheData": "Cache Data",
+  "@cacheData": {
+    "description": "Label for the data caching setting"
+  },
+  "cacheDataDescription": "Store match data locally for offline access and faster loading",
+  "@cacheDataDescription": {
+    "description": "Description for the data caching setting"
+  },
+  "clearCache": "Clear Cache",
+  "@clearCache": {
+    "description": "Label for the clear cache action"
+  },
+  "clearCacheDescription": "Remove all locally stored match data",
+  "@clearCacheDescription": {
+    "description": "Description for the clear cache action"
+  },
+  "clearCacheConfirmation": "Are you sure you want to clear all cached data? This cannot be undone.",
+  "@clearCacheConfirmation": {
+    "description": "Confirmation message before clearing the cache"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Text for a cancel button"
+  },
   "clearingCache": "Clearing cache...",
-  "cacheCleared": "Cache cleared successfully",
-  
-  "version": "Version",
-  "build": "Build",
-  "developedWith": "Developed with Flutter"
+  "@clearingCache": {
+    "description": "Snackbar message shown while cache is being cleared"
+  },
+  "cacheCleared": "Cache cleared successfully.",
+  "@cacheCleared": {
+    "description": "Snackbar message shown after cache is cleared"
+  },
+  "clear": "Clear",
+  "@clear": {
+    "description": "Text for the confirmation button to clear cache"
+  },
+  "colorPicker": "Color Picker",
+  "@colorPicker": {
+    "description": "Label for the color picker setting/screen"
+  },
+  "colorPickerDescription": "Customize UI colors",
+  "@colorPickerDescription": {
+    "description": "Description for the color picker setting"
+  },
+  "about": "About",
+  "@about": {
+    "description": "Label for the 'About' section/dialog"
+  },
+  "aboutDescription": "View application information and credits",
+  "@aboutDescription": {
+    "description": "Description for the 'About' setting"
+  },
+  "aboutAppDescription": "This app displays soccer match information using data from ESPN APIs. It is intended for informational and demonstration purposes.",
+  "@aboutAppDescription": {
+    "description": "Main text content in the About dialog"
+  },
+  "copyright": "Data provided by ESPN. All rights reserved.",
+  "@copyright": {
+    "description": "Copyright notice in the About dialog"
+  },
+  "visitEspn": "Visit ESPN",
+  "@visitEspn": {
+    "description": "Label for the link to visit the ESPN website"
+  },
+  "visitEspnDescription": "Go to the official ESPN soccer website",
+  "@visitEspnDescription": {
+    "description": "Description for the link to visit the ESPN website"
+  },
+  "couldNotLaunchUrl": "Could not launch {url}",
+  "@couldNotLaunchUrl": {
+    "description": "Error message shown when a URL cannot be opened",
+    "placeholders": {
+      "url": {
+        "type": "String",
+        "example": "https://www.espn.com"
+      }
+    }
+  },
+  "versionInfo": "Version: {version} (Build: {buildNumber})",
+  "@versionInfo": {
+    "description": "Text displaying the app version and build number",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "1.0.0"
+      },
+      "buildNumber": {
+        "type": "String",
+        "example": "1"
+      }
+    }
+  },
+  "developedWith": "Developed with Flutter",
+  "@developedWith": {
+    "description": "Text indicating the app was developed using Flutter"
+  },
+  "editColor": "Edit color",
+  "@editColor": {
+    "description": "Title for the dialog when editing a color"
+  },
+  "addNewColor": "Add new color",
+  "@addNewColor": {
+    "description": "Title for the dialog when adding a new color"
+  },
+  "update": "Update",
+  "@update": {
+    "description": "Button text to confirm updating something"
+  },
+  "add": "Add",
+  "@add": {
+    "description": "Button text to confirm adding something"
+  },
+  "colorsTitle": "COLORS",
+  "@colorsTitle": {
+    "description": "Title on the color picker screen"
+  },
+  "colorIndex": "Color #{index}",
+  "@colorIndex": {
+    "description": "Label for a color entry in the list",
+    "placeholders": {
+      "index": {
+        "type": "int",
+        "example": "1"
+      }
+    }
+  },
+  "hexValue": "HEX: {hex}",
+  "@hexValue": {
+    "description": "Label showing the HEX value of a color",
+    "placeholders": {
+      "hex": {
+        "type": "String",
+        "example": "#FF0000"
+      }
+    }
+  },
+  "rgbValue": "RGB: ({r}, {g}, {b})",
+  "@rgbValue": {
+    "description": "Label showing the RGB value of a color",
+    "placeholders": {
+      "r": {
+        "type": "int",
+        "example": "255"
+      },
+      "g": {
+        "type": "int",
+        "example": "0"
+      },
+      "b": {
+        "type": "int",
+        "example": "0"
+      }
+    }
+  },
+  "editColorTooltip": "Edit color",
+  "@editColorTooltip": {
+    "description": "Tooltip for the edit color button"
+  },
+  "deleteColorTooltip": "Delete color",
+  "@deleteColorTooltip": {
+    "description": "Tooltip for the delete color button"
+  },
+  "addNewColorTooltip": "Add new color",
+  "@addNewColorTooltip": {
+    "description": "Tooltip for the add new color floating action button"
+  },
+  "headerAt": "AT",
+  "@headerAt": {
+    "description": "'AT' displayed between team names in the header"
+  },
+  "headerFirstLeg": "FIRST LEG",
+  "@headerFirstLeg": {
+    "description": "Label indicating it's the first leg of a match"
+  },
+  "statsGoals": "Goals",
+  "statsAssists": "Assists",
+  "statsShots": "Shots",
+  "statsSaves": "Saves",
+  "statsFouls": "Fouls",
+  "statsYellowCards": "Yellow Cards",
+  "statsRedCards": "Red Cards",
+  "@statsGoals": {
+    "description": "Label for Goals statistic"
+  },
+  "@statsAssists": {
+    "description": "Label for Assists statistic"
+  },
+  "@statsShots": {
+    "description": "Label for Shots statistic"
+  },
+  "@statsSaves": {
+    "description": "Label for Saves statistic"
+  },
+  "@statsFouls": {
+    "description": "Label for Fouls statistic"
+  },
+  "@statsYellowCards": {
+    "description": "Label for Yellow Cards statistic"
+  },
+  "@statsRedCards": {
+    "description": "Label for Red Cards statistic"
+  }
 }

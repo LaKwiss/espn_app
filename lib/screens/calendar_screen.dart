@@ -1,13 +1,15 @@
+// espn_app/lib/screens/calendar_screen.dart
 import 'package:espn_app/models/event.dart';
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
-import 'package:espn_app/providers/theme_provider.dart';
 import 'package:espn_app/repositories/event_repository/i_event_repository.dart';
 import 'package:espn_app/services/asset_service.dart';
 import 'package:espn_app/services/date_formatter_service.dart';
 import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -22,19 +24,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _selectedDay = DateTime.now();
   int _selectedYear = DateTime.now().year;
 
-  // Liste des 20 dernières années
   List<int> _availableYears = [];
 
-  // Événements pour la date sélectionnée
   List<Event> _eventsForSelectedDate = [];
   bool _isLoadingEvents = false;
   String? _errorMessage;
 
-  // Options de filtre
   final bool _showUpcoming = true;
   final bool _showCompleted = true;
 
-  // Services
   late final IEventRepository _eventRepository;
   late final AssetService _assetService;
   late final DateFormatterService _dateFormatter;
@@ -43,41 +41,31 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   void initState() {
     super.initState();
 
-    // Initialiser les services immédiatement
     _eventRepository = ref.read(eventRepositoryProvider);
     _assetService = ref.read(assetServiceProvider);
     _dateFormatter = ref.read(dateFormatterServiceProvider);
 
-    // Initialiser la liste des années disponibles
     _initAvailableYears();
 
-    // Initialiser la ligue et récupérer les événements initiaux
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final selectedState = ref.read(selectedLeagueProvider);
       final leagueCode = selectedState.$2.isEmpty ? 'ger.1' : selectedState.$2;
 
-      // Si aucune ligue n'est sélectionnée, utiliser 'ger.1' par défaut
       if (selectedState.$2.isEmpty) {
         ref.read(selectedLeagueProvider.notifier).selectCode(leagueCode);
-        ref.read(selectedLeagueProvider.notifier).selectLeague('Bundesliga');
       }
-
-      // Récupérer les événements initiaux pour aujourd'hui
       _fetchEventsForSelectedDate();
     });
   }
 
-  // Initialise la liste des 20 dernières années
   void _initAvailableYears() {
     final currentYear = DateTime.now().year;
     _availableYears = List.generate(20, (index) => currentYear - 19 + index);
   }
 
-  // S'assure que l'année sélectionnée est dans la liste des années disponibles
   void _ensureYearIsAvailable() {
     if (!_availableYears.contains(_selectedYear)) {
       setState(() {
-        // Régénérer la liste centrée autour de l'année sélectionnée
         _availableYears = List.generate(
           20,
           (index) => _selectedYear - 10 + index,
@@ -95,11 +83,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     });
 
     try {
-      // Obtenir le code de la ligue sélectionnée ou utiliser 'ger.1' par défaut
       final selectedState = ref.read(selectedLeagueProvider);
       final leagueCode = selectedState.$2.isEmpty ? 'ger.1' : selectedState.$2;
-
-      // Récupérer les événements pour la date et la ligue sélectionnées
       final events = await _eventRepository.fetchEventsByDate(
         leagueCode,
         _selectedDay,
@@ -119,25 +104,49 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Échec du chargement des événements: $e';
+        _errorMessage = AppLocalizations.of(context)!.errorLoadingMatches;
         _isLoadingEvents = false;
         _eventsForSelectedDate = [];
       });
     }
   }
 
+  String _getLocalizedLeagueName(String leagueCode, AppLocalizations l10n) {
+    switch (leagueCode) {
+      case 'ger.1':
+        return l10n.leagueBundesliga;
+      case 'esp.1':
+        return l10n.leagueLaLiga;
+      case 'fra.1':
+        return l10n.leagueLigue1;
+      case 'eng.1':
+        return l10n.leaguePremierLeague;
+      case 'ita.1':
+        return l10n.leagueSerieA;
+      case 'uefa.europa':
+        return l10n.leagueEuropaLeague;
+      case 'uefa.champions':
+        return l10n.leagueChampionsLeague;
+      default:
+        return l10n.leagueChampionsLeague; // Fallback
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Obtenir le thème courant
+    final l10n = AppLocalizations.of(context)!;
+    final currentLocale = Localizations.localeOf(context).toString();
+
     final theme = Theme.of(context);
     final textTheme = ref.watch(themeProvider).textTheme;
     final colorScheme = theme.colorScheme;
 
-    // Observer les changements dans la ligue sélectionnée
     final selectedLeagueState = ref.watch(selectedLeagueProvider);
-    final String leagueName = selectedLeagueState.$1;
+    final String leagueName = _getLocalizedLeagueName(
+      selectedLeagueState.$2,
+      l10n,
+    );
 
-    // Si la ligue a changé, recharger les événements
     ref.listen<(String, String)>(selectedLeagueProvider, (previous, current) {
       if (previous?.$2 != current.$2) {
         _fetchEventsForSelectedDate();
@@ -147,7 +156,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Custom AppBar - Utilise le comportement par défaut pour le LeagueSelector
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: CustomAppBar(
@@ -156,7 +164,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
           ),
 
-          // Calendar Title avec sélecteur d'année
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
@@ -165,8 +172,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('CALENDAR', style: textTheme.headlineLarge),
-                // Year Selector
+                Text(l10n.calendarTitle, style: textTheme.headlineLarge),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   decoration: BoxDecoration(
@@ -178,7 +184,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ),
                   child: DropdownButton<int>(
                     value: _selectedYear,
-                    underline: Container(), // Supprimer la ligne par défaut
+                    underline: Container(),
                     dropdownColor:
                         theme.brightness == Brightness.light
                             ? Colors.grey[200]
@@ -191,20 +197,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       if (value != null) {
                         setState(() {
                           _selectedYear = value;
-                          // Mettre à jour le jour focalisé avec l'année sélectionnée
                           _focusedDay = DateTime(
                             _selectedYear,
                             _focusedDay.month,
-                            // S'assurer que le jour est valide dans le nouveau mois/année
                             _focusedDay.day >
                                     DateTime(
                                       _selectedYear,
-                                      _focusedDay.month,
+                                      _focusedDay.month + 1,
                                       0,
                                     ).day
                                 ? DateTime(
                                   _selectedYear,
-                                  _focusedDay.month,
+                                  _focusedDay.month + 1,
                                   0,
                                 ).day
                                 : _focusedDay.day,
@@ -212,7 +216,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           _selectedDay = _focusedDay;
                         });
 
-                        // Récupérer les événements pour la nouvelle date
                         _fetchEventsForSelectedDate();
                       }
                     },
@@ -234,13 +237,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
           ),
 
-          // Calendar widget
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: _buildCalendar(),
+            child: _buildCalendar(l10n),
           ),
 
-          // Selected day events
           Expanded(
             child:
                 _isLoadingEvents
@@ -250,9 +251,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ),
                     )
                     : _errorMessage != null
-                    ? _buildErrorWidget()
+                    ? _buildErrorWidget(l10n)
                     : _eventsForSelectedDate.isEmpty
-                    ? _buildEmptyEventsWidget()
+                    ? _buildEmptyEventsWidget(l10n, currentLocale)
                     : _buildEventsList(),
           ),
         ],
@@ -260,7 +261,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildErrorWidget() {
+  Widget _buildErrorWidget(AppLocalizations l10n) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
@@ -271,7 +272,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
           const SizedBox(height: 16),
           Text(
-            'Erreur lors du chargement des matchs',
+            l10n.errorLoadingMatches, // Utiliser la clé de localisation
             style: textTheme.titleMedium?.copyWith(color: Colors.red[700]),
           ),
           const SizedBox(height: 8),
@@ -283,17 +284,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _fetchEventsForSelectedDate,
-            child: const Text('Réessayer'),
+            child: Text(l10n.tryAgain),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmptyEventsWidget() {
+  Widget _buildEmptyEventsWidget(AppLocalizations l10n, String currentLocale) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final isDark = theme.brightness == Brightness.dark;
+    final formattedDate = DateFormat.yMMMMd(currentLocale).format(_selectedDay);
 
     return Center(
       child: Column(
@@ -306,15 +308,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Aucun match le ${_dateFormatter.formatDate(_selectedDay)}',
+            l10n.noMatchesOnDate(formattedDate),
             style: textTheme.bodyLarge?.copyWith(
               color: isDark ? Colors.grey[300] : Colors.grey[700],
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Essayez de sélectionner une autre date ou ligue',
+            l10n.tryAnotherDateOrLeague,
             style: textTheme.bodyMedium,
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -335,12 +339,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendar() {
+  Widget _buildCalendar(AppLocalizations l10n) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = theme.colorScheme.primary;
+    final currentLocale = Localizations.localeOf(context).toString();
 
     return TableCalendar(
+      locale: currentLocale,
       firstDay: DateTime.utc(1970, 1, 1),
       lastDay: DateTime.utc(2050, 12, 31),
       focusedDay: _focusedDay,
@@ -353,14 +359,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           _selectedDay = selectedDay;
           _focusedDay = focusedDay;
 
-          // Mettre à jour l'année sélectionnée si nécessaire
           if (_selectedDay.year != _selectedYear) {
             _selectedYear = _selectedDay.year;
             _ensureYearIsAvailable();
           }
         });
 
-        // Récupérer les événements pour la date sélectionnée
         _fetchEventsForSelectedDate();
       },
       onFormatChanged: (format) {
@@ -372,7 +376,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         setState(() {
           _focusedDay = focusedDay;
 
-          // Mettre à jour l'année si elle a changé
           if (_focusedDay.year != _selectedYear) {
             _selectedYear = _focusedDay.year;
             _ensureYearIsAvailable();
@@ -380,7 +383,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         });
       },
       calendarStyle: CalendarStyle(
-        // Jour sélectionné
         selectedDecoration: BoxDecoration(
           color: primaryColor,
           shape: BoxShape.circle,
@@ -390,7 +392,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           fontWeight: FontWeight.bold,
         ),
 
-        // Aujourd'hui
         todayDecoration: BoxDecoration(
           color: isDark ? Colors.grey[800] : Colors.grey[300],
           shape: BoxShape.circle,
@@ -400,7 +401,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           fontWeight: FontWeight.bold,
         ),
 
-        // Jours normaux
         defaultTextStyle: TextStyle(color: primaryColor),
         weekendTextStyle: TextStyle(
           color: isDark ? Colors.red[200] : Colors.red[700],
@@ -409,7 +409,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           color: isDark ? Colors.grey[600] : Colors.grey[400],
         ),
 
-        // Marqueurs
         markersMaxCount: 3,
         markerDecoration: BoxDecoration(
           color: isDark ? Colors.red[700] : Colors.red,
@@ -426,6 +425,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         formatButtonTextStyle: theme.textTheme.labelLarge!,
+        titleTextFormatter:
+            (date, locale) => DateFormat.yMMMM(locale).format(date),
         titleTextStyle: theme.textTheme.titleMedium!,
         leftChevronIcon: Icon(Icons.chevron_left, color: primaryColor),
         rightChevronIcon: Icon(Icons.chevron_right, color: primaryColor),
@@ -436,6 +437,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
       ),
       daysOfWeekStyle: DaysOfWeekStyle(
+        dowTextFormatter:
+            (date, locale) =>
+                DateFormat.E(locale).format(date).substring(0, 1).toUpperCase(),
         weekdayStyle: TextStyle(
           color: primaryColor,
           fontWeight: FontWeight.bold,
@@ -445,9 +449,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           fontWeight: FontWeight.bold,
         ),
       ),
-      // Style global
       calendarBuilders: CalendarBuilders(
-        // Personnalisation du marqueur d'événements
         markerBuilder: (context, date, events) {
           if (events.isNotEmpty) {
             return Positioned(

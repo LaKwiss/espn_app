@@ -1,17 +1,8 @@
-import 'package:espn_app/providers/provider_factory.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Provider qui fournit le thème actuel de l'application
-final themeProvider = Provider<ThemeData>((ref) {
-  final settings = ref.watch(settingsProvider);
-
-  return settings.darkModeEnabled ? _darkTheme : _lightTheme;
-});
-
 /// Thème clair de l'application
-final _lightTheme = ThemeData(
+final lightTheme = ThemeData(
   brightness: Brightness.light,
   scaffoldBackgroundColor: Colors.white,
   primaryColor: Colors.black,
@@ -27,18 +18,16 @@ final _lightTheme = ThemeData(
     onSecondary: Colors.white,
     surface: Colors.white,
     onSurface: Colors.black,
-    background: Colors.white,
-    onBackground: Colors.black,
   ),
   switchTheme: SwitchThemeData(
-    thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
-      if (states.contains(MaterialState.selected)) {
+    thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+      if (states.contains(WidgetState.selected)) {
         return Colors.black;
       }
       return Colors.grey.shade400;
     }),
-    trackColor: MaterialStateProperty.resolveWith<Color>((states) {
-      if (states.contains(MaterialState.selected)) {
+    trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+      if (states.contains(WidgetState.selected)) {
         return Colors.grey.shade600;
       }
       return Colors.grey.shade300;
@@ -48,7 +37,7 @@ final _lightTheme = ThemeData(
   cardTheme: CardTheme(
     color: Colors.white,
     elevation: 4,
-    shadowColor: Colors.black.withOpacity(0.2),
+    shadowColor: Colors.black.withValues(alpha: 0.2),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
   ),
   textTheme: TextTheme(
@@ -120,7 +109,7 @@ final _lightTheme = ThemeData(
 );
 
 /// Thème sombre de l'application
-final _darkTheme = ThemeData(
+final darkTheme = ThemeData(
   brightness: Brightness.dark,
   scaffoldBackgroundColor: Colors.black,
   primaryColor: Colors.white,
@@ -136,18 +125,16 @@ final _darkTheme = ThemeData(
     onSecondary: Colors.white,
     surface: Color(0xFF1E1E1E),
     onSurface: Colors.white,
-    background: Color(0xFF121212),
-    onBackground: Colors.white,
   ),
   switchTheme: SwitchThemeData(
-    thumbColor: MaterialStateProperty.resolveWith<Color>((states) {
-      if (states.contains(MaterialState.selected)) {
+    thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+      if (states.contains(WidgetState.selected)) {
         return Colors.white;
       }
       return Colors.grey.shade700;
     }),
-    trackColor: MaterialStateProperty.resolveWith<Color>((states) {
-      if (states.contains(MaterialState.selected)) {
+    trackColor: WidgetStateProperty.resolveWith<Color>((states) {
+      if (states.contains(WidgetState.selected)) {
         return Colors.grey.shade300;
       }
       return Colors.grey.shade800;
@@ -157,7 +144,7 @@ final _darkTheme = ThemeData(
   cardTheme: CardTheme(
     color: Color(0xFF1E1E1E),
     elevation: 4,
-    shadowColor: Colors.black.withOpacity(0.3),
+    shadowColor: Colors.black.withValues(alpha: 0.3),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
   ),
   textTheme: TextTheme(

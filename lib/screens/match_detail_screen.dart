@@ -1,3 +1,4 @@
+// espn_app/lib/screens/match_detail_screen.dart
 import 'dart:async';
 import 'dart:developer';
 
@@ -14,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
 
 enum MatchStatus { notStarted, inProgress, finished }
 
@@ -64,6 +66,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
     // Initialiser les clubs
     _initializeClubs();
 
+    // Initialiser le nom de la ligue (sera localisé dans build)
     _leagueName = _getLeagueNameById(_leagueId);
 
     // Déterminer le statut du match
@@ -140,8 +143,15 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
 
   void _initializeTeams() {
     final parts = widget.event.name.split(" at ");
-    final awayTeamName = parts.isNotEmpty ? parts.first.trim() : "Away Team";
-    final homeTeamName = parts.length > 1 ? parts.last.trim() : "Home Team";
+    // Les noms complets pourraient nécessiter une localisation s'ils sont statiques
+    final awayTeamName =
+        parts.isNotEmpty
+            ? parts.first.trim()
+            : "Away Team"; // Potentiellement localiser
+    final homeTeamName =
+        parts.length > 1
+            ? parts.last.trim()
+            : "Home Team"; // Potentiellement localiser
 
     final awayTeamShortName = widget.event.teamsShortName.$1;
     final homeTeamShortName = widget.event.teamsShortName.$2;
@@ -191,7 +201,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
       await Future.wait([widget.event.score.$1, widget.event.score.$2]);
       // Les scores seront affichés dans le FutureBuilder du score terminé.
     } catch (e) {
-      debugPrint('Erreur lors de l\'initialisation des scores: $e');
+      debugPrint('Error initializing scores: $e'); // Log localisé si besoin
     }
   }
 
@@ -208,9 +218,18 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!; // Obtenir les localisations
+    final currentLocale = Localizations.localeOf(context).toString();
+
     final matchDate = DateTime.tryParse(widget.event.date) ?? DateTime.now();
-    final formattedDate = DateFormat('dd MMMM').format(matchDate);
-    final formattedTime = DateFormat('HH:mm').format(matchDate);
+    final formattedDate = DateFormat(
+      'dd MMMM',
+      currentLocale,
+    ).format(matchDate); // Formatage localisé
+    final formattedTime = DateFormat(
+      'HH:mm',
+      currentLocale,
+    ).format(matchDate); // Formatage localisé
 
     // Récupération des événements depuis le provider
     final eventsAsync = ref.watch(matchEventsProvider);
@@ -228,6 +247,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
               slivers: [
                 SliverToBoxAdapter(
                   child: CustomAppBar(
+                    // Utiliser l'URL basée sur le nom anglais si le service s'attend à ça
                     url: _getLeagueLogoUrl(_leagueName),
                     backgroundColor: widget.randomColor,
                     iconOrientation: 3,
@@ -252,7 +272,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Text(
-                        'EN COURS',
+                        l10n.matchStatusInProgress, // Clé de localisation
                         textAlign: TextAlign.center,
                         style: GoogleFonts.blackOpsOne(
                           fontSize: 32,
@@ -266,7 +286,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Text(
-                        'TERMINÉ',
+                        l10n.matchStatusFinished, // Clé de localisation
                         textAlign: TextAlign.center,
                         style: GoogleFonts.blackOpsOne(
                           fontSize: 32,
@@ -280,7 +300,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Text(
-                        'PROCHAINEMENT',
+                        l10n.matchStatusUpcoming, // Clé de localisation
                         textAlign: TextAlign.center,
                         style: GoogleFonts.blackOpsOne(
                           fontSize: 32,
@@ -292,8 +312,8 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
 
                 SliverToBoxAdapter(
                   child: MatchInfoSectionWidget(
-                    date: formattedDate,
-                    time: formattedTime,
+                    date: formattedDate, // Date déjà localisée
+                    time: formattedTime, // Heure déjà localisée
                     awayTeam: _awayTeam,
                     homeTeam: _homeTeam,
                     isFinished: _matchStatus == MatchStatus.finished,
@@ -323,7 +343,7 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                   ),
                 ),
 
-                SliverToBoxAdapter(child: SizedBox(height: 50)),
+                const SliverToBoxAdapter(child: SizedBox(height: 50)),
               ],
             ),
           ),
@@ -332,7 +352,28 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
     );
   }
 
-  // Obtenir le nom complet de la ligue à partir de son ID
+  String _getLeagueLogoUrl(String englishLeagueName) {
+    switch (englishLeagueName) {
+      case 'Bundesliga':
+        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/10.png';
+      case 'LALIGA':
+        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png';
+      case 'French Ligue 1':
+        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/9.png';
+      case 'Premier League':
+        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/23.png';
+      case 'Italian Serie A':
+        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/12.png';
+      case 'UEFA Europa League':
+        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2310.png';
+      case 'Champions League':
+        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
+      default:
+        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
+    }
+  }
+
+  // Retourne le nom ANGLAIS basé sur l'ID pour la correspondance de logo
   String _getLeagueNameById(String leagueId) {
     switch (leagueId) {
       case 'ger.1':
@@ -351,28 +392,6 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
         return 'Champions League';
       default:
         return 'Champions League';
-    }
-  }
-
-  // Obtenir l'URL du logo de la ligue
-  String _getLeagueLogoUrl(String leagueName) {
-    switch (leagueName) {
-      case 'Bundesliga':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/10.png';
-      case 'LALIGA':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png';
-      case 'French Ligue 1':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/9.png';
-      case 'Premier League':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/23.png';
-      case 'Italian Serie A':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/12.png';
-      case 'UEFA Europa League':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2310.png';
-      case 'Champions League':
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
-      default:
-        return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
     }
   }
 }
