@@ -1,3 +1,4 @@
+import 'package:espn_app/providers/cache_stats_tracker.dart';
 import 'package:espn_app/providers/colors_provider.dart';
 import 'package:espn_app/providers/theme_provider.dart';
 import 'package:espn_app/repositories/athlete_repository/athlete_repository.dart';
@@ -21,46 +22,6 @@ import 'package:espn_app/repositories/match_event_repository/i_match_event_repos
 import 'package:espn_app/repositories/last_5_repository/last_5_repository.dart';
 import 'package:espn_app/repositories/league_picture_repository/league_picture_repository.dart';
 
-/// A class to track cache hit statistics
-class CacheStatsTracker {
-  int cacheHits = 0;
-  int cacheMisses = 0;
-  int cacheExpired = 0;
-  int networkRequests = 0;
-  int totalStorage = 0; // In bytes
-
-  void trackCacheHit() {
-    cacheHits++;
-  }
-
-  void trackCacheMiss() {
-    cacheMisses++;
-  }
-
-  void trackCacheExpired() {
-    cacheExpired++;
-  }
-
-  void trackNetworkRequest() {
-    networkRequests++;
-  }
-
-  void updateTotalStorage(int bytes) {
-    totalStorage = bytes;
-  }
-
-  void reset() {
-    cacheHits = 0;
-    cacheMisses = 0;
-    cacheExpired = 0;
-    networkRequests = 0;
-  }
-
-  double get hitRatio => totalRequests > 0 ? cacheHits / totalRequests : 0;
-  int get totalRequests => cacheHits + cacheMisses + cacheExpired;
-}
-
-// Services Providers
 final hiveCacheServiceProvider = Provider<HiveCacheService>((ref) {
   return HiveCacheService();
 });
@@ -77,9 +38,8 @@ final apiServiceProvider = Provider<ApiService>((ref) {
     cacheService: cacheService,
     cacheEnabled: settings.cacheEnabled,
     defaultCacheDuration: const Duration(hours: 4),
-    logCacheHits: true, // Enable cache hit logging
-    providerRef:
-        ref, // Pass ProviderReference to allow access to cacheStatsProvider
+    logCacheHits: true,
+    providerRef: ref,
   );
 });
 
@@ -93,7 +53,6 @@ final dateFormatterServiceProvider = Provider<DateFormatterService>(
 
 final assetServiceProvider = Provider<AssetService>((ref) => AssetService());
 
-// Repository Providers
 final eventRepositoryProvider = Provider<IEventRepository>((ref) {
   return EventRepository(
     apiService: ref.watch(apiServiceProvider),
@@ -131,7 +90,6 @@ final athletesRepositoryProvider = Provider<IAthletesRepository>((ref) {
   );
 });
 
-// Repository Provider for Formation
 final formationRepositoryProvider = Provider<IFormationRepository>((ref) {
   return FormationRepository(
     apiService: ref.watch(apiServiceProvider),
@@ -143,7 +101,6 @@ final colorsProvider = StateNotifierProvider<ColorsNotifier, List<Color>>(
   (ref) => ColorsNotifier(),
 );
 
-// Modifier le provider pour utiliser le code de langue
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
   ref,
 ) {

@@ -163,7 +163,10 @@ class _CacheStatisticsWidgetState extends ConsumerState<CacheStatisticsWidget> {
                   ],
                 ),
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.delete_outline),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: theme.colorScheme.onPrimary,
+                  ),
                   label: Text(l10n.clearCache),
                   onPressed: () async {
                     final hiveCacheService = HiveCacheService();

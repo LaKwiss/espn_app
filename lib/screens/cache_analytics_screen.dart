@@ -315,8 +315,9 @@ class _CacheAnalyticsScreenState extends ConsumerState<CacheAnalyticsScreen> {
             ).showSnackBar(SnackBar(content: Text(l10n.cacheCleared)));
           }
         },
-        child: const Icon(Icons.delete_sweep),
+
         tooltip: l10n.clearCache,
+        child: const Icon(Icons.delete_sweep),
       ),
     );
   }

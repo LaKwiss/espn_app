@@ -3,7 +3,6 @@ import 'package:espn_app/services/hive_cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Modèle pour les paramètres de l'application
 class AppSettings {
   final bool notificationsEnabled;
   final bool darkModeEnabled;
@@ -17,7 +16,6 @@ class AppSettings {
     this.cacheEnabled = true,
   });
 
-  // Créer une copie avec des valeurs modifiées
   AppSettings copyWith({
     bool? notificationsEnabled,
     bool? darkModeEnabled,
@@ -33,7 +31,6 @@ class AppSettings {
   }
 }
 
-// Notifier pour gérer les paramètres
 class SettingsNotifier extends StateNotifier<AppSettings> {
   SettingsNotifier() : super(AppSettings());
 
@@ -53,25 +50,19 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = state.copyWith(cacheEnabled: value);
   }
 
-  // Méthode pour supprimer le cache
   Future<void> clearCache() async {
     try {
-      // Get the HiveCacheService instance
       final hiveCacheService = HiveCacheService();
 
-      // Clear all cache
       await hiveCacheService.clearAll();
 
-      // Wait for a small delay for UI feedback
       await Future.delayed(const Duration(milliseconds: 500));
     } catch (e) {
-      // Handle any error that might occur during cache clearing
       print('Error clearing cache: $e');
     }
   }
 }
 
-// Ajouter un provider pour la locale actuelle
 final localeProvider = Provider<Locale>((ref) {
   final settings = ref.watch(settingsProvider);
   return Locale(settings.languageCode);
