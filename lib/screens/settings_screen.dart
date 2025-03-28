@@ -54,12 +54,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // Obtenir le notifier pour mettre à jour les paramètres
     final settingsNotifier = ref.read(settingsProvider.notifier);
 
-    final List<String> languageCodes = ['en', 'fr', 'es', 'de'];
+    final List<String> languageCodes = ['en', 'fr', 'es', 'de', 'ja'];
     final Map<String, String> languageDisplayNames = {
       'en': 'English',
       'fr': 'Français',
       'es': 'Español',
       'de': 'Deutsch',
+      'ja': 'Japanese',
     };
 
     return Scaffold(
