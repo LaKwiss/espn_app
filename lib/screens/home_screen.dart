@@ -1,3 +1,4 @@
+// espn_app/lib/screens/home_screen.dart
 import 'dart:developer' as dev;
 import 'package:espn_app/providers/league_async_notifier.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
@@ -6,6 +7,7 @@ import 'package:espn_app/widgets/home_screen_title.dart';
 import 'package:espn_app/widgets/match_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +20,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Obtenir les traductions localisées
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Consumer(
@@ -51,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.all(20),
                         child: Center(
                           child: Text(
-                            'No events available for this league',
+                            l10n.noEventsAvailable, // Utiliser la clé de localisation
                             style: theme.textTheme.bodyLarge,
                           ),
                         ),
@@ -92,10 +96,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'Error: $error',
+                              l10n.errorLoadingEvents,
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 color: theme.colorScheme.error,
                               ),
+                              textAlign: TextAlign.center,
                             ),
                             TextButton(
                               onPressed: () {
@@ -103,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 dev.log('Refresh result: $result');
                               },
                               child: Text(
-                                'Try Again',
+                                l10n.tryAgain, // Utiliser la clé de localisation
                                 style: theme.textTheme.labelLarge,
                               ),
                             ),
@@ -123,6 +128,8 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 _getLinkByFullTitle(String fullTitle) {
+  // This logic might need adjustment based on how league names are localized
+  // It's better to map based on league codes if possible
   switch (fullTitle) {
     case 'Bundesliga':
       return 'https://a.espncdn.com/i/leaguelogos/soccer/500/10.png';

@@ -1,4 +1,4 @@
-import 'package:espn_app/l10n/l10n.dart';
+// espn_app/lib/main.dart
 import 'package:espn_app/providers/settings_provider.dart';
 import 'package:espn_app/providers/theme_provider.dart';
 import 'package:espn_app/screens/home_screen.dart';
@@ -6,6 +6,7 @@ import 'package:espn_app/screens/main_navigation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,19 +31,24 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'ESPN App',
+      // Utiliser la localisation pour le titre
+      onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       theme: themeData,
 
       // Ajout des configurations de localisation
-      localizationsDelegates: L10n.localizationsDelegates,
-      supportedLocales: L10n.supportedLocales,
-      localeResolutionCallback: L10n.localeResolutionCallback,
+      localizationsDelegates:
+          AppLocalizations.localizationsDelegates, // Utiliser le délégué généré
+      supportedLocales:
+          AppLocalizations.supportedLocales, // Utiliser les locales générées
+      // localeResolutionCallback: L10n.localeResolutionCallback, // Peut être géré par Flutter
       locale: locale, // Utiliser la locale du provider
 
       routes: {
         '/': (context) => const MainNavigationScreen(),
         '/home': (context) => const HomeScreen(),
       },
+      // Si vous n'utilisez pas onGenerateTitle, vous pouvez définir title ici :
+      // title: 'ESPN App', // Ceci ne sera pas localisé
     );
   }
 }
