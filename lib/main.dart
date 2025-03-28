@@ -1,6 +1,6 @@
 // espn_app/lib/main.dart
+import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/providers/settings_provider.dart';
-import 'package:espn_app/providers/theme_provider.dart';
 import 'package:espn_app/screens/home_screen.dart';
 import 'package:espn_app/screens/main_navigation_screen.dart';
 import 'package:flutter/material.dart';
