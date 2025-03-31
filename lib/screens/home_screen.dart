@@ -41,7 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CustomAppBar(url: _getLinkByFullTitle(fullTitle)),
                 HomeScreenTitle(titleLine1: titleLine1, titleLine2: titleLine2),
 
                 // Debug info

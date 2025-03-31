@@ -1,43 +1,60 @@
+// lib/widgets/navigation_dots.dart
 import 'package:espn_app/providers/page_index_provider.dart';
-import 'package:espn_app/widgets/widgets.dart';
+import 'package:espn_app/widgets/widgets.dart'; // Assurez-vous que cela importe Material et GoogleFonts
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class NavigationDots extends ConsumerWidget {
   const NavigationDots({super.key});
 
-  // Valeurs de configuration intégrées directement dans le widget
-  static const double _baseDotSize = 6.0;
-  static const double _selectedDotSize = 8.0;
-  static const double _dotHorizontalMargin = 4.0;
-  static const double _selectedOpacity = 1.0;
-  static const double _unselectedOpacity = 0.5;
-  static const int _animationDurationMs = 300;
+  // Valeurs de configuration intégrées
+  static const double _baseDotSize = 7.0; // légèrement plus grand
+  static const double _selectedDotSize = 10.0; // légèrement plus grand
+  static const double _dotHorizontalMargin = 5.0; // un peu plus d'espace
+  static const int _animationDurationMs = 250; // un peu plus rapide
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Obtenir l'index de page actuel
+    // Obtenir l'index de page actuel et le thème
     final pageIndex = ref.watch(pageIndexProvider);
-
-    Color color = Theme.of(context).primaryColor;
+    final theme = Theme.of(context);
+    // Utiliser la couleur primaire du thème pour les points
+    final Color activeColor = theme.colorScheme.primary;
+    final Color inactiveColor = theme.colorScheme.primary.withOpacity(
+      0.4,
+    ); // Couleur inactive plus visible
 
     return SizedBox(
-      width: 150,
+      // Augmenter un peu la largeur pour accommoder les points plus grands et plus espacés
+      width: 160,
       child: Center(
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center, // Centrer les points
           children: List.generate(3, (index) {
+            // 3 points pour 3 écrans
             final bool isSelected = index == pageIndex;
 
-            // Calculer la taille du point en fonction de son état
+            // Calculer la taille et la couleur du point en fonction de son état
             final double dotSize = isSelected ? _selectedDotSize : _baseDotSize;
+            final Color dotColor = isSelected ? activeColor : inactiveColor;
 
             return GestureDetector(
               onTap: () {
-                // Mettre à jour l'index de la page et naviguer vers cette page
-                ref.read(pageIndexProvider.notifier).state = index;
+                // Lire le PageController depuis le provider
+                final pageController = ref.read(pageControllerProvider);
+                if (pageController != null && pageController.hasClients) {
+                  // Mettre à jour l'index via le provider D'ABORD
+                  // ref.read(pageIndexProvider.notifier).state = index; // Redondant si on utilise animateToPage qui déclenche onPageChanged
 
-                // Navigation directe vers la page demandée
-                ref.read(pageControllerProvider)?.jumpToPage(index);
+                  // Animer le PageView vers la page sélectionnée
+                  pageController.animateToPage(
+                    index,
+                    duration: const Duration(
+                      milliseconds: _animationDurationMs,
+                    ),
+                    curve: Curves.easeInOut,
+                  );
+                }
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: _animationDurationMs),
@@ -46,7 +63,21 @@ class NavigationDots extends ConsumerWidget {
                 ),
                 width: dotSize,
                 height: dotSize,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                  // Optionnel: ajouter une petite ombre pour la profondeur
+                  boxShadow:
+                      isSelected
+                          ? [
+                            BoxShadow(
+                              color: activeColor.withOpacity(0.3),
+                              blurRadius: 3,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                          : [],
+                ),
               ),
             );
           }),

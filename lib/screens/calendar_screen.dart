@@ -158,14 +158,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: CustomAppBar(
-              url: _assetService.getLeagueLogoUrl(leagueName),
-              backgroundColor: theme.scaffoldBackgroundColor,
-            ),
-          ),
-
-          Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
               vertical: 8.0,

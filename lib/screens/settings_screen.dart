@@ -70,15 +70,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: Column(
         children: [
           // Custom AppBar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: CustomAppBar(
-              url: assetService.getLeagueLogoUrl(
-                englishLeagueName,
-              ), // Use English name for URL if needed
-              backgroundColor: AppBarTheme.of(context).backgroundColor,
-            ),
-          ),
 
           // Settings Title
           Padding(
