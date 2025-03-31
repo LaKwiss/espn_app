@@ -8,7 +8,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:espn_app/providers/provider_factory.dart';
 
 class CacheStatisticsWidget extends ConsumerStatefulWidget {
-  const CacheStatisticsWidget({Key? key}) : super(key: key);
+  const CacheStatisticsWidget({super.key});
 
   @override
   ConsumerState<CacheStatisticsWidget> createState() =>
@@ -199,9 +199,9 @@ class _CacheStatisticsWidgetState extends ConsumerState<CacheStatisticsWidget> {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [

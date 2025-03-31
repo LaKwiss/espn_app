@@ -1,3 +1,4 @@
+import 'package:espn_app/providers/app_bar_open_notifier.dart';
 import 'package:espn_app/providers/cache_stats_tracker.dart';
 import 'package:espn_app/providers/colors_provider.dart';
 import 'package:espn_app/providers/theme_provider.dart';
@@ -112,3 +113,6 @@ final themeProvider = Provider<ThemeData>((ref) {
 
   return settings.darkModeEnabled ? darkTheme : lightTheme;
 });
+
+final leagueSelectorVisibilityProvider =
+    AsyncNotifierProvider<AppBarOpenNotifier, bool>(() => AppBarOpenNotifier());

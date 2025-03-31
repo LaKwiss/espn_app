@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:espn_app/services/hive_cache_service.dart';
 import 'package:espn_app/widgets/cache_statistics_widget.dart';
 import 'package:espn_app/widgets/widgets.dart';
@@ -6,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class CacheAnalyticsScreen extends ConsumerStatefulWidget {
-  const CacheAnalyticsScreen({Key? key}) : super(key: key);
+  const CacheAnalyticsScreen({super.key});
 
   @override
   ConsumerState<CacheAnalyticsScreen> createState() =>
@@ -53,7 +55,7 @@ class _CacheAnalyticsScreenState extends ConsumerState<CacheAnalyticsScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading cache entries: $e');
+      log('Error loading cache entries: $e');
       setState(() {
         _isLoading = false;
       });
@@ -191,8 +193,9 @@ class _CacheAnalyticsScreenState extends ConsumerState<CacheAnalyticsScreen> {
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.all(16),
                                     leading: CircleAvatar(
-                                      backgroundColor: categoryColor
-                                          .withOpacity(0.2),
+                                      backgroundColor: categoryColor.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       child: Text(
                                         category[0],
                                         style: TextStyle(color: categoryColor),
@@ -311,6 +314,7 @@ class _CacheAnalyticsScreenState extends ConsumerState<CacheAnalyticsScreen> {
           // Show snackbar
           if (mounted) {
             ScaffoldMessenger.of(
+              // ignore: use_build_context_synchronously
               context,
             ).showSnackBar(SnackBar(content: Text(l10n.cacheCleared)));
           }

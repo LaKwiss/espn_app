@@ -626,5 +626,17 @@
   },
   "@statsRedCards": {
     "description": "Label for Red Cards statistic"
+  },
+  "@languageName_en": {
+    "description": "English Language"
+  },
+  "@languageName_fr": {
+    "description": "French Language"
+  },
+  "@languageName_es": {
+    "description": "Spain Language"
+  },
+  "@languageName_de": {
+    "description": "Deutscher Language"
   }
 }

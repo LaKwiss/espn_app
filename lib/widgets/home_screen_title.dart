@@ -29,7 +29,7 @@ class HomeScreenTitle extends StatelessWidget {
             titleLine2!.toUpperCase(),
             style: theme.textTheme.headlineLarge?.copyWith(
               height: 1,
-              color: theme.colorScheme.onBackground.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
       ],

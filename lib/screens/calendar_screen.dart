@@ -112,27 +112,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
   }
 
-  String _getLocalizedLeagueName(String leagueCode, AppLocalizations l10n) {
-    switch (leagueCode) {
-      case 'ger.1':
-        return l10n.leagueBundesliga;
-      case 'esp.1':
-        return l10n.leagueLaLiga;
-      case 'fra.1':
-        return l10n.leagueLigue1;
-      case 'eng.1':
-        return l10n.leaguePremierLeague;
-      case 'ita.1':
-        return l10n.leagueSerieA;
-      case 'uefa.europa':
-        return l10n.leagueEuropaLeague;
-      case 'uefa.champions':
-        return l10n.leagueChampionsLeague;
-      default:
-        return l10n.leagueChampionsLeague; // Fallback
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -141,12 +120,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final theme = Theme.of(context);
     final textTheme = ref.watch(themeProvider).textTheme;
     final colorScheme = theme.colorScheme;
-
-    final selectedLeagueState = ref.watch(selectedLeagueProvider);
-    final String leagueName = _getLocalizedLeagueName(
-      selectedLeagueState.$2,
-      l10n,
-    );
 
     ref.listen<(String, String)>(selectedLeagueProvider, (previous, current) {
       if (previous?.$2 != current.$2) {

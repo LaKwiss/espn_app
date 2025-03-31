@@ -1,3 +1,4 @@
+import 'package:espn_app/providers/provider_factory.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'widgets.dart';
@@ -51,16 +52,19 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar>
 
     // Default behavior - toggle league selector
     if (isExpanded) {
-      _animationController.reverse().then((_) {
-        setState(() {
-          isExpanded = false;
-        });
+      _animationController.reverse();
+      setState(() {
+        isExpanded = false;
+        ref.read(leagueSelectorVisibilityProvider.notifier).closeNavBar();
       });
     } else {
       setState(() {
         isExpanded = true;
       });
       _animationController.forward();
+      setState(() {
+        ref.read(leagueSelectorVisibilityProvider.notifier).openNavBar();
+      });
     }
   }
 

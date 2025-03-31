@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:espn_app/providers/provider_factory.dart';
-import 'package:espn_app/providers/selected_league_notifier.dart';
 import 'package:espn_app/providers/settings_provider.dart';
 import 'package:espn_app/screens/cache_analytics_screen.dart';
 import 'package:espn_app/screens/color_picker_screen.dart';
@@ -44,14 +43,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     // Obtenir les traductions localisées
     final l10n = AppLocalizations.of(context)!;
-
-    final selectedLeagueState = ref.watch(selectedLeagueProvider);
-
-    final assetService = ref.read(assetServiceProvider);
-    // Obtenir le nom anglais pour le service d'asset si nécessaire
-    final String englishLeagueName = _getEnglishLeagueNameById(
-      selectedLeagueState.$2,
-    );
 
     // Observer les paramètres depuis le provider
     final settings = ref.watch(settingsProvider);
@@ -258,28 +249,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  // Retourne le nom ANGLAIS basé sur l'ID pour la correspondance de logo
-  String _getEnglishLeagueNameById(String leagueId) {
-    switch (leagueId) {
-      case 'ger.1':
-        return 'Bundesliga';
-      case 'esp.1':
-        return 'LALIGA';
-      case 'fra.1':
-        return 'French Ligue 1';
-      case 'eng.1':
-        return 'Premier League';
-      case 'ita.1':
-        return 'Italian Serie A';
-      case 'uefa.europa':
-        return 'UEFA Europa League';
-      case 'uefa.champions':
-        return 'Champions League';
-      default:
-        return 'Champions League';
-    }
-  }
-
   Widget _buildSettingSwitch(
     String title,
     String subtitle,
@@ -289,7 +258,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     bool isDeactivated = false,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Theme.of(context).colorScheme.onBackground),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.onSurface),
       title: Text(
         title,
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -302,7 +271,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             isDeactivated ? Colors.grey : Theme.of(context).colorScheme.primary,
         inactiveThumbColor: isDeactivated ? Colors.white : null,
         trackColor:
-            isDeactivated ? MaterialStateProperty.all(Colors.grey[300]) : null,
+            isDeactivated ? WidgetStatePropertyAll(Colors.grey[300]) : null,
       ),
     );
   }
@@ -318,7 +287,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     Function(String?) onChanged,
   ) {
     return ListTile(
-      leading: Icon(icon, color: Theme.of(context).colorScheme.onBackground),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.onSurface),
       title: Text(
         title,
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -350,7 +319,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     VoidCallback onTap,
   ) {
     return ListTile(
-      leading: Icon(icon, color: Theme.of(context).colorScheme.onBackground),
+      leading: Icon(icon, color: Theme.of(context).colorScheme.onSurface),
       title: Text(
         title,
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -419,15 +388,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder:
           (context) => AboutDialog(
             applicationName: l10n.appTitle,
-            applicationVersion: '$_version',
-            applicationIcon: Image.network(
-              'https://a.espncdn.com/i/espn/misc_logos/500/espn_red.png',
-              width: 50,
-              height: 50,
-              errorBuilder:
-                  (context, error, stackTrace) =>
-                      const Icon(Icons.sports_soccer, size: 50),
-            ),
+            applicationVersion: _version,
             children: [
               Text(l10n.aboutAppDescription), // Clé de localisation
               const SizedBox(height: 20),
@@ -449,6 +410,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     } catch (e) {
       if (context.mounted) {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.couldNotLaunchUrl(url)), // Use localized message

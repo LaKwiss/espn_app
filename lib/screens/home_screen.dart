@@ -2,7 +2,6 @@
 import 'dart:developer' as dev;
 import 'package:espn_app/providers/league_async_notifier.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';
-import 'package:espn_app/widgets/custom_app_bar.dart';
 import 'package:espn_app/widgets/home_screen_title.dart';
 import 'package:espn_app/widgets/match_widget.dart';
 import 'package:flutter/material.dart';
@@ -123,28 +122,5 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
-  }
-}
-
-_getLinkByFullTitle(String fullTitle) {
-  // This logic might need adjustment based on how league names are localized
-  // It's better to map based on league codes if possible
-  switch (fullTitle) {
-    case 'Bundesliga':
-      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/10.png';
-    case 'LALIGA':
-      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/15.png';
-    case 'French Ligue 1':
-      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/9.png';
-    case 'Premier League':
-      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/23.png';
-    case 'Italian Serie A':
-      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/12.png';
-    case 'UEFA Europa League':
-      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2310.png';
-    case 'Champions League':
-      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
-    default:
-      return 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png';
   }
 }

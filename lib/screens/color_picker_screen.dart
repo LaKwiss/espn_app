@@ -66,6 +66,7 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
   }
 
   String _colorToHex(Color color) {
+    // ignore: deprecated_member_use
     return '#${color.value.toRadixString(16).padLeft(8, '0').toUpperCase().substring(2)}';
   }
 
@@ -92,9 +93,7 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
               style: GoogleFonts.blackOpsOne(
                 fontSize: 45,
                 color:
-                    Theme.of(
-                      context,
-                    ).colorScheme.onBackground, // Use theme color
+                    Theme.of(context).colorScheme.onSurface, // Use theme color
                 height: 1.0,
               ),
             ),
@@ -109,11 +108,11 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -136,7 +135,7 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: color.withOpacity(0.3),
+                            color: color.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
                           ),
@@ -160,9 +159,9 @@ class _ColorState extends ConsumerState<ColorPickerScreen> {
                         ),
                         Text(
                           l10n.rgbValue(
-                            color.red,
-                            color.green,
-                            color.blue,
+                            color.r.toInt(),
+                            color.g.toInt(),
+                            color.b.toInt(),
                           ), // Localized label
                           style: GoogleFonts.roboto(fontSize: 14),
                         ),

@@ -19,8 +19,8 @@ class NavigationDots extends ConsumerWidget {
     final theme = Theme.of(context);
     // Utiliser la couleur primaire du thème pour les points
     final Color activeColor = theme.colorScheme.primary;
-    final Color inactiveColor = theme.colorScheme.primary.withOpacity(
-      0.4,
+    final Color inactiveColor = theme.colorScheme.primary.withValues(
+      alpha: 0.4,
     ); // Couleur inactive plus visible
 
     return SizedBox(
@@ -71,7 +71,7 @@ class NavigationDots extends ConsumerWidget {
                       isSelected
                           ? [
                             BoxShadow(
-                              color: activeColor.withOpacity(0.3),
+                              color: activeColor.withValues(alpha: 0.3),
                               blurRadius: 3,
                               spreadRadius: 1,
                             ),

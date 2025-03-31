@@ -40,7 +40,7 @@ class SubstitutesList extends StatelessWidget {
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -78,8 +78,8 @@ class SubstitutesList extends StatelessWidget {
                     l10n.changesTitle, // Use localization key
                     style: GoogleFonts.blackOpsOne(
                       fontSize: 16,
-                      color: theme.colorScheme.onSurface.withOpacity(
-                        0.87,
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.87,
                       ), // Use theme color
                     ),
                   ),
@@ -100,11 +100,13 @@ class SubstitutesList extends StatelessWidget {
     final bool isDark = theme.brightness == Brightness.dark;
     final Color chipBackgroundColor =
         isSubbedIn
-            ? teamColor.withOpacity(0.2)
+            ? teamColor.withValues(alpha: 0.2)
             : (isDark ? Colors.grey.shade800 : Colors.grey.shade200);
     final Color chipBorderColor = isSubbedIn ? teamColor : Colors.grey.shade400;
     final Color chipTextColor =
-        isSubbedIn ? teamColor : theme.colorScheme.onSurface.withOpacity(0.87);
+        isSubbedIn
+            ? teamColor
+            : theme.colorScheme.onSurface.withValues(alpha: 0.87);
     final Color avatarBackgroundColor =
         isSubbedIn ? teamColor : Colors.grey.shade600;
     final Color avatarTextColor = Colors.white;
@@ -168,7 +170,7 @@ class SubstitutesList extends StatelessWidget {
   }
 
   Widget _buildSubstitutionItem(Substitution sub, ThemeData theme) {
-    final Color textColor = theme.colorScheme.onSurface.withOpacity(0.87);
+    final Color textColor = theme.colorScheme.onSurface.withValues(alpha: 0.87);
 
     // Ensure player names are available, provide fallback if necessary
     final String playerInName =

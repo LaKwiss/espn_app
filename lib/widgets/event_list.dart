@@ -85,7 +85,7 @@ class EventsListWidget extends StatelessWidget {
               l10n.matchEventsTitle, // Use localization key
               style: GoogleFonts.blackOpsOne(
                 fontSize: 24,
-                color: theme.colorScheme.onBackground, // Use theme color
+                color: theme.colorScheme.onSurface, // Use theme color
               ),
             ),
           ),

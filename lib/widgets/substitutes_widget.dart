@@ -75,7 +75,7 @@ class SubstitutesWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
         decoration: BoxDecoration(
-          color: teamColor.withOpacity(0.1),
+          color: teamColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16.0),
           border: Border.all(color: teamColor, width: 1),
         ),

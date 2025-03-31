@@ -3,6 +3,8 @@ import 'package:espn_app/services/hive_cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'dart:developer' as dev;
+
 class AppSettings {
   final bool notificationsEnabled;
   final bool darkModeEnabled;
@@ -58,7 +60,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
       await Future.delayed(const Duration(milliseconds: 500));
     } catch (e) {
-      print('Error clearing cache: $e');
+      dev.log('Error clearing cache: $e');
     }
   }
 }
