@@ -103,6 +103,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         _isLoadingEvents = false;
       });
     } catch (e) {
+      //causing error
       setState(() {
         _errorMessage = AppLocalizations.of(context)!.errorLoadingMatches;
         _isLoadingEvents = false;

@@ -98,8 +98,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.blackOpsOne(
                           fontSize: 20,
-                          color:
-                              theme.colorScheme.onBackground, // Use theme color
+                          color: theme.colorScheme.onSurface, // Use theme color
                         ),
                       ),
                   ],
@@ -115,8 +114,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 20,
-                        color:
-                            theme.colorScheme.onBackground, // Use theme color
+                        color: theme.colorScheme.onSurface, // Use theme color
                       ),
                     ),
                     if (homeTeam.secondName.isNotEmpty)
