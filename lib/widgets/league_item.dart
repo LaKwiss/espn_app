@@ -1,7 +1,6 @@
 import 'package:espn_app/widgets/widgets.dart';
 
 class LeagueItem {
-  // Bundesliga
   static Widget bundesliga({VoidCallback? onTap}) => LeagueBadge(
     leagueName: 'Bundesliga',
     backgroundColor: Color(0xFFD5262F),
@@ -9,7 +8,6 @@ class LeagueItem {
     onTap: onTap,
   );
 
-  // LaLiga
   static Widget laLiga({VoidCallback? onTap}) => LeagueBadge(
     leagueName: 'LaLiga',
     backgroundColor: Color(0xFFE50062),
@@ -17,7 +15,6 @@ class LeagueItem {
     onTap: onTap,
   );
 
-  // Ligue 1
   static Widget ligue1({VoidCallback? onTap}) => LeagueBadge(
     leagueName: 'Ligue 1',
     backgroundColor: Color(0xFF091F92),
@@ -25,7 +22,6 @@ class LeagueItem {
     onTap: onTap,
   );
 
-  // Premier League
   static Widget premierLeague({VoidCallback? onTap}) => LeagueBadge(
     leagueName: 'Premier League',
     backgroundColor: Color(0xFF37003C),
@@ -33,7 +29,6 @@ class LeagueItem {
     onTap: onTap,
   );
 
-  // Serie A
   static Widget serieA({VoidCallback? onTap}) => LeagueBadge(
     leagueName: 'Serie A',
     backgroundColor: Color(0xFF127DC5),
@@ -41,7 +36,6 @@ class LeagueItem {
     onTap: onTap,
   );
 
-  // Europa League
   static Widget europaLeague({VoidCallback? onTap}) => LeagueBadge(
     leagueName: 'Europa League',
     backgroundColor: Color(0xFFEF7C00),
@@ -49,7 +43,6 @@ class LeagueItem {
     onTap: onTap,
   );
 
-  // Champions League
   static Widget championsLeague({VoidCallback? onTap}) => LeagueBadge(
     leagueName: 'Champions League',
     backgroundColor: Color(0xFF002F6C),
@@ -57,7 +50,6 @@ class LeagueItem {
     onTap: onTap,
   );
 
-  // Widget par défaut avec personnalisation
   static Widget defaultBadge({
     required String leagueName,
     Color backgroundColor = Colors.grey,
@@ -110,10 +102,7 @@ class LeagueBadge extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Text(
                 leagueName,
-                style: font.copyWith(
-                  color: foregroundColor,
-                  fontSize: 20, // Taille maximale ajustable
-                ),
+                style: font.copyWith(color: foregroundColor, fontSize: 20),
               ),
             ),
           ),

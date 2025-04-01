@@ -3,7 +3,7 @@ import 'dart:developer' as dev;
 import 'package:espn_app/models/match_event.dart';
 import 'package:espn_app/models/team.dart';
 import 'package:espn_app/widgets/widgets.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class EventsListWidget extends StatelessWidget {
   final List<MatchEvent> events;
@@ -19,16 +19,15 @@ class EventsListWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // Get localizations
-    final theme = Theme.of(context); // Get theme
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
-    // Vérification si la liste est vide
     if (events.isEmpty) {
       return Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: theme.cardColor, // Use theme color
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
@@ -39,11 +38,11 @@ class EventsListWidget extends StatelessWidget {
                 Icon(
                   Icons.sports_soccer_outlined,
                   size: 48,
-                  color: Colors.grey[500], // Adjust color based on theme
+                  color: Colors.grey[500],
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  l10n.noEventsRecorded, // Use localization key
+                  l10n.noEventsRecorded,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -51,7 +50,7 @@ class EventsListWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  l10n.checkBackLaterForUpdates, // Use localization key
+                  l10n.checkBackLaterForUpdates,
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: Colors.grey[600],
@@ -64,7 +63,6 @@ class EventsListWidget extends StatelessWidget {
       );
     }
 
-    // Trier les événements par heure de match
     final sortedEvents = _sortEventsByMatchTime(events);
     dev.log('${events.first}');
     dev.log('Displaying ${sortedEvents.length} sorted events');
@@ -73,7 +71,7 @@ class EventsListWidget extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.cardColor, // Use theme color
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -82,10 +80,10 @@ class EventsListWidget extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 16),
             child: Text(
-              l10n.matchEventsTitle, // Use localization key
+              l10n.matchEventsTitle,
               style: GoogleFonts.blackOpsOne(
                 fontSize: 24,
-                color: theme.colorScheme.onSurface, // Use theme color
+                color: theme.colorScheme.onSurface,
               ),
             ),
           ),
@@ -102,7 +100,7 @@ class EventsListWidget extends StatelessWidget {
                   index,
                   sortedEvents,
                   l10n,
-                ); // Pass context and l10n
+                );
               }
               return EventWidget(event: event);
             },
@@ -122,12 +120,11 @@ class EventsListWidget extends StatelessWidget {
       return sortedEvents;
     } catch (e) {
       dev.log('Error sorting events: $e');
-      return events; // Return unsorted if sort fails
+      return events;
     }
   }
 
   int _calculateMatchTimeWeight(String timeString) {
-    // First check for specific strings
     if (timeString.contains("First Half ends") || timeString == "45'") {
       return 4500;
     }
@@ -142,7 +139,6 @@ class EventsListWidget extends StatelessWidget {
       return 9900;
     }
 
-    // Then handle regular minute formats
     try {
       bool isSecondHalf = false;
       int minute = 0;
@@ -174,35 +170,31 @@ class EventsListWidget extends StatelessWidget {
       }
     } catch (e) {
       dev.log('Error calculating match time weight: $e');
-      return 0; // Default weight if parsing fails
+      return 0;
     }
   }
 
   Widget _buildGoalEventItem(
-    BuildContext context, // Add context
+    BuildContext context,
     MatchEvent event,
     int index,
     List<MatchEvent> allEvents,
-    AppLocalizations l10n, // Add l10n
+    AppLocalizations l10n,
   ) {
-    final theme = Theme.of(context); // Get theme
+    final theme = Theme.of(context);
 
     try {
-      // Compare with String or int based on what's available
       final homeTeamId = homeTeam.id.toString();
       final awayTeamId = awayTeam.id.toString();
 
-      // Check if the event's teamId matches either home or away team
       final isHomeTeamGoal = event.teamId == homeTeamId;
       final isAwayTeamGoal = event.teamId == awayTeamId;
 
-      // If we can't determine the team, default to home team
       final effectiveTeamGoal = isHomeTeamGoal || !isAwayTeamGoal;
 
       int homeGoals = 0;
       int awayGoals = 0;
 
-      // Calculate score after this goal
       for (int i = 0; i <= index; i++) {
         final currentEvent = allEvents[i];
         if (currentEvent.type == MatchEventType.goal) {
@@ -217,13 +209,11 @@ class EventsListWidget extends StatelessWidget {
         }
       }
 
-      // Extract player name from event text
       String playerName = l10n.unknownPlayer; // Localized default
       if (event.shortText != null && event.shortText!.isNotEmpty) {
         final nameParts = event.shortText!.split(" ");
         if (nameParts.isNotEmpty) {
-          playerName =
-              nameParts.first; // Assumes first name is enough, adjust if needed
+          playerName = nameParts.first;
         }
       } else if (event.text.contains("(")) {
         final startIndex = event.text.indexOf("!");
@@ -239,7 +229,7 @@ class EventsListWidget extends StatelessWidget {
         scoringTeamName,
         homeGoals,
         awayGoals,
-      ); // Localized score update
+      );
 
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
@@ -269,7 +259,7 @@ class EventsListWidget extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: Colors.green.withAlpha(51), // Use withAlpha
+                color: Colors.green.withAlpha(51),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -284,7 +274,7 @@ class EventsListWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l10n.goalScoredBy(playerName), // Localized goal message
+                    l10n.goalScoredBy(playerName),
                     style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.green,
@@ -294,9 +284,7 @@ class EventsListWidget extends StatelessWidget {
                   Text(
                     teamScore,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withAlpha(
-                        178,
-                      ), // Use theme color
+                      color: theme.colorScheme.onSurface.withAlpha(178),
                     ),
                   ),
                 ],
@@ -307,13 +295,10 @@ class EventsListWidget extends StatelessWidget {
       );
     } catch (e) {
       dev.log('Error building goal event: $e');
-      // Fallback goal event display
       return ListTile(
         leading: const Icon(Icons.sports_soccer, color: Colors.green),
-        title: Text(l10n.goalAtTime(event.time)), // Localized fallback
-        subtitle: Text(
-          l10n.teamId(event.teamId ?? l10n.unknown),
-        ), // Localized fallback
+        title: Text(l10n.goalAtTime(event.time)),
+        subtitle: Text(l10n.teamId(event.teamId ?? l10n.unknown)),
       );
     }
   }

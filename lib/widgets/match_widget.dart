@@ -9,7 +9,7 @@ import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:espn_app/models/event.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MatchWidget extends ConsumerStatefulWidget {
   final Event event;
@@ -23,24 +23,16 @@ class MatchWidget extends ConsumerStatefulWidget {
 class _MatchWidgetState extends ConsumerState<MatchWidget> {
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // Get localizations
-    final currentLocale =
-        Localizations.localeOf(context).toString(); // Get current locale
+    final l10n = AppLocalizations.of(context)!;
+    final currentLocale = Localizations.localeOf(context).toString();
 
     final parts = widget.event.name.split(" at ");
-    // Les noms d'équipe viennent probablement de l'API et n'ont pas besoin d'être localisés ici.
-    // S'il y a des fallbacks, ils devraient être localisés.
     final awayTeamName =
-        parts.isNotEmpty
-            ? parts.first.trim()
-            : l10n.defaultAwayTeam; // Localized fallback
+        parts.isNotEmpty ? parts.first.trim() : l10n.defaultAwayTeam;
     final homeTeamName =
-        parts.length > 1
-            ? parts.last.trim()
-            : l10n.defaultHomeTeam; // Localized fallback
+        parts.length > 1 ? parts.last.trim() : l10n.defaultHomeTeam;
     final possibleColors = ref.watch(colorsProvider);
 
-    // Generate a random color from the possible colors list
     final Random rnd = Random();
     final Color randomColor =
         possibleColors[rnd.nextInt(possibleColors.length)];
@@ -48,20 +40,16 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
     final awayTeam = Team(
       id: widget.event.idTeam.$1,
       name: awayTeamName,
-      shortName:
-          awayTeamName, // Utiliser shortName venant de l'Event si disponible
+      shortName: awayTeamName,
     );
     final homeTeam = Team(
       id: widget.event.idTeam.$2,
       name: homeTeamName,
-      shortName:
-          homeTeamName, // Utiliser shortName venant de l'Event si disponible
+      shortName: homeTeamName,
     );
 
-    // Conversion de la date (on suppose ici que event.date est au format ISO8601)
     final matchDate = DateTime.tryParse(widget.event.date) ?? DateTime.now();
 
-    // Pour cet exemple, on considère le match comme planifié (non live)
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -97,11 +85,10 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
     (Future<Score> home, Future<Score> away) score,
     DateTime matchDate,
     Color randomColor,
-    AppLocalizations l10n, // Passer l10n
-    String currentLocale, // Passer la locale
+    AppLocalizations l10n,
+    String currentLocale,
   ) {
     final day = matchDate.day;
-    // Utiliser DateFormat avec la locale pour le nom du mois
     final monthName = DateFormat.MMMM(currentLocale).format(matchDate);
     final hourString = "${matchDate.hour.toString().padLeft(2, '0')}:";
     final minuteString = matchDate.minute.toString().padLeft(2, '0');
@@ -146,9 +133,7 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                     child: CircularProgressIndicator(),
                                   );
                                 } else if (snapshot.hasError) {
-                                  return Center(
-                                    child: Text(l10n.error),
-                                  ); // Localized error
+                                  return Center(child: Text(l10n.error));
                                 } else if (snapshot.hasData) {
                                   final scores = snapshot.data!;
                                   final homeScore = scores.$1.value;
@@ -168,7 +153,7 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                         ),
                                       ),
                                       Text(
-                                        '-', // Le tiret est souvent universel
+                                        '-',
                                         style: GoogleFonts.blackOpsOne(
                                           height: 1.25,
                                           fontSize: 42,
@@ -181,9 +166,7 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                         style: GoogleFonts.blackOpsOne(
                                           height: 1.25,
                                           fontSize: 42,
-                                          color: Colors.black.withAlpha(
-                                            128,
-                                          ), // Use withAlpha
+                                          color: Colors.black.withAlpha(128),
                                         ),
                                       ),
                                     ],
@@ -211,9 +194,7 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                   style: GoogleFonts.blackOpsOne(
                                     height: 1.25,
                                     fontSize: 32,
-                                    color: Colors.black.withAlpha(
-                                      128,
-                                    ), // Use withAlpha
+                                    color: Colors.black.withAlpha(128),
                                   ),
                                 ),
                               ],
@@ -222,7 +203,6 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                 ],
               ),
               const SizedBox(width: 16),
-              // Colonne de droite : date et noms des équipes
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,12 +217,12 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                       ),
                     ),
                     Text(
-                      monthName, // Nom du mois localisé
+                      monthName,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.blackOpsOne(
                         height: 1.2,
                         fontSize: 16,
-                        color: Colors.black.withAlpha(128), // Use withAlpha
+                        color: Colors.black.withAlpha(128),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -255,7 +235,7 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  homeTeam.firstName, // Nom de l'API
+                                  homeTeam.firstName,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.blackOpsOne(
                                     fontSize: 22,
@@ -265,14 +245,12 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                 ),
                                 if (homeTeam.secondName.isNotEmpty)
                                   Text(
-                                    homeTeam.secondName, // Nom de l'API
+                                    homeTeam.secondName,
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.blackOpsOne(
                                       fontSize: 22,
                                       height: 1.15,
-                                      color: Colors.black.withAlpha(
-                                        128,
-                                      ), // Use withAlpha
+                                      color: Colors.black.withAlpha(128),
                                     ),
                                   ),
                               ],
@@ -283,7 +261,7 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  awayTeam.firstName, // Nom de l'API
+                                  awayTeam.firstName,
                                   overflow: TextOverflow.ellipsis,
                                   style: GoogleFonts.blackOpsOne(
                                     fontSize: 22,
@@ -319,19 +297,13 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
     );
   }
 
-  /// Affichage de l'avatar de l'équipe avec ses initiales
   Widget _buildTeamAvatar(Team team) {
     return CircleAvatar(
       radius: 24,
       backgroundColor: Colors.transparent,
       backgroundImage: NetworkImage(
-        // L'URL de l'image n'a pas besoin d'être localisée
         'https://a.espncdn.com/i/teamlogos/soccer/500/${team.id}.png',
       ),
-      onBackgroundImageError: (exception, stackTrace) {
-        // Fallback si l'image ne charge pas
-        // Vous pourriez afficher une icône ou des initiales ici
-      },
     );
   }
 }

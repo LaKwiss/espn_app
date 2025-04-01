@@ -7,22 +7,16 @@ class Last5RowWidget extends ConsumerWidget {
 
   final String id;
 
-  /// Mappe le résultat (0, 1 ou 3) sur une couleur.
-  /// Vous pouvez ajuster ces couleurs selon vos besoins.
   Container _mapResultToContainer(int result) {
     switch (result) {
       case 3:
-        return Container(
-          height: 16,
-          width: 16,
-          color: Colors.black,
-        ); // Victoire
+        return Container(height: 16, width: 16, color: Colors.black);
       case 1:
         return Container(
           height: 16,
           width: 16,
           color: Colors.black.withValues(alpha: 0.5),
-        ); // Match nul
+        );
       case 0:
         return Container(
           height: 16,
@@ -34,7 +28,7 @@ class Last5RowWidget extends ConsumerWidget {
           height: 16,
           width: 16,
           decoration: BoxDecoration(border: Border.all(width: 1.0)),
-        ); // Défaite
+        );
     }
   }
 
@@ -57,7 +51,7 @@ class Last5RowWidget extends ConsumerWidget {
                   return Row(
                     children: [
                       _mapResultToContainer(result),
-                      const SizedBox(width: 2), // Add space between containers
+                      const SizedBox(width: 2),
                     ],
                   );
                 }).toList(),

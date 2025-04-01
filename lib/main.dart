@@ -14,13 +14,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive for local storage
   await Hive.initFlutter();
 
-  // Register adapters for Hive
   Hive.registerAdapter(HiveCacheEntryAdapter());
 
-  // Initialize the cache service
   await HiveCacheService.init();
 
   SystemChrome.setPreferredOrientations([
@@ -36,32 +33,24 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Utiliser le thème depuis le provider
     final themeData = ref.watch(themeProvider);
 
-    // Observer la locale depuis le provider
     final locale = ref.watch(localeProvider);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      // Utiliser la localisation pour le titre
+
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
       theme: themeData,
 
-      // Ajout des configurations de localisation
-      localizationsDelegates:
-          AppLocalizations.localizationsDelegates, // Utiliser le délégué généré
-      supportedLocales:
-          AppLocalizations.supportedLocales, // Utiliser les locales générées
-      // localeResolutionCallback: L10n.localeResolutionCallback, // Peut être géré par Flutter
-      locale: locale, // Utiliser la locale du provider
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
 
       routes: {
         '/': (context) => const MainNavigationScreen(),
         '/home': (context) => const HomeScreen(),
       },
-      // Si vous n'utilisez pas onGenerateTitle, vous pouvez définir title ici :
-      // title: 'ESPN App', // Ceci ne sera pas localisé
     );
   }
 }

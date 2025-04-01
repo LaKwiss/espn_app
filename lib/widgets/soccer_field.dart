@@ -1,7 +1,5 @@
-// lib/widgets/soccer_field.dart
 import 'package:flutter/material.dart';
 
-/// Widget qui dessine un terrain de football
 class SoccerField extends StatelessWidget {
   final Widget? child;
 
@@ -30,7 +28,6 @@ class SoccerField extends StatelessWidget {
   }
 }
 
-/// Painter pour dessiner les lignes du terrain de football
 class SoccerFieldPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {

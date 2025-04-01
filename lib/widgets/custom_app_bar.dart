@@ -8,7 +8,7 @@ class CustomAppBar extends ConsumerStatefulWidget {
     required this.url,
     this.backgroundColor,
     this.onArrowButtonPressed,
-    this.iconOrientation = 0, // Parameter for icon orientation
+    this.iconOrientation = 0,
     super.key,
   });
 
@@ -36,21 +36,19 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar>
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -1), // Start hidden above
-      end: const Offset(0, 0), // End at normal position
+      begin: const Offset(0, -1),
+      end: const Offset(0, 0),
     ).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
 
   void _toggleExpansion() {
-    // If custom function is provided, use it instead
     if (widget.onArrowButtonPressed != null) {
       widget.onArrowButtonPressed!();
       return;
     }
 
-    // Default behavior - toggle league selector
     if (isExpanded) {
       _animationController.reverse();
       setState(() {

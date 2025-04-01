@@ -17,9 +17,6 @@ class TeamLogoWidget extends StatelessWidget {
           backgroundImage: NetworkImage(
             'https://a.espncdn.com/i/teamlogos/soccer/500/${team.id}.png',
           ),
-          onBackgroundImageError: (exception, stackTrace) {
-            // Fallback si l'image ne charge pas
-          },
         ),
       ],
     );

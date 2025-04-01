@@ -182,7 +182,6 @@ class TacticsView extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // Formation de l'équipe à l'extérieur
               Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(16),
@@ -198,10 +197,10 @@ class TacticsView extends ConsumerWidget {
                   ],
                 ),
                 child: FormationVisualizer(
-                  formation: awayFormation.formationName, // API data
+                  formation: awayFormation.formationName,
                   players: awayStarters,
                   teamColor: awayColor,
-                  teamName: awayTeam.name, // API data
+                  teamName: awayTeam.name,
                   isHomeTeam: false,
                   onPlayerTap: (player) {
                     _showPlayerDetails(context, player, awayColor);
@@ -209,18 +208,15 @@ class TacticsView extends ConsumerWidget {
                 ),
               ),
 
-              // Remplaçants de l'équipe à l'extérieur
               SubstitutesList(
                 substitutes: awaySubstitutes,
                 substitutions: awaySubstitutions,
                 teamColor: awayColor,
-                teamName: awayTeam.name, // API data
+                teamName: awayTeam.name,
                 onPlayerTap: (player) {
                   _showPlayerDetails(context, player, awayColor);
                 },
               ),
-
-              // Espace en bas pour le défilement
               const SizedBox(height: 32),
             ],
           ),
@@ -233,7 +229,7 @@ class TacticsView extends ConsumerWidget {
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
-                Text(l10n.loadingTacticsData), // Use localization key
+                Text(l10n.loadingTacticsData),
               ],
             ),
           ),
@@ -250,11 +246,10 @@ class TacticsView extends ConsumerWidget {
                 const SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: () {
-                    // Réessayer de charger les données
                     var data = ref.refresh(formationAsyncProvider);
                     log(data.value.toString());
                   },
-                  child: Text(l10n.tryAgain), // Use localization key
+                  child: Text(l10n.tryAgain),
                 ),
               ],
             ),
@@ -262,14 +257,11 @@ class TacticsView extends ConsumerWidget {
     );
   }
 
-  /// Crée les substitutions à partir des données des joueurs
   List<Substitution> _createSubstitutions(List<EnrichedPlayerEntry> players) {
     final substitutions = <Substitution>[];
 
-    // Trouver les joueurs qui sont sortis
     for (var player in players) {
       if (player.subbedOut && player.replacementId != null) {
-        // Trouver le joueur entrant correspondant
         final replacement = players.firstWhere(
           (p) => p.playerId == player.replacementId,
           orElse:
@@ -287,7 +279,6 @@ class TacticsView extends ConsumerWidget {
         }
       }
     }
-    // Sort substitutions by minute
     substitutions.sort((a, b) {
       final minuteA =
           int.tryParse(a.minute.replaceAll(RegExp(r'[^\d]'), '')) ?? 999;
@@ -299,13 +290,12 @@ class TacticsView extends ConsumerWidget {
     return substitutions;
   }
 
-  /// Affiche une boîte de dialogue avec les détails du joueur
   void _showPlayerDetails(
     BuildContext context,
     EnrichedPlayerEntry player,
     Color teamColor,
   ) {
-    final l10n = AppLocalizations.of(context)!; // Get localizations
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
@@ -325,9 +315,8 @@ class TacticsView extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  // Ensure name doesn't overflow
                   child: Text(
-                    player.displayName, // API data
+                    player.displayName,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -339,19 +328,19 @@ class TacticsView extends ConsumerWidget {
               children: [
                 Text(
                   '${l10n.positionLabel}: ${player.positionName} (${player.positionAbbreviation})',
-                ), // Localized label
+                ),
                 const SizedBox(height: 8),
                 if (player.subbedOut)
-                  Text(l10n.substitutedOutAt(player.subMinute)), // Localized
+                  Text(l10n.substitutedOutAt(player.subMinute)),
                 if (player.subbedIn)
-                  Text(l10n.substitutedInAt(player.subMinute)), // Localized
+                  Text(l10n.substitutedInAt(player.subMinute)),
                 const SizedBox(height: 8),
                 if (player.hasYellowCard)
                   Row(
                     children: [
                       const Icon(Icons.square, color: Colors.yellow, size: 16),
                       const SizedBox(width: 4),
-                      Text(l10n.yellowCardLabel), // Localized
+                      Text(l10n.yellowCardLabel),
                     ],
                   ),
                 if (player.hasRedCard)
@@ -359,7 +348,7 @@ class TacticsView extends ConsumerWidget {
                     children: [
                       const Icon(Icons.square, color: Colors.red, size: 16),
                       const SizedBox(width: 4),
-                      Text(l10n.redCardLabel), // Localized
+                      Text(l10n.redCardLabel),
                     ],
                   ),
               ],
@@ -367,7 +356,7 @@ class TacticsView extends ConsumerWidget {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.closeButton), // Localized
+                child: Text(l10n.closeButton),
               ),
             ],
           ),

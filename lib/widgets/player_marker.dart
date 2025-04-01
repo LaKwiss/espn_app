@@ -1,8 +1,6 @@
-// lib/widgets/player_marker.dart
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/formation_response.dart';
 
-/// Widget pour représenter un joueur sur le terrain
 class PlayerMarker extends StatelessWidget {
   final EnrichedPlayerEntry player;
   final Color teamColor;
@@ -41,7 +39,6 @@ class PlayerMarker extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // Numéro du joueur
                 Center(
                   child: Text(
                     player.jerseyNumber,
@@ -52,7 +49,6 @@ class PlayerMarker extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Indicateur de carton jaune
                 if (player.hasYellowCard)
                   Positioned(
                     top: 0,
@@ -66,7 +62,6 @@ class PlayerMarker extends StatelessWidget {
                       ),
                     ),
                   ),
-                // Indicateur de carton rouge
                 if (player.hasRedCard)
                   Positioned(
                     top: 0,
@@ -84,7 +79,6 @@ class PlayerMarker extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          // Nom du joueur
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             decoration: BoxDecoration(

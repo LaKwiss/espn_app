@@ -1,4 +1,3 @@
-// espn_app/lib/widgets/match_info_section.dart
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/score.dart';
 import 'package:espn_app/models/team.dart';
@@ -6,11 +5,11 @@ import 'package:espn_app/widgets/score_display.dart';
 import 'package:espn_app/widgets/time_display.dart';
 import 'package:espn_app/widgets/team_logo.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MatchInfoSectionWidget extends StatelessWidget {
-  final String date; // Already formatted with locale
-  final String time; // Already formatted with locale
+  final String date;
+  final String time;
   final Team awayTeam;
   final Team homeTeam;
   final bool isFinished;
@@ -34,14 +33,14 @@ class MatchInfoSectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // Get localizations
-    final theme = Theme.of(context); // Get theme
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.cardColor, // Use theme color
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -50,14 +49,14 @@ class MatchInfoSectionWidget extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                date, // Already formatted date
+                date,
                 style: GoogleFonts.blackOpsOne(
                   fontSize: 24,
                   color: randomColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              if (isFinished) // Show toggle only if finished
+              if (isFinished)
                 IconButton(
                   icon: Icon(
                     showEvents ? Icons.expand_less : Icons.expand_more,
@@ -67,16 +66,14 @@ class MatchInfoSectionWidget extends StatelessWidget {
                   tooltip:
                       showEvents
                           ? l10n.hideEventsTooltip
-                          : l10n.showEventsTooltip, // Localized tooltip
+                          : l10n.showEventsTooltip,
                   onPressed: onToggleEvents,
                 ),
             ],
           ),
           const SizedBox(height: 16),
-          // Affichage du score
-          _buildScoreSection(context, l10n), // Pass context and l10n
+          _buildScoreSection(context, l10n),
           const SizedBox(height: 16),
-          // Affichage des équipes
           Row(
             children: [
               Expanded(
@@ -85,7 +82,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                     TeamLogoWidget(team: awayTeam, radius: 30),
                     const SizedBox(height: 8),
                     Text(
-                      awayTeam.firstName, // API data
+                      awayTeam.firstName,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 20,
@@ -94,11 +91,11 @@ class MatchInfoSectionWidget extends StatelessWidget {
                     ),
                     if (awayTeam.secondName.isNotEmpty)
                       Text(
-                        awayTeam.secondName, // API data
+                        awayTeam.secondName,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.blackOpsOne(
                           fontSize: 20,
-                          color: theme.colorScheme.onSurface, // Use theme color
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                   ],
@@ -110,16 +107,16 @@ class MatchInfoSectionWidget extends StatelessWidget {
                     TeamLogoWidget(team: homeTeam, radius: 30),
                     const SizedBox(height: 8),
                     Text(
-                      homeTeam.firstName, // API data
+                      homeTeam.firstName,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 20,
-                        color: theme.colorScheme.onSurface, // Use theme color
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     if (homeTeam.secondName.isNotEmpty)
                       Text(
-                        homeTeam.secondName, // API data
+                        homeTeam.secondName,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.blackOpsOne(
                           fontSize: 20,
@@ -160,11 +157,10 @@ class MatchInfoSectionWidget extends StatelessWidget {
                       ),
                     );
                   } else if (snapshot.hasError) {
-                    return Text(l10n.errorLoadingScores); // Localized error
+                    return Text(l10n.errorLoadingScores);
                   } else if (snapshot.hasData) {
                     final result = snapshot.data!;
                     return ScoreDisplay(
-                      // Pass scores directly
                       homeScore: result.$1.value.toInt(),
                       awayScore: result.$2.value.toInt(),
                     );
@@ -172,10 +168,7 @@ class MatchInfoSectionWidget extends StatelessWidget {
                   return const SizedBox(height: 60);
                 },
               )
-              : TimeDisplay(
-                time: time,
-                randomColor: randomColor,
-              ), // Time is already formatted
+              : TimeDisplay(time: time, randomColor: randomColor),
     );
   }
 }

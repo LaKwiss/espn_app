@@ -103,7 +103,6 @@ class SubstitutesWidget extends StatelessWidget {
                 color: teamColor,
               ),
             ),
-            // Indicateurs de cartons
             if (player.hasYellowCard)
               Container(
                 margin: const EdgeInsets.only(left: 4),
@@ -129,7 +128,6 @@ class SubstitutesWidget extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Row(
         children: [
-          // Indicateur minute
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
@@ -146,7 +144,6 @@ class SubstitutesWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Flèche d'entrée
           const Icon(Icons.arrow_upward, color: Colors.green, size: 16),
           const SizedBox(width: 4),
           Text(
@@ -158,7 +155,6 @@ class SubstitutesWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          // Flèche de sortie
           const Icon(Icons.arrow_downward, color: Colors.red, size: 16),
           const SizedBox(width: 4),
           Text(

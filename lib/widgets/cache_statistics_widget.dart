@@ -23,11 +23,10 @@ class _CacheStatisticsWidgetState extends ConsumerState<CacheStatisticsWidget> {
     super.initState();
     _refreshTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (mounted) {
-        setState(() {}); // Force refresh every 2 seconds
+        setState(() {});
       }
     });
 
-    // Initial update of cache size
     _updateCacheSize();
   }
 
@@ -42,13 +41,11 @@ class _CacheStatisticsWidgetState extends ConsumerState<CacheStatisticsWidget> {
       final cacheService = HiveCacheService();
       final statTracker = ref.read(cacheStatsProvider);
 
-      // Update total storage size
       int totalSize = 0;
       final keys = cacheService.box.keys;
       for (var key in keys) {
         final entry = cacheService.box.get(key);
         if (entry != null) {
-          // Rough estimate of entry size
           totalSize += entry.body.length;
         }
       }
@@ -65,7 +62,6 @@ class _CacheStatisticsWidgetState extends ConsumerState<CacheStatisticsWidget> {
     final theme = Theme.of(context);
     final statTracker = ref.watch(cacheStatsProvider);
 
-    // Make sure to update the cache size on each build
     _updateCacheSize();
 
     return Card(
@@ -85,7 +81,6 @@ class _CacheStatisticsWidgetState extends ConsumerState<CacheStatisticsWidget> {
             ),
             const SizedBox(height: 16),
 
-            // Cache hit ratio visual indicator
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -109,7 +104,6 @@ class _CacheStatisticsWidgetState extends ConsumerState<CacheStatisticsWidget> {
             ),
             const SizedBox(height: 16),
 
-            // Stats grid
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -146,7 +140,6 @@ class _CacheStatisticsWidgetState extends ConsumerState<CacheStatisticsWidget> {
             ),
             const SizedBox(height: 16),
 
-            // Cache storage
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

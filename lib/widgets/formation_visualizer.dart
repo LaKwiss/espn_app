@@ -4,14 +4,13 @@ import 'package:espn_app/models/formation_response.dart';
 import 'package:espn_app/widgets/soccer_field.dart';
 import 'package:espn_app/widgets/player_marker.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-/// Widget de visualisation de formation tactique
 class FormationVisualizer extends StatelessWidget {
-  final String formation; // From API
+  final String formation;
   final List<EnrichedPlayerEntry> players;
   final Color teamColor;
-  final String teamName; // From API or parent
+  final String teamName;
   final bool isHomeTeam;
   final Function(EnrichedPlayerEntry)? onPlayerTap;
 
@@ -27,35 +26,27 @@ class FormationVisualizer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // Get localizations
+    final l10n = AppLocalizations.of(context)!;
 
-    // Filtrer pour n'avoir que les titulaires
     final starters = players.where((p) => p.isStarter).toList();
 
-    // Analyser la formation (ex: "4-4-2") en une liste d'entiers
     final List<int> formationNumbers =
         formation.split('-').map((s) => int.tryParse(s) ?? 0).toList();
 
-    // Trouver le gardien
     final goalkeeper = starters.firstWhere(
-      (p) => p.formationPlace == 1, // Logic based on API data structure
-      orElse: () => starters.first, // Fallback if specific place isn't found
+      (p) => p.formationPlace == 1,
+      orElse: () => starters.first,
     );
 
-    // Extraire les joueurs de champ (tous sauf le gardien)
     final fieldPlayers = starters.where((p) => p.formationPlace != 1).toList();
 
-    // Trier les joueurs par position sur le terrain
     fieldPlayers.sort((a, b) => a.formationPlace.compareTo(b.formationPlace));
 
-    // Distribuer les joueurs en lignes selon la formation
     final List<List<EnrichedPlayerEntry>> lines = [];
     int currentIndex = 0;
 
-    // Pour chaque nombre dans la formation (ex: 4,4,2)
     for (int count in formationNumbers) {
       if (currentIndex < fieldPlayers.length) {
-        // Prendre les 'count' prochains joueurs pour cette ligne
         final endIndex =
             currentIndex + count > fieldPlayers.length
                 ? fieldPlayers.length
@@ -69,7 +60,6 @@ class FormationVisualizer extends StatelessWidget {
 
     return Column(
       children: [
-        // Formation label
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
@@ -77,15 +67,11 @@ class FormationVisualizer extends StatelessWidget {
             style: GoogleFonts.blackOpsOne(fontSize: 18, color: teamColor),
           ),
         ),
-        // Terrain avec joueurs
         SoccerField(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               if (isHomeTeam) _buildPlayerRow([goalkeeper]),
-              // Déterminer l'ordre en fonction de l'équipe (domicile/extérieur)
-
-              // Afficher les lignes dans le bon ordre
               ...isHomeTeam
                   ? lines.map((line) => _buildPlayerRow(line))
                   : lines.reversed.map((line) => _buildPlayerRow(line)),
@@ -98,7 +84,6 @@ class FormationVisualizer extends StatelessWidget {
     );
   }
 
-  // Construit une rangée de joueurs
   Widget _buildPlayerRow(List<EnrichedPlayerEntry> rowPlayers) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,

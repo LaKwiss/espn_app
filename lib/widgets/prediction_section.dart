@@ -4,7 +4,7 @@ import 'package:espn_app/screens/match_detail_screen.dart';
 import 'package:espn_app/widgets/last_5_row.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PredictionSectionWidget extends StatelessWidget {
   const PredictionSectionWidget({
@@ -113,7 +113,7 @@ class PredictionSectionWidget extends StatelessWidget {
                             l10n.probabilityAwayWinShort(
                               awayTeam.shortName,
                               probs[0].toString(),
-                            ), // Short version
+                            ),
                             style: GoogleFonts.blackOpsOne(
                               fontSize: 12,
                               color: theme.colorScheme.onSurface,
@@ -133,9 +133,7 @@ class PredictionSectionWidget extends StatelessWidget {
                             color: barColor.withValues(alpha: probs[1].value),
                           ),
                           Text(
-                            l10n.probabilityDrawShort(
-                              probs[1].toString(),
-                            ), // Short version
+                            l10n.probabilityDrawShort(probs[1].toString()),
                             style: GoogleFonts.blackOpsOne(
                               fontSize: 12,
                               color: theme.colorScheme.onSurface,

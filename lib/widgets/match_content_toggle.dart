@@ -7,7 +7,7 @@ import 'package:espn_app/widgets/tactics_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class MatchContentToggle extends ConsumerStatefulWidget {
   final Event event;
@@ -15,8 +15,7 @@ class MatchContentToggle extends ConsumerStatefulWidget {
   final Team awayTeam;
   final AsyncValue<List<MatchEvent>> eventsAsync;
   final bool hasStarted;
-  final bool
-  isWhite; // Determines if background is light/white for text color contrast
+  final bool isWhite;
 
   const MatchContentToggle({
     super.key,
@@ -35,7 +34,6 @@ class MatchContentToggle extends ConsumerStatefulWidget {
 class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
   bool _showTactics = false;
 
-  // Extraire l'ID de la ligue à partir de l'URL
   String _extractLeagueId(String leagueUrl) {
     final uriParts = leagueUrl.split('/');
     for (int i = 0; i < uriParts.length; i++) {
@@ -44,14 +42,13 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
         return leagueWithParams.split('?').first;
       }
     }
-    return 'uefa.champions'; // Valeur par défaut
+    return 'uefa.champions';
   }
 
   @override
   void initState() {
     super.initState();
 
-    // Ensure we initialize after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final leagueId = _extractLeagueId(widget.event.league);
       final params = MatchParams(
@@ -60,36 +57,30 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
         isFinished: widget.event.isFinished,
       );
 
-      // Initialize with new parameters (avoid recreating provider)
       ref.read(matchEventsProvider.notifier).initialize(params);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // Get localizations
-    final theme = Theme.of(context); // Get theme
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
-    // Observer directement le provider d'événements ici pour éviter les problèmes de synchronisation
     final eventsAsync = ref.watch(matchEventsProvider);
 
     final Color activeBackgroundColor = theme.colorScheme.onSurface;
-    final Color inactiveBackgroundColor =
-        theme.cardColor; // or another contrasting color
-    final Color activeTextColor =
-        theme.colorScheme.surface; // e.g., white or black
+    final Color inactiveBackgroundColor = theme.cardColor;
+    final Color activeTextColor = theme.colorScheme.surface;
     final Color inactiveTextColor = theme.colorScheme.onSurface.withValues(
       alpha: 0.8,
     );
 
     return Column(
       children: [
-        // Barre de bascule
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color:
-                inactiveBackgroundColor, // Background for the whole toggle bar
+            color: inactiveBackgroundColor,
             borderRadius: BorderRadius.circular(30),
           ),
           child: Row(
@@ -107,7 +98,7 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Text(
-                      l10n.eventsTab, // Use localization key
+                      l10n.eventsTab,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 16,
@@ -146,7 +137,6 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
           ),
         ),
 
-        // Contenu selon la sélection
         !widget.hasStarted
             ? Padding(
               padding: const EdgeInsets.all(32.0),
@@ -160,25 +150,23 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                       color:
                           widget.isWhite
                               ? Colors.white
-                              : theme
-                                  .colorScheme
-                                  .onSurface, // Adjust color based on background
+                              : theme.colorScheme.onSurface,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      l10n.informationWillFollow, // Use localization key
+                      l10n.informationWillFollow,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 24,
                         color:
                             widget.isWhite
                                 ? Colors.white
-                                : theme.colorScheme.onSurface, // Adjust color
+                                : theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      l10n.checkBackAfterKickoff, // Use localization key
+                      l10n.checkBackAfterKickoff,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
@@ -187,7 +175,7 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                                 ? Colors.white.withValues(alpha: 0.8)
                                 : theme.colorScheme.onSurface.withValues(
                                   alpha: 0.8,
-                                ), // Adjust color
+                                ),
                       ),
                     ),
                   ],
@@ -203,7 +191,6 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
             )
             : eventsAsync.when(
               data: (events) {
-                // Afficher un message si la liste est vide
                 if (events.isEmpty) {
                   return Padding(
                     padding: const EdgeInsets.all(32.0),
@@ -218,7 +205,7 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            l10n.noEventsAvailable, // Use localization key
+                            l10n.noEventsAvailable,
                             textAlign: TextAlign.center,
                             style: GoogleFonts.blackOpsOne(
                               fontSize: 24,
@@ -228,10 +215,9 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: () {
-                              // Rafraîchir les événements
                               ref.read(matchEventsProvider.notifier).refresh();
                             },
-                            child: Text(l10n.refresh), // Use localization key
+                            child: Text(l10n.refresh),
                           ),
                         ],
                       ),

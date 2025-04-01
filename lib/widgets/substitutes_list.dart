@@ -1,15 +1,13 @@
-// espn_app/lib/widgets/substitutes_list.dart
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/formation_response.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
-/// Widget pour afficher la liste des remplaçants
 class SubstitutesList extends StatelessWidget {
   final List<EnrichedPlayerEntry> substitutes;
   final List<Substitution> substitutions;
   final Color teamColor;
-  final String teamName; // Team name likely from API
+  final String teamName;
   final Function(EnrichedPlayerEntry)? onPlayerTap;
 
   const SubstitutesList({
@@ -23,8 +21,8 @@ class SubstitutesList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!; // Get localizations
-    final theme = Theme.of(context); // Get theme
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(20.0),
@@ -36,7 +34,7 @@ class SubstitutesList extends StatelessWidget {
           bottom: 8.0,
         ),
         decoration: BoxDecoration(
-          color: theme.cardColor, // Use theme color
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(16.0),
           boxShadow: [
             BoxShadow(
@@ -50,32 +48,25 @@ class SubstitutesList extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.substitutesTitle(
-                teamName,
-              ), // Use localization key with team name
+              l10n.substitutesTitle(teamName),
               style: GoogleFonts.blackOpsOne(fontSize: 18, color: teamColor),
             ),
             const SizedBox(height: 12),
-            // Liste des remplaçants
             Wrap(
               spacing: 8.0,
               runSpacing: 8.0,
               children:
                   substitutes
-                      .map(
-                        (player) => _buildSubstituteChip(player, theme),
-                      ) // Pass theme
+                      .map((player) => _buildSubstituteChip(player, theme))
                       .toList(),
             ),
-            // Séparateur
             if (substitutions.isNotEmpty) const Divider(height: 32),
-            // Liste des substitutions effectuées
             if (substitutions.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    l10n.changesTitle, // Use localization key
+                    l10n.changesTitle,
                     style: GoogleFonts.blackOpsOne(
                       fontSize: 16,
                       color: theme.colorScheme.onSurface.withValues(
@@ -86,7 +77,7 @@ class SubstitutesList extends StatelessWidget {
                   const SizedBox(height: 8),
                   ...substitutions.map(
                     (sub) => _buildSubstitutionItem(sub, theme),
-                  ), // Pass theme
+                  ),
                 ],
               ),
           ],
@@ -141,14 +132,13 @@ class SubstitutesList extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              player.displayName, // API data
+              player.displayName,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: chipTextColor,
               ),
             ),
-            // Indicateurs de cartons
             if (player.hasYellowCard)
               Container(
                 margin: const EdgeInsets.only(left: 4),
@@ -172,15 +162,14 @@ class SubstitutesList extends StatelessWidget {
   Widget _buildSubstitutionItem(Substitution sub, ThemeData theme) {
     final Color textColor = theme.colorScheme.onSurface.withValues(alpha: 0.87);
 
-    // Ensure player names are available, provide fallback if necessary
     final String playerInName =
         sub.playerIn is EnrichedPlayerEntry
             ? (sub.playerIn as EnrichedPlayerEntry).displayName
-            : 'Unknown'; // Fallback name
+            : 'Unknown';
     final String playerOutName =
         sub.playerOut is EnrichedPlayerEntry
             ? (sub.playerOut as EnrichedPlayerEntry).displayName
-            : 'Unknown'; // Fallback name
+            : 'Unknown';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
@@ -193,7 +182,7 @@ class SubstitutesList extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              sub.minute, // API data (e.g., "65'")
+              sub.minute,
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
@@ -202,13 +191,12 @@ class SubstitutesList extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Flèche d'entrée
           const Icon(Icons.arrow_upward, color: Colors.green, size: 16),
           const SizedBox(width: 4),
           Expanded(
             flex: 1,
             child: Text(
-              "${sub.playerIn.jerseyNumber} $playerInName", // API data
+              "${sub.playerIn.jerseyNumber} $playerInName",
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 14,
@@ -218,13 +206,12 @@ class SubstitutesList extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          // Flèche de sortie
           const Icon(Icons.arrow_downward, color: Colors.red, size: 16),
           const SizedBox(width: 4),
           Expanded(
             flex: 1,
             child: Text(
-              "${sub.playerOut.jerseyNumber} $playerOutName", // API data
+              "${sub.playerOut.jerseyNumber} $playerOutName",
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 14,
