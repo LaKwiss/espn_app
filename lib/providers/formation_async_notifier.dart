@@ -1,11 +1,9 @@
-// lib/providers/formation_async_notifier.dart
 import 'dart:async';
 import 'package:espn_app/models/formation_response.dart';
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/repositories/formation_repository/i_formation_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// État pour gérer les données de formation
 class FormationState {
   final Map<String, FormationResponse> formationCache;
   final Map<String, List<EnrichedPlayerEntry>> enrichedPlayersCache;
@@ -16,7 +14,6 @@ class FormationState {
   });
 }
 
-/// AsyncNotifier pour les formations d'équipe
 class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
   late final IFormationRepository _repository;
 
@@ -26,7 +23,6 @@ class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
     return const FormationState();
   }
 
-  /// Récupère la formation d'une équipe pour un match spécifique
   Future<FormationResponse> fetchFormation({
     required String matchId,
     required String teamId,
@@ -35,24 +31,20 @@ class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
     state = const AsyncValue.loading();
 
     try {
-      // Clé de cache
       final cacheKey = '$matchId-$teamId';
 
-      // Vérifier si la formation est déjà en cache
       if (state.value != null &&
           state.value!.formationCache.containsKey(cacheKey)) {
         state = AsyncValue.data(state.value!);
         return state.value!.formationCache[cacheKey]!;
       }
 
-      // Sinon, récupérer depuis le repository
       final formation = await _repository.getTeamFormation(
         matchId: matchId,
         teamId: teamId,
         leagueId: leagueId,
       );
 
-      // Mettre à jour le cache
       final updatedCache = {...?state.value?.formationCache};
       updatedCache[cacheKey] = formation;
 
@@ -66,7 +58,6 @@ class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
       return formation;
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
-      // Retourner une formation vide en cas d'erreur
       return FormationResponse.fromJson({
         'formation': {'name': 'Unknown'},
         'entries': [],
@@ -74,7 +65,6 @@ class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
     }
   }
 
-  /// Récupère les données de joueurs enrichies
   Future<List<EnrichedPlayerEntry>> fetchEnrichedPlayers({
     required String matchId,
     required String teamId,
@@ -84,10 +74,8 @@ class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
     state = const AsyncValue.loading();
 
     try {
-      // Clé de cache
       final cacheKey = '$matchId-$teamId';
 
-      // Vérifier si les données enrichies sont déjà en cache et qu'on ne force pas le rafraîchissement
       if (!forceRefresh &&
           state.value != null &&
           state.value!.enrichedPlayersCache.containsKey(cacheKey)) {
@@ -95,19 +83,16 @@ class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
         return state.value!.enrichedPlayersCache[cacheKey]!;
       }
 
-      // Récupérer d'abord la formation de base
       final formation = await fetchFormation(
         matchId: matchId,
         teamId: teamId,
         leagueId: leagueId,
       );
 
-      // Ensuite enrichir les données des joueurs
       final enrichedPlayers = await _repository.enrichPlayersData(
         formation.players,
       );
 
-      // Mettre à jour le cache
       final updatedCache = {...?state.value?.enrichedPlayersCache};
       updatedCache[cacheKey] = enrichedPlayers;
 
@@ -125,14 +110,12 @@ class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
     }
   }
 
-  /// Récupère les formations des deux équipes d'un match
   Future<(FormationResponse, FormationResponse)> fetchMatchFormations({
     required String matchId,
     required String homeTeamId,
     required String awayTeamId,
     required String leagueId,
   }) async {
-    // Récupérer les formations en parallèle
     final results = await Future.wait([
       fetchFormation(matchId: matchId, teamId: homeTeamId, leagueId: leagueId),
       fetchFormation(matchId: matchId, teamId: awayTeamId, leagueId: leagueId),
@@ -142,7 +125,6 @@ class FormationAsyncNotifier extends AsyncNotifier<FormationState> {
   }
 }
 
-// Provider pour accéder au notifier de formation
 final formationAsyncProvider =
     AsyncNotifierProvider<FormationAsyncNotifier, FormationState>(
       () => FormationAsyncNotifier(),

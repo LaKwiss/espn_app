@@ -31,31 +31,25 @@ class MatchParams {
   int get hashCode => matchId.hashCode ^ leagueId.hashCode;
 }
 
-// AsyncNotifier pour gérer les événements du match
 class MatchEventsNotifier extends AsyncNotifier<List<MatchEvent>> {
   MatchParams? _params;
   late final IMatchEventRepository _repository;
   bool _isInitialized = false;
 
-  // Initialiser le notifier avec les paramètres spécifiques
   void initialize(MatchParams params) {
-    // Only update params if they've changed
     if (_params != params) {
       dev.log('Initializing events notifier with params: $params');
       _params = params;
 
-      // Only initialize repository once
       if (!_isInitialized) {
         _repository = ref.read(matchEventRepositoryProvider);
         _isInitialized = true;
       }
 
-      // Always fetch events when params change
       _fetchEvents();
     }
   }
 
-  // Récupérer les événements depuis le repository
   Future<void> _fetchEvents() async {
     if (_params == null) {
       dev.log('Cannot fetch events: params are null');
@@ -84,7 +78,6 @@ class MatchEventsNotifier extends AsyncNotifier<List<MatchEvent>> {
     }
   }
 
-  // Rafraîchir les données manuellement
   Future<void> refresh() async {
     dev.log('Manually refreshing events');
     return _fetchEvents();
@@ -92,27 +85,22 @@ class MatchEventsNotifier extends AsyncNotifier<List<MatchEvent>> {
 
   @override
   Future<List<MatchEvent>> build() async {
-    // Si _params n'est pas encore défini, retourner une liste vide
     if (_params == null) {
       dev.log('Building with empty state: params not set');
       return [];
     }
 
-    // Utiliser _fetchEvents pour charger les données
     await _fetchEvents();
 
-    // Récupérer les données de l'état actuel
     return state.valueOrNull ?? [];
   }
 }
 
-// Provider pour accéder au notifier
 final matchEventsProvider =
     AsyncNotifierProvider<MatchEventsNotifier, List<MatchEvent>>(
       () => MatchEventsNotifier(),
     );
 
-// Pour utiliser le provider avec des paramètres spécifiques
 void initializeMatchEvents(WidgetRef ref, MatchParams params) {
   dev.log('Initializing match events with: $params');
   ref.read(matchEventsProvider.notifier).initialize(params);

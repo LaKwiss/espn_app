@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Thème clair de l'application
 final lightTheme = ThemeData(
   brightness: Brightness.light,
   scaffoldBackgroundColor: Colors.white,
@@ -41,31 +40,26 @@ final lightTheme = ThemeData(
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
   ),
   textTheme: TextTheme(
-    // Titres principaux en BlackOpsOne
     headlineLarge: GoogleFonts.blackOpsOne(
       fontSize: 45,
       color: Colors.black,
       height: 1.0,
     ),
-    // Titres secondaires en BlackOpsOne
     headlineMedium: GoogleFonts.blackOpsOne(
       fontSize: 32,
       color: Colors.black,
       height: 1.0,
     ),
-    // Titres de sections en BlackOpsOne
     titleLarge: GoogleFonts.blackOpsOne(
       fontSize: 24,
       color: Colors.black,
       height: 1.0,
     ),
-    // Titres de cartes/widgets en BlackOpsOne
     titleMedium: GoogleFonts.blackOpsOne(
       fontSize: 18,
       color: Colors.black,
       height: 1.0,
     ),
-    // Texte courant en Roboto
     bodyLarge: GoogleFonts.roboto(
       fontSize: 16,
       fontWeight: FontWeight.w400,
@@ -81,7 +75,6 @@ final lightTheme = ThemeData(
       fontWeight: FontWeight.w400,
       color: Colors.black54,
     ),
-    // Pour les boutons et éléments interactifs
     labelLarge: GoogleFonts.roboto(
       fontSize: 16,
       fontWeight: FontWeight.w500,
@@ -108,7 +101,6 @@ final lightTheme = ThemeData(
   ),
 );
 
-/// Thème sombre de l'application
 final darkTheme = ThemeData(
   brightness: Brightness.dark,
   scaffoldBackgroundColor: Colors.black,
@@ -148,31 +140,26 @@ final darkTheme = ThemeData(
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
   ),
   textTheme: TextTheme(
-    // Titres principaux en BlackOpsOne
     headlineLarge: GoogleFonts.blackOpsOne(
       fontSize: 45,
       color: Colors.white,
       height: 1.0,
     ),
-    // Titres secondaires en BlackOpsOne
     headlineMedium: GoogleFonts.blackOpsOne(
       fontSize: 32,
       color: Colors.white,
       height: 1.0,
     ),
-    // Titres de sections en BlackOpsOne
     titleLarge: GoogleFonts.blackOpsOne(
       fontSize: 24,
       color: Colors.white,
       height: 1.0,
     ),
-    // Titres de cartes/widgets en BlackOpsOne
     titleMedium: GoogleFonts.blackOpsOne(
       fontSize: 18,
       color: Colors.white,
       height: 1.0,
     ),
-    // Texte courant en Roboto
     bodyLarge: GoogleFonts.roboto(
       fontSize: 16,
       fontWeight: FontWeight.w400,
@@ -188,7 +175,6 @@ final darkTheme = ThemeData(
       fontWeight: FontWeight.w400,
       color: Colors.white60,
     ),
-    // Pour les boutons et éléments interactifs
     labelLarge: GoogleFonts.roboto(
       fontSize: 16,
       fontWeight: FontWeight.w500,

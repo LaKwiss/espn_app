@@ -7,7 +7,7 @@ class Team extends Equatable {
   final String name;
   final String shortName;
   final IconData? icon;
-  final Club? club; // Add club property to associate Team with its Club
+  final Club? club;
 
   late final List<String> _nameParts;
 
@@ -16,7 +16,7 @@ class Team extends Equatable {
     required this.name,
     required this.shortName,
     this.icon,
-    this.club, // Make club optional in the constructor
+    this.club,
   }) {
     _nameParts = name.split(' ');
   }
@@ -25,7 +25,6 @@ class Team extends Equatable {
   String get secondName =>
       _nameParts.length > 1 ? _nameParts.sublist(1).join(' ') : '';
 
-  // Factory method to create a Team with associated Club
   factory Team.withClub({
     required String id,
     required String name,

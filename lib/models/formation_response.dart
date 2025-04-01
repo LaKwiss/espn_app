@@ -1,7 +1,5 @@
-// lib/models/formation_response.dart
 import 'package:equatable/equatable.dart';
 
-/// Modèle pour la réponse de formation d'équipe
 class FormationResponse extends Equatable {
   final String formationName;
   final List<PlayerEntry> players;
@@ -9,13 +7,11 @@ class FormationResponse extends Equatable {
   const FormationResponse({required this.formationName, required this.players});
 
   factory FormationResponse.fromJson(Map<String, dynamic> json) {
-    // Extraire la formation
     final formation =
         json['formation'] != null
             ? json['formation']['name'] ?? 'Unknown'
             : 'Unknown';
 
-    // Extraire les joueurs
     final List<PlayerEntry> players = [];
     if (json['entries'] != null && json['entries'] is List) {
       for (var entry in json['entries']) {
@@ -26,24 +22,19 @@ class FormationResponse extends Equatable {
     return FormationResponse(formationName: formation, players: players);
   }
 
-  // Méthode utilitaire pour obtenir uniquement les titulaires
   List<PlayerEntry> get starters {
     return players.where((player) => player.isStarter).toList();
   }
 
-  // Méthode utilitaire pour obtenir uniquement les remplaçants
   List<PlayerEntry> get substitutes {
     return players.where((player) => !player.isStarter).toList();
   }
 
-  // Méthode utilitaire pour obtenir les changements effectués
   List<Substitution> get substitutions {
     final subs = <Substitution>[];
 
-    // Trouver les joueurs qui sont sortis
     for (var player in players) {
       if (player.subbedOut) {
-        // Trouver le joueur entrant correspondant
         final replacement = players.firstWhere(
           (p) => p.playerId == player.replacementId,
           orElse: () => PlayerEntry.empty(),
@@ -68,7 +59,6 @@ class FormationResponse extends Equatable {
   List<Object?> get props => [formationName, players];
 }
 
-/// Modèle pour un joueur dans la formation
 class PlayerEntry extends Equatable {
   final int playerId;
   final String jerseyNumber;
@@ -79,7 +69,7 @@ class PlayerEntry extends Equatable {
   final int? replacementId;
   final String subMinute;
   final String
-  athleteRef; // Référence à l'API pour récupérer les détails du joueur
+  athleteRef;
   final bool hasYellowCard;
   final bool hasRedCard;
 
@@ -98,7 +88,6 @@ class PlayerEntry extends Equatable {
   });
 
   factory PlayerEntry.fromJson(Map<String, dynamic> json) {
-    // Extraire le moment de la substitution
     String subMinute = '';
     if (json['subbedOut'] != null &&
         json['subbedOut']['didSub'] == true &&
@@ -106,7 +95,6 @@ class PlayerEntry extends Equatable {
       subMinute = json['subbedOut']['clock']['displayValue'] ?? '';
     }
 
-    // Extraire l'ID du remplaçant
     int? replacementId;
     if (json['subbedOut'] != null &&
         json['subbedOut']['didSub'] == true &&
@@ -116,18 +104,13 @@ class PlayerEntry extends Equatable {
       replacementId = _extractIdFromRef(refString);
     }
 
-    // Extraire l'URL de référence du joueur
     String athleteRef = '';
     if (json['athlete'] != null && json['athlete']['\$ref'] != null) {
       athleteRef = json['athlete']['\$ref'] as String? ?? '';
     }
 
-    // Vérifier les cartons
     bool hasYellowCard = false;
     bool hasRedCard = false;
-
-    // Logique pour extraire les cartons si disponible dans la réponse JSON
-    // Cette partie peut être ajustée en fonction de la structure réelle des données
 
     return PlayerEntry(
       playerId: json['playerId'] ?? 0,
@@ -153,7 +136,6 @@ class PlayerEntry extends Equatable {
     );
   }
 
-  // Méthode pour créer un objet vide
   factory PlayerEntry.empty() {
     return const PlayerEntry(
       playerId: 0,
@@ -183,7 +165,6 @@ class PlayerEntry extends Equatable {
     hasRedCard,
   ];
 
-  // Fonction utilitaire pour extraire l'ID du joueur depuis l'URL de référence
   static int? _extractIdFromRef(String ref) {
     if (ref.isEmpty) return null;
 
@@ -196,7 +177,6 @@ class PlayerEntry extends Equatable {
   }
 }
 
-/// Version enrichie du modèle PlayerEntry avec plus d'informations
 class EnrichedPlayerEntry extends PlayerEntry {
   final String displayName;
   final String firstName;
@@ -223,7 +203,6 @@ class EnrichedPlayerEntry extends PlayerEntry {
     required this.positionAbbreviation,
   });
 
-  /// Crée un EnrichedPlayerEntry à partir d'un PlayerEntry de base
   factory EnrichedPlayerEntry.fromPlayerEntry(PlayerEntry player) {
     return EnrichedPlayerEntry(
       playerId: player.playerId,
@@ -256,7 +235,6 @@ class EnrichedPlayerEntry extends PlayerEntry {
   ];
 }
 
-/// Modèle pour représenter une substitution
 class Substitution extends Equatable {
   final PlayerEntry playerOut;
   final PlayerEntry playerIn;

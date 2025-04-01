@@ -239,7 +239,6 @@ class MatchEventParticipant extends Equatable {
   ];
 
   factory MatchEventParticipant.fromJson(Map<String, dynamic> json) {
-    // Extraire l'ID de l'athlète
     String athleteId = '';
     if (json.containsKey('athlete') && json['athlete'] != null) {
       final athleteRef = json['athlete']['\$ref'] as String;
@@ -247,7 +246,6 @@ class MatchEventParticipant extends Equatable {
       athleteId = parts.isNotEmpty ? parts.last : '';
     }
 
-    // Extraire l'ID de l'équipe
     String teamId = '';
     if (json.containsKey('team') && json['team'] != null) {
       final teamRef = json['team']['\$ref'] as String;
@@ -255,7 +253,6 @@ class MatchEventParticipant extends Equatable {
       teamId = parts.isNotEmpty ? parts.last : '';
     }
 
-    // Extraire l'ID de la position
     String? positionId;
     if (json.containsKey('position') && json['position'] != null) {
       final positionRef = json['position']['\$ref'] as String;

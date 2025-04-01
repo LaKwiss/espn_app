@@ -5,12 +5,10 @@ class ColorsNotifier extends StateNotifier<List<Color>> {
   ColorsNotifier()
     : super([Colors.red, Colors.blue, Colors.green, Colors.yellow]);
 
-  // Create - Ajouter une nouvelle couleur
   void addColor(Color color) {
     state = [...state, color];
   }
 
-  // Read - Obtenir une couleur par index
   Color? getColor(int index) {
     if (index >= 0 && index < state.length) {
       return state[index];
@@ -18,7 +16,6 @@ class ColorsNotifier extends StateNotifier<List<Color>> {
     return null;
   }
 
-  // Update - Modifier une couleur existante
   void updateColor(int index, Color newColor) {
     if (index >= 0 && index < state.length) {
       final newColors = List<Color>.from(state);
@@ -27,7 +24,6 @@ class ColorsNotifier extends StateNotifier<List<Color>> {
     }
   }
 
-  // Delete - Supprimer une couleur
   void deleteColor(int index) {
     if (index >= 0 && index < state.length) {
       final newColors = List<Color>.from(state);
@@ -36,7 +32,6 @@ class ColorsNotifier extends StateNotifier<List<Color>> {
     }
   }
 
-  // Vider la liste des couleurs
   void clearColors() {
     state = [];
   }

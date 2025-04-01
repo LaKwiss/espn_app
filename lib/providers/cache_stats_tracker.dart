@@ -3,7 +3,7 @@ class CacheStatsTracker {
   int cacheMisses = 0;
   int cacheExpired = 0;
   int networkRequests = 0;
-  int totalStorage = 0; // In bytes
+  int totalStorage = 0;
 
   void trackCacheHit() {
     cacheHits++;

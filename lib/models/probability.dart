@@ -1,6 +1,5 @@
-// Classe qui représente une probabilité implicite calculée à partir d'une cote décimale.
 class Probability {
-  final double value; // valeur comprise entre 0 et 1 (ex. 0.488 = 48.8%)
+  final double value;
 
   Probability({required this.value});
 

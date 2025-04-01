@@ -26,7 +26,6 @@ class Event extends Equatable {
   )
   probability;
 
-  // Club information
   final Club? homeClub;
   final Club? awayClub;
 
@@ -46,21 +45,17 @@ class Event extends Equatable {
     this.awayClub,
   });
 
-  /// Creates an Event from two JSON objects: event data and odds data.
-  /// Also extracts the shortName field and splits it to get the team short names.
   factory Event.fromJson(
     Map<String, dynamic> eventJson,
     Map<String, dynamic> oddsJson,
   ) {
     final competition = eventJson['competitions'][0];
 
-    // Get score URLs for each competitor
     final String homeScoreUrl =
         competition['competitors'][0]['score']['\$ref'] as String;
     final String awayScoreUrl =
         competition['competitors'][1]['score']['\$ref'] as String;
 
-    // Extract and parse short names
     final String eventShortName = eventJson['shortName'] as String;
     final parts = eventShortName.split('@');
     if (parts.length != 2) {
@@ -69,14 +64,12 @@ class Event extends Equatable {
     final String awayShort = parts[0].trim();
     final String homeShort = parts[1].trim();
 
-    // Calculate probabilities from odds
     final (
       double awayProb,
       double homeProb,
       double drawProb,
     ) = OddsService.calculateProbabilities(oddsJson);
 
-    // Convert to Future<Probability> objects
     final Future<Probability> awayProbability = Future.value(
       Probability(value: awayProb),
     );
@@ -87,7 +80,6 @@ class Event extends Equatable {
       Probability(value: drawProb),
     );
 
-    // Extract club information if available
     Club? homeClub;
     Club? awayClub;
 
@@ -98,7 +90,6 @@ class Event extends Equatable {
       log('Error extracting club data: $e');
     }
 
-    // Determine if the match is finished
     bool isFinished = _determineMatchStatus(eventJson, competition);
 
     return Event(
@@ -122,7 +113,6 @@ class Event extends Equatable {
     );
   }
 
-  /// Extract club data from competitor JSON
   static Club? _extractClubData(Map<String, dynamic> competitor) {
     if (!competitor.containsKey('team') || competitor['team'] == null) {
       return null;
@@ -141,7 +131,6 @@ class Event extends Equatable {
     );
   }
 
-  /// Extract league data from team data
   static League _extractLeagueData(Map<String, dynamic> teamData) {
     if (teamData.containsKey('league') && teamData['league'] != null) {
       final leagueData = teamData['league'];
@@ -162,7 +151,6 @@ class Event extends Equatable {
       );
     }
 
-    // Default league if no data is available
     return const League(
       id: 0,
       name: 'Unknown',
@@ -174,7 +162,6 @@ class Event extends Equatable {
     );
   }
 
-  /// Helper to extract logo URL with fallback
   static String _extractLogo(Map<String, dynamic> data, dynamic fallbackId) {
     return data['logos'] != null &&
             data['logos'] is List &&
@@ -183,7 +170,6 @@ class Event extends Equatable {
         : 'https://a.espncdn.com/i/teamlogos/soccer/500/$fallbackId.png';
   }
 
-  /// Determine if a match is finished based on status
   static bool _determineMatchStatus(
     Map<String, dynamic> eventJson,
     Map<String, dynamic> competition,
@@ -197,7 +183,6 @@ class Event extends Equatable {
             ).isBefore(DateTime.now().subtract(const Duration(hours: 3))));
   }
 
-  /// Fetch event and odds data from APIs and create an Event
   static Future<Event> fetchEvent(String eventUrl, String oddsUrl) async {
     // Fetch event data
     final eventResponse = await http.get(Uri.parse(eventUrl));
@@ -206,18 +191,15 @@ class Event extends Equatable {
     }
     final eventJson = jsonDecode(eventResponse.body) as Map<String, dynamic>;
 
-    // Fetch odds data
     final oddsResponse = await http.get(Uri.parse(oddsUrl));
     if (oddsResponse.statusCode != 200) {
       throw Exception('Failed to fetch odds data');
     }
     final oddsJson = jsonDecode(oddsResponse.body) as Map<String, dynamic>;
 
-    // Create and return the Event
     return Event.fromJson(eventJson, oddsJson);
   }
 
-  /// Get a default club for a team ID
   Club getDefaultClub(String teamId) {
     return Club(
       id: int.tryParse(teamId) ?? 0,
@@ -237,7 +219,6 @@ class Event extends Equatable {
     );
   }
 
-  /// Getter for home club
   Club get club => homeClub ?? getDefaultClub(idTeam.$2);
 
   @override

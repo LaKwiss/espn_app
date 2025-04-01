@@ -1,4 +1,3 @@
-// lib/providers/selected_league_notifier.dart
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/repositories/league_picture_repository/i_league_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +6,6 @@ class SelectedLeagueNotifier
     extends StateNotifier<(String league, String code)> {
   final ILeaguePictureRepository _repository;
 
-  // Initialize with default values and repository
   SelectedLeagueNotifier({required ILeaguePictureRepository repository})
     : _repository = repository,
       super(('Bundesliga', 'ger.1'));
