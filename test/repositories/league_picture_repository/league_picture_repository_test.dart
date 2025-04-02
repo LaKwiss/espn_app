@@ -6,7 +6,6 @@ import 'package:espn_app/services/api_service.dart';
 import 'package:espn_app/services/error_handler_service.dart';
 import 'package:espn_app/repositories/league_picture_repository/league_picture_repository.dart';
 
-// Mock classes
 class MockApiService extends Mock implements ApiService {}
 
 class MockErrorHandlerService extends Mock implements ErrorHandlerService {}

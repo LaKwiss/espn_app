@@ -1,4 +1,3 @@
-// espn_app/lib/widgets/event_list.dart
 import 'dart:developer' as dev;
 import 'package:espn_app/models/match_event.dart';
 import 'package:espn_app/models/team.dart';

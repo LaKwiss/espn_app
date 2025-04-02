@@ -1,4 +1,3 @@
-// espn_app/lib/widgets/formation_visualizer.dart
 import 'package:flutter/material.dart';
 import 'package:espn_app/models/formation_response.dart';
 import 'package:espn_app/widgets/soccer_field.dart';

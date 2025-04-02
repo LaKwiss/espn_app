@@ -1,4 +1,3 @@
-// espn_app/lib/widgets/match_widget.dart
 import 'dart:math';
 
 import 'package:espn_app/models/score.dart';

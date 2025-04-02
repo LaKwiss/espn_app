@@ -1,4 +1,3 @@
-// lib/screens/main_navigation_screen.dart
 import 'dart:developer';
 
 import 'package:espn_app/providers/page_index_provider.dart';
@@ -21,8 +20,6 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   late PageController _pageController;
-
-  // ... (initState et dispose restent les mêmes) ...
   @override
   void initState() {
     super.initState();
@@ -66,21 +63,14 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
 
     final theme = Theme.of(context);
 
-    // *** Modification ici ***
-    // Lisez l'état de visibilité du sélecteur de ligue
     final isLeagueSelectorVisible = ref.watch(leagueSelectorVisibilityProvider);
 
-    // Calculez la hauteur supplémentaire nécessaire
-    // 50.0 lorsque le sélecteur est visible, 10.0 sinon (comme demandé)
-    // Vous pouvez ajuster la valeur 10.0 si vous préférez 0 ou autre chose.
     final double extraHeight =
         isLeagueSelectorVisible.value == true ? 50.0 : 10.0;
     final double preferredHeight = kToolbarHeight + extraHeight;
-    // ***********************
 
     return Scaffold(
       appBar: PreferredSize(
-        // Utilisez la hauteur calculée dynamiquement
         preferredSize: Size.fromHeight(preferredHeight),
         child: CustomAppBar(
           url: _getAppBarLogoUrl(ref),
@@ -100,6 +90,4 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
       ),
     );
   }
-
-  // ... (_getLinkByFullTitle reste le même si vous l'utilisez encore) ...
 }

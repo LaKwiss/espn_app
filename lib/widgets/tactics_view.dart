@@ -1,4 +1,3 @@
-// espn_app/lib/widgets/tactics_view.dart
 import 'dart:developer';
 
 import 'package:espn_app/models/event.dart';
@@ -12,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
 
-/// Widget pour afficher les tactiques d'un match
 class TacticsView extends ConsumerWidget {
   final Event event;
   final Team homeTeam;

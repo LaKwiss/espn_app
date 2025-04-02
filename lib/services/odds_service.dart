@@ -1,6 +1,5 @@
 import 'dart:developer';
 
-/// Service for handling betting odds and probability calculations
 class OddsService {
   /// Calculate probabilities based on odds data
   /// Returns a tuple of (away probability, home probability, draw probability)

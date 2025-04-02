@@ -1,4 +1,3 @@
-// espn_app/lib/screens/home_screen.dart
 import 'dart:developer' as dev;
 import 'package:espn_app/providers/league_async_notifier.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';

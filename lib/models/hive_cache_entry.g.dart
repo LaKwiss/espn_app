@@ -1,10 +1,4 @@
-// GENERATED CODE - DO NOT MODIFY BY HAND
-
 part of 'hive_cache_entry.dart';
-
-// **************************************************************************
-// TypeAdapterGenerator
-// **************************************************************************
 
 class HiveCacheEntryAdapter extends TypeAdapter<HiveCacheEntry> {
   @override

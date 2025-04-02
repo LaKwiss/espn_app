@@ -1,4 +1,3 @@
-// espn_app/lib/screens/color_picker_screen.dart
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

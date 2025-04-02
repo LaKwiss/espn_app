@@ -7,7 +7,6 @@ class Last5Repository implements ILast5Repository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
 
-  // Last 5 games data can be cached for a few hours since it doesn't change often
   static const Duration _last5CacheDuration = Duration(hours: 6);
 
   Last5Repository({
@@ -22,7 +21,6 @@ class Last5Repository implements ILast5Repository {
         'http://sports.core.api.espn.com/v2/sports/soccer/leagues/esp.1/seasons/2024/teams/$teamId';
 
     try {
-      // Use cache for last 5 games data
       final response = await _apiService.get(
         url,
         cacheDuration: _last5CacheDuration,
@@ -31,7 +29,6 @@ class Last5Repository implements ILast5Repository {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         final String form = data['form'] as String;
-        // On suppose que la chaîne "form" a toujours une taille d'au moins 5.
         final List<int> results =
             form.split('').take(5).map((result) {
               if (result == 'W') return 3;
@@ -48,7 +45,7 @@ class Last5Repository implements ILast5Repository {
         e,
         stack,
         'getLast5',
-        defaultValue: List.filled(5, 0), // Valeur par défaut en cas d'erreur
+        defaultValue: List.filled(5, 0),
       );
     }
   }

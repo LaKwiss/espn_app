@@ -7,7 +7,6 @@ class LeaguePictureRepository implements ILeaguePictureRepository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
 
-  // League logos rarely change, so we can cache them for a longer period
   static const Duration _leagueLogoCacheDuration = Duration(days: 7);
 
   LeaguePictureRepository({
@@ -22,7 +21,6 @@ class LeaguePictureRepository implements ILeaguePictureRepository {
       final url =
           'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$code';
 
-      // Use a longer cache duration for league data
       final response = await _apiService.get(
         url,
         useCache: true,
@@ -40,8 +38,7 @@ class LeaguePictureRepository implements ILeaguePictureRepository {
         e,
         stack,
         'getUrlByLeagueCode',
-        defaultValue:
-            'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png', // Valeur par défaut en cas d'erreur
+        defaultValue: 'https://a.espncdn.com/i/leaguelogos/soccer/500/2.png',
       );
     }
   }

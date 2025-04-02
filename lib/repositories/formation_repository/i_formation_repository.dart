@@ -1,4 +1,3 @@
-// lib/repositories/formation_repository/i_formation_repository.dart
 import 'package:espn_app/models/formation_response.dart';
 
 abstract class IFormationRepository {

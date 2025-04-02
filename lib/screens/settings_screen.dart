@@ -41,13 +41,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtenir les traductions localisées
     final l10n = AppLocalizations.of(context)!;
 
-    // Observer les paramètres depuis le provider
     final settings = ref.watch(settingsProvider);
 
-    // Obtenir le notifier pour mettre à jour les paramètres
     final settingsNotifier = ref.read(settingsProvider.notifier);
 
     final List<String> languageCodes =
@@ -60,9 +57,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Custom AppBar
-
-          // Settings Title
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
@@ -74,19 +68,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
 
-          // Settings List
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(16.0),
               children: [
-                // Notifications
                 GestureDetector(
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(
-                          l10n.notificationsUnderDevelopment, // Utiliser la clé de localisation
-                        ),
+                        content: Text(l10n.notificationsUnderDevelopment),
                       ),
                     );
                   },
@@ -104,7 +94,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const Divider(),
 
-                // Dark Mode
                 _buildSettingSwitch(
                   l10n.darkMode,
                   l10n.darkModeDescription,
@@ -117,7 +106,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const Divider(),
 
-                // Language
                 _buildSettingDropdown(
                   l10n.language,
                   l10n.languageDescription,
@@ -135,7 +123,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const Divider(),
 
-                // Cache Data
                 _buildSettingSwitch(
                   l10n.cacheData,
                   l10n.cacheDataDescription,
@@ -148,7 +135,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const Divider(),
 
-                // Clear Cache
                 _buildSettingAction(
                   l10n.clearCache,
                   l10n.clearCacheDescription,
@@ -160,7 +146,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const Divider(),
 
-                // NEW: Cache Analytics
                 _buildSettingAction(
                   'Cache Analytics',
                   'View detailed cache usage statistics and entries',
@@ -176,7 +161,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const Divider(),
 
-                // Color Picker
                 _buildSettingAction(
                   l10n.colorPicker,
                   l10n.colorPickerDescription,
@@ -192,7 +176,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const Divider(),
 
-                // About
                 _buildSettingAction(
                   l10n.about,
                   l10n.aboutDescription,
@@ -204,7 +187,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const Divider(),
 
-                // Visit ESPN
                 _buildSettingAction(
                   l10n.visitEspn,
                   l10n.visitEspnDescription,
@@ -218,15 +200,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                 const SizedBox(height: 40),
 
-                // Version info
                 Center(
                   child: Column(
                     children: [
                       Text(
-                        l10n.versionInfo(
-                          _version,
-                          _buildNumber,
-                        ), // Clé avec paramètres
+                        l10n.versionInfo(_version, _buildNumber),
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
                       ),
                       const SizedBox(height: 8),
@@ -306,8 +284,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               );
             }).toList(),
         onChanged: onChanged,
-        underline: Container(), // Remove the default underline
-        dropdownColor: Theme.of(context).cardColor, // Match theme
+        underline: Container(),
+        dropdownColor: Theme.of(context).cardColor,
       ),
     );
   }
@@ -341,39 +319,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder:
           (context) => AlertDialog(
             title: Text(l10n.clearCache),
-            content: Text(l10n.clearCacheConfirmation), // Clé de localisation
+            content: Text(l10n.clearCacheConfirmation),
             actions: [
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text(l10n.cancel), // Clé de localisation
+                child: Text(l10n.cancel),
               ),
               TextButton(
                 onPressed: () async {
                   Navigator.of(context).pop();
-                  // Afficher un indicateur de chargement
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(l10n.clearingCache), // Clé de localisation
+                      content: Text(l10n.clearingCache),
                       duration: const Duration(seconds: 1),
                     ),
                   );
 
-                  // Attendre que le cache soit effacé
                   await settingsNotifier.clearCache();
 
-                  // Afficher un message de confirmation
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(l10n.cacheCleared), // Clé de localisation
+                        content: Text(l10n.cacheCleared),
                         duration: const Duration(seconds: 2),
                       ),
                     );
                   }
                 },
-                child: Text(l10n.clear), // Clé de localisation
+                child: Text(l10n.clear),
               ),
             ],
           ),
@@ -390,10 +365,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             applicationName: l10n.appTitle,
             applicationVersion: _version,
             children: [
-              Text(l10n.aboutAppDescription), // Clé de localisation
+              Text(l10n.aboutAppDescription),
               const SizedBox(height: 20),
               Text(
-                l10n.copyright, // Clé de localisation
+                l10n.copyright,
                 style: const TextStyle(fontStyle: FontStyle.italic),
               ),
             ],
@@ -402,18 +377,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _launchUrl(String url) async {
-    final l10n = AppLocalizations.of(context)!; // Get localizations
+    final l10n = AppLocalizations.of(context)!;
     final Uri uri = Uri.parse(url);
     try {
       if (!await launchUrl(uri)) {
-        throw Exception('Could not launch $url'); // Throw specific error
+        throw Exception('Could not launch $url');
       }
     } catch (e) {
       if (context.mounted) {
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.couldNotLaunchUrl(url)), // Use localized message
+            content: Text(l10n.couldNotLaunchUrl(url)),
             duration: const Duration(seconds: 2),
           ),
         );

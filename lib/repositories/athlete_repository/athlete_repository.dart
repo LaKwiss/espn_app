@@ -11,7 +11,6 @@ class AthletesRepository implements IAthletesRepository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
 
-  // Athlete data doesn't change frequently, so we can cache it for a day
   static const Duration _athleteCacheDuration = Duration(days: 1);
   static const Duration _teamAthletesCacheDuration = Duration(hours: 12);
 
@@ -28,7 +27,6 @@ class AthletesRepository implements IAthletesRepository {
           'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueId/seasons/2024/teams/$teamId/athletes?limit=1000';
 
       dev.log('Fetching athletes from: $url');
-      // Use cache with team athletes duration
       final response = await _apiService.get(
         url,
         cacheDuration: _teamAthletesCacheDuration,
@@ -38,16 +36,13 @@ class AthletesRepository implements IAthletesRepository {
         final data = jsonDecode(response.body);
         final List<Athlete> athletes = [];
 
-        // Vérifier si items existe et est une liste
         if (data.containsKey('items') && data['items'] is List) {
           final List<dynamic> items = data['items'];
 
-          // Pour chaque référence d'athlète, récupérer ses données complètes
           for (var item in items) {
             if (item.containsKey('\$ref')) {
               final String athleteUrl = item['\$ref'];
               try {
-                // Use cache for individual athlete data
                 final athleteResponse = await _apiService.get(
                   athleteUrl,
                   cacheDuration: _athleteCacheDuration,
@@ -84,7 +79,6 @@ class AthletesRepository implements IAthletesRepository {
           'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueId/seasons/2024/athletes/$athleteId?lang=en&region=us';
 
       dev.log('Fetching athlete from: $url');
-      // Use cache with athlete cache duration
       final response = await _apiService.get(
         url,
         cacheDuration: _athleteCacheDuration,

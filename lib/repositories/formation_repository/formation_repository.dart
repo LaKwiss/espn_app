@@ -10,16 +10,9 @@ class FormationRepository implements IFormationRepository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
 
-  // Cache durations for different types of data
-  static const Duration _formationCacheDuration = Duration(
-    hours: 2,
-  ); // Formations don't change once set
-  static const Duration _playerDetailsCacheDuration = Duration(
-    hours: 12,
-  ); // Player details change infrequently
-  static const Duration _positionCacheDuration = Duration(
-    days: 30,
-  ); // Position data is essentially static
+  static const Duration _formationCacheDuration = Duration(hours: 2);
+  static const Duration _playerDetailsCacheDuration = Duration(hours: 12);
+  static const Duration _positionCacheDuration = Duration(days: 30);
 
   FormationRepository({
     required ApiService apiService,
@@ -39,7 +32,6 @@ class FormationRepository implements IFormationRepository {
 
       dev.log('Fetching team formation from: $url');
 
-      // Use cache for formation data
       final response = await _apiService.get(
         url,
         cacheDuration: _formationCacheDuration,
@@ -74,7 +66,6 @@ class FormationRepository implements IFormationRepository {
 
     for (var player in players) {
       try {
-        // Récupérer les détails du joueur
         final playerDetails = await _getPlayerDetails(player.athleteRef);
 
         final String displayName = playerDetails['displayName'] ?? 'Unknown';
@@ -82,12 +73,10 @@ class FormationRepository implements IFormationRepository {
         final String lastName = playerDetails['lastName'] ?? '';
         final String positionRefUrl = playerDetails['position']?['\$ref'] ?? '';
 
-        // Récupérer les détails de position si disponibles
         String positionName = 'Unknown';
         String positionAbbreviation = '';
 
         if (positionRefUrl.isNotEmpty) {
-          // Extract the position ID from the URL (last digits before any query parameters)
           final uri = Uri.parse(positionRefUrl);
           final pathSegments = uri.pathSegments;
           final positionId =
@@ -122,8 +111,6 @@ class FormationRepository implements IFormationRepository {
         dev.log(
           'Error enriching player data for player ${player.playerId}: $e',
         );
-
-        // Ajouter quand même le joueur avec des valeurs par défaut
         enrichedPlayers.add(EnrichedPlayerEntry.fromPlayerEntry(player));
       }
     }
@@ -131,7 +118,6 @@ class FormationRepository implements IFormationRepository {
     return enrichedPlayers;
   }
 
-  /// Récupère plus de détails sur un joueur spécifique
   Future<Map<String, dynamic>> _getPlayerDetails(String athleteRef) async {
     try {
       dev.log('Fetching player details from: $athleteRef');
@@ -159,7 +145,6 @@ class FormationRepository implements IFormationRepository {
     }
   }
 
-  /// Récupère les détails de position du joueur
   Future<Position> _getPositionDetails(int position) async {
     try {
       final positionRef =
@@ -167,7 +152,6 @@ class FormationRepository implements IFormationRepository {
 
       dev.log('Fetching position details from: $positionRef');
 
-      // Use long cache duration for position data as it's static
       final response = await _apiService.get(
         positionRef,
         cacheDuration: _positionCacheDuration,

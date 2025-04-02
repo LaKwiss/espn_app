@@ -9,19 +9,10 @@ class EventRepository implements IEventRepository {
   final ApiService _apiService;
   final ErrorHandlerService _errorHandler;
 
-  // Cache durations based on data staleness
-  static const Duration _leagueCacheDuration = Duration(
-    days: 3,
-  ); // League info rarely changes
-  static const Duration _eventsCacheDuration = Duration(
-    hours: 1,
-  ); // Schedule may update
-  static const Duration _finishedEventCacheDuration = Duration(
-    days: 7,
-  ); // Completed events won't change
-  static const Duration _upcomingEventCacheDuration = Duration(
-    hours: 2,
-  ); // Upcoming events might have minor changes
+  static const Duration _leagueCacheDuration = Duration(days: 3);
+  static const Duration _eventsCacheDuration = Duration(hours: 1);
+  static const Duration _finishedEventCacheDuration = Duration(days: 7);
+  static const Duration _upcomingEventCacheDuration = Duration(hours: 2);
 
   EventRepository({
     required ApiService apiService,
@@ -50,10 +41,8 @@ class EventRepository implements IEventRepository {
         // Log response body length for debugging
         dev.log('Response body length: ${response.body.length} characters');
 
-        // Decode response body
         final Map<String, dynamic> data = jsonDecode(response.body);
 
-        // Extract event URLs
         final List<dynamic> items = data['items'];
         dev.log('Found ${items.length} event items in response');
 
@@ -65,13 +54,11 @@ class EventRepository implements IEventRepository {
         final List<String> eventUrls =
             items.map<String>((item) => item['\$ref'] as String).toList();
 
-        // Fetch details for each event
         final futures =
             eventUrls.map<Future<Event>>((url) async {
               dev.log('Fetching event details from: $url');
 
               try {
-                // Fetch event data with appropriate cache duration
                 final eventResponse = await _apiService.get(url);
                 if (eventResponse.statusCode != 200) {
                   throw Exception(
@@ -83,10 +70,8 @@ class EventRepository implements IEventRepository {
                   eventResponse.body,
                 );
 
-                // Determine if event is finished to use appropriate cache duration
                 bool isFinished = _isEventFinished(eventJson);
 
-                // Get competition data
                 if (!eventJson.containsKey('competitions') ||
                     eventJson['competitions'].isEmpty) {
                   throw Exception(
@@ -96,12 +81,10 @@ class EventRepository implements IEventRepository {
 
                 final competition = eventJson['competitions'][0];
 
-                // Get odds URL
                 if (!competition.containsKey('odds') ||
                     competition['odds'] == null ||
                     !competition['odds'].containsKey('\$ref')) {
                   dev.log('No odds data found for event, using default values');
-                  // Create mock odds data with default probabilities
                   final mockOddsJson = {
                     'items': [
                       {
@@ -184,7 +167,6 @@ class EventRepository implements IEventRepository {
     dev.log('Fetching league name for: $leagueName');
 
     try {
-      // League names rarely change, so we can cache them for longer
       final response = await _apiService.get(
         'http://sports.core.api.espn.com/v2/sports/soccer/leagues/$leagueName',
         cacheDuration: _leagueCacheDuration,
@@ -222,7 +204,6 @@ class EventRepository implements IEventRepository {
     dev.log('Fetching from URL: $url');
 
     try {
-      // Use cache with appropriate duration based on date
       final bool isDateInPast = date.isBefore(
         DateTime.now().subtract(const Duration(days: 1)),
       );
@@ -234,13 +215,10 @@ class EventRepository implements IEventRepository {
       dev.log('Response status code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        // Log response body length for debugging
         dev.log('Response body length: ${response.body.length} characters');
 
-        // Decode response body
         final Map<String, dynamic> data = jsonDecode(response.body);
 
-        // Extract event URLs
         final List<dynamic> items = data['items'];
         dev.log(
           'Found ${items.length} event items in response for date: $formattedDate',
@@ -256,7 +234,6 @@ class EventRepository implements IEventRepository {
         final List<String> eventUrls =
             items.map<String>((item) => item['\$ref'] as String).toList();
 
-        // Fetch details for each event (using the same logic as in fetchEventsFromLeague)
         final futures =
             eventUrls.map<Future<Event>>((url) async {
               dev.log('Fetching event details from: $url');
@@ -274,10 +251,8 @@ class EventRepository implements IEventRepository {
                   eventResponse.body,
                 );
 
-                // Determine if event is finished for caching purposes
                 bool isFinished = _isEventFinished(eventJson);
 
-                // Get competition data
                 if (!eventJson.containsKey('competitions') ||
                     eventJson['competitions'].isEmpty) {
                   throw Exception(
@@ -287,12 +262,10 @@ class EventRepository implements IEventRepository {
 
                 final competition = eventJson['competitions'][0];
 
-                // Get odds URL
                 if (!competition.containsKey('odds') ||
                     competition['odds'] == null ||
                     !competition['odds'].containsKey('\$ref')) {
                   dev.log('No odds data found for event, using default values');
-                  // Create mock odds data with default probabilities
                   final mockOddsJson = {
                     'items': [
                       {
@@ -313,13 +286,11 @@ class EventRepository implements IEventRepository {
                 final String oddsUrl = competition['odds']['\$ref'] as String;
                 dev.log('Fetching odds from: $oddsUrl');
 
-                // Cache duration based on whether the event is finished
                 final Duration oddsCacheDuration =
                     isFinished
                         ? _finishedEventCacheDuration
                         : _upcomingEventCacheDuration;
 
-                // Fetch odds data
                 final oddsResponse = await _apiService.get(
                   oddsUrl,
                   cacheDuration: oddsCacheDuration,
@@ -335,7 +306,6 @@ class EventRepository implements IEventRepository {
                   oddsResponse.body,
                 );
 
-                // Create Event object
                 return Event.fromJson(eventJson, oddsJson);
               } catch (e, stack) {
                 return _errorHandler.handleError<Event>(
@@ -371,32 +341,26 @@ class EventRepository implements IEventRepository {
     }
   }
 
-  // Helper method to determine if an event is finished
   bool _isEventFinished(Map<String, dynamic> eventJson) {
-    // Check competition status if available
     if (eventJson.containsKey('competitions') &&
         eventJson['competitions'] is List &&
         eventJson['competitions'].isNotEmpty) {
       final competition = eventJson['competitions'][0];
 
-      // Check explicit status indicators
       if (competition['status']?['type']?['name'] == "STATUS_FINAL" ||
           competition['status']?['type']?['state'] == "post") {
         return true;
       }
 
-      // Check recap availability
       if (competition['recapAvailable'] == true) {
         return true;
       }
 
-      // Check if live is no longer available
       if (competition['liveAvailable'] == false) {
         return true;
       }
     }
 
-    // Check date - if more than 3 hours in the past, consider finished
     if (eventJson.containsKey('date')) {
       try {
         final eventDate = DateTime.parse(eventJson['date']);
@@ -406,7 +370,7 @@ class EventRepository implements IEventRepository {
           return true;
         }
       } catch (e) {
-        // Date parsing error, fall back to default
+        dev.log(e.toString());
       }
     }
 

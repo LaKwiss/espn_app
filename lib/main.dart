@@ -1,4 +1,3 @@
-// espn_app/lib/main.dart
 import 'package:espn_app/models/hive_cache_entry.dart';
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/providers/settings_provider.dart';

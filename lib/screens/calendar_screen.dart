@@ -1,4 +1,3 @@
-// espn_app/lib/screens/calendar_screen.dart
 import 'package:espn_app/models/event.dart';
 import 'package:espn_app/providers/provider_factory.dart';
 import 'package:espn_app/providers/selected_league_notifier.dart';

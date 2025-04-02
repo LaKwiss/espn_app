@@ -7,7 +7,6 @@ import 'package:espn_app/services/error_handler_service.dart';
 import 'package:espn_app/models/match_event.dart';
 import 'package:espn_app/repositories/match_event_repository/match_event_repository.dart';
 
-// Mock classes
 class MockApiService extends Mock implements ApiService {}
 
 class MockErrorHandlerService extends Mock implements ErrorHandlerService {}
