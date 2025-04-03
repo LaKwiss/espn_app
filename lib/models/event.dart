@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'package:equatable/equatable.dart';
 import 'package:espn_app/models/club.dart';
 import 'package:espn_app/models/league.dart';
 import 'package:espn_app/models/probability.dart';
 import 'package:espn_app/models/score.dart';
-import 'package:http/http.dart' as http;
 import 'package:espn_app/services/odds_service.dart';
 
 class Event extends Equatable {
@@ -126,7 +124,7 @@ class Event extends Equatable {
       name: teamData['displayName'] ?? 'Unknown',
       logo: _extractLogo(teamData, competitor['id']),
       country: teamData['location'] ?? 'Unknown',
-      flag: '', // Not directly available in data
+      flag: '',
       league: leagueData,
     );
   }
@@ -181,23 +179,6 @@ class Event extends Equatable {
             DateTime.parse(
               eventJson['date'],
             ).isBefore(DateTime.now().subtract(const Duration(hours: 3))));
-  }
-
-  static Future<Event> fetchEvent(String eventUrl, String oddsUrl) async {
-    // Fetch event data
-    final eventResponse = await http.get(Uri.parse(eventUrl));
-    if (eventResponse.statusCode != 200) {
-      throw Exception('Failed to fetch event data');
-    }
-    final eventJson = jsonDecode(eventResponse.body) as Map<String, dynamic>;
-
-    final oddsResponse = await http.get(Uri.parse(oddsUrl));
-    if (oddsResponse.statusCode != 200) {
-      throw Exception('Failed to fetch odds data');
-    }
-    final oddsJson = jsonDecode(oddsResponse.body) as Map<String, dynamic>;
-
-    return Event.fromJson(eventJson, oddsJson);
   }
 
   Club getDefaultClub(String teamId) {
