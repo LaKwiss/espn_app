@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'package:equatable/equatable.dart';
 import 'package:espn_app/models/club.dart';
 import 'package:espn_app/models/league.dart';
 import 'package:espn_app/models/probability.dart';
 import 'package:espn_app/models/score.dart';
-import 'package:http/http.dart' as http;
 import 'package:espn_app/services/odds_service.dart';
 
 class Event extends Equatable {
@@ -183,6 +181,7 @@ class Event extends Equatable {
             ).isBefore(DateTime.now().subtract(const Duration(hours: 3))));
   }
 
+<<<<<<< HEAD
   static Future<Event> fetchEvent(String eventUrl, String oddsUrl) async {
     final eventResponse = await http.get(Uri.parse(eventUrl));
     if (eventResponse.statusCode != 200) {
@@ -199,6 +198,8 @@ class Event extends Equatable {
     return Event.fromJson(eventJson, oddsJson);
   }
 
+=======
+>>>>>>> fc44049c9ca8bd7993c17a5957eb9c197da74d44
   Club getDefaultClub(String teamId) {
     return Club(
       id: int.tryParse(teamId) ?? 0,
