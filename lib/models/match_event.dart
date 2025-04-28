@@ -41,8 +41,7 @@ class MatchEvent extends Equatable {
   final String time;
   final MatchEventPeriod period;
   final (int away, int home) score;
-  final (String away, String home)
-  teams; // Tuple contenant les IDs des équipes away et home
+  final (String away, String home) teams;
   final bool isScoring;
   final bool isPriority;
   final DateTime wallClock;
@@ -110,7 +109,6 @@ class MatchEvent extends Equatable {
         return MatchEventType.assistsShot;
       case '122':
         return MatchEventType.handball;
-      // Ajoutez les autres types selon les données que vous recevez
       case '1':
         return MatchEventType.goal;
       case '2':
@@ -159,11 +157,9 @@ class MatchEvent extends Equatable {
     final displayTime =
         json['clock']['displayValue'] as String? ?? '$minutes\'';
 
-    // Extraire la période
     final periodNumber = json['period']['number'] as int;
     final period = _parsePeriod(periodNumber);
 
-    // Extraire l'ID de l'équipe si disponible
     String? teamId;
     if (json.containsKey('team') && json['team'] != null) {
       final teamRef = json['team']['\$ref'] as String;
@@ -171,7 +167,6 @@ class MatchEvent extends Equatable {
       teamId = parts.isNotEmpty ? parts.last : null;
     }
 
-    // Extraire les participants
     final participants = <MatchEventParticipant>[];
     if (json.containsKey('participants') && json['participants'] is List) {
       for (final participantJson in json['participants']) {

@@ -265,14 +265,12 @@ class _MatchWidgetState extends ConsumerState<MatchWidget> {
                                   style: GoogleFonts.blackOpsOne(
                                     fontSize: 22,
                                     height: 1.15,
-                                    color: Colors.black.withAlpha(
-                                      128,
-                                    ), // Use withAlpha
+                                    color: Colors.black.withAlpha(128),
                                   ),
                                 ),
                                 if (awayTeam.secondName.isNotEmpty)
                                   Text(
-                                    awayTeam.secondName, // Nom de l'API
+                                    awayTeam.secondName,
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.blackOpsOne(
                                       fontSize: 22,

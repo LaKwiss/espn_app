@@ -9,7 +9,7 @@ import 'package:espn_app/widgets/substitutes_list.dart';
 import 'package:espn_app/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TacticsView extends ConsumerWidget {
   final Event event;
@@ -25,7 +25,6 @@ class TacticsView extends ConsumerWidget {
     required this.onToggleView,
   });
 
-  /// Extrait l'ID de la ligue à partir de l'URL de la ligue
   String _extractLeagueId(String leagueUrl) {
     final uriParts = leagueUrl.split('/');
     for (int i = 0; i < uriParts.length; i++) {
@@ -34,28 +33,24 @@ class TacticsView extends ConsumerWidget {
         return leagueWithParams.split('?').first;
       }
     }
-    return 'uefa.champions'; // Valeur par défaut
+    return 'uefa.champions';
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!; // Get localizations
-    final theme = Theme.of(context); // Get theme
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
-    // Extraire les identifiants nécessaires
     final leagueId = _extractLeagueId(event.league);
     final matchId = event.id;
-    final homeTeamId = event.idTeam.$1; // Assuming this is correct ID
-    final awayTeamId = event.idTeam.$2; // Assuming this is correct ID
+    final homeTeamId = event.idTeam.$1;
+    final awayTeamId = event.idTeam.$2;
 
-    // Clés de cache pour les formations et joueurs
     final homeFormationKey = '$matchId-$homeTeamId';
     final awayFormationKey = '$matchId-$awayTeamId';
 
-    // Observer l'état du provider
     final formationState = ref.watch(formationAsyncProvider);
 
-    // Initialiser la récupération des données si ce n'est pas déjà fait
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (formationState.value == null ||
           !formationState.value!.formationCache.containsKey(homeFormationKey) ||
@@ -69,7 +64,6 @@ class TacticsView extends ConsumerWidget {
               leagueId: leagueId,
             );
 
-        // Pré-charger les données enrichies des joueurs
         ref
             .read(formationAsyncProvider.notifier)
             .fetchEnrichedPlayers(
@@ -90,17 +84,14 @@ class TacticsView extends ConsumerWidget {
 
     return formationState.when(
       data: (state) {
-        // Récupérer les données de formation si disponibles
         final homeFormation = state.formationCache[homeFormationKey];
         final awayFormation = state.formationCache[awayFormationKey];
 
-        // Récupérer les données enrichies des joueurs si disponibles
         final homeEnrichedPlayers =
             state.enrichedPlayersCache[homeFormationKey] ?? [];
         final awayEnrichedPlayers =
             state.enrichedPlayersCache[awayFormationKey] ?? [];
 
-        // Filtrer pour obtenir les titulaires et remplaçants
         final homeStarters =
             homeEnrichedPlayers.where((p) => p.isStarter).toList();
         final awayStarters =
@@ -110,7 +101,6 @@ class TacticsView extends ConsumerWidget {
         final awaySubstitutes =
             awayEnrichedPlayers.where((p) => !p.isStarter).toList();
 
-        // Si les données ne sont pas encore disponibles
         if (homeFormation == null ||
             awayFormation == null ||
             homeStarters.isEmpty ||
@@ -121,31 +111,25 @@ class TacticsView extends ConsumerWidget {
               children: [
                 const CircularProgressIndicator(),
                 const SizedBox(height: 16),
-                Text(l10n.loadingTacticsData), // Use localization key
+                Text(l10n.loadingTacticsData),
               ],
             ),
           );
         }
+        final homeColor = Colors.blue;
+        final awayColor = Colors.red;
 
-        // Déterminer les couleurs des équipes (pourrait être plus sophistiqué)
-        final homeColor = Colors.blue; // Example color
-        final awayColor = Colors.red; // Example color
-
-        // Créer les listes de substitutions
         final homeSubstitutions = _createSubstitutions(homeEnrichedPlayers);
         final awaySubstitutions = _createSubstitutions(awayEnrichedPlayers);
 
         return SingleChildScrollView(
           child: Column(
             children: [
-              // Bouton pour basculer (géré par le parent via onToggleView)
-
-              // Formation de l'équipe à domicile
               Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: theme.cardColor, // Use theme color
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -156,10 +140,10 @@ class TacticsView extends ConsumerWidget {
                   ],
                 ),
                 child: FormationVisualizer(
-                  formation: homeFormation.formationName, // API data
+                  formation: homeFormation.formationName,
                   players: homeStarters,
                   teamColor: homeColor,
-                  teamName: homeTeam.name, // API data
+                  teamName: homeTeam.name,
                   isHomeTeam: true,
                   onPlayerTap: (player) {
                     _showPlayerDetails(context, player, homeColor);
@@ -167,12 +151,11 @@ class TacticsView extends ConsumerWidget {
                 ),
               ),
 
-              // Remplaçants de l'équipe à domicile
               SubstitutesList(
                 substitutes: homeSubstitutes,
                 substitutions: homeSubstitutions,
                 teamColor: homeColor,
-                teamName: homeTeam.name, // API data
+                teamName: homeTeam.name,
                 onPlayerTap: (player) {
                   _showPlayerDetails(context, player, homeColor);
                 },
@@ -184,7 +167,7 @@ class TacticsView extends ConsumerWidget {
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: theme.cardColor, // Use theme color
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -238,9 +221,7 @@ class TacticsView extends ConsumerWidget {
               children: [
                 const Icon(Icons.error_outline, size: 48, color: Colors.red),
                 const SizedBox(height: 16),
-                Text(
-                  l10n.errorLoadingTactics(error.toString()),
-                ), // Use localization key
+                Text(l10n.errorLoadingTactics(error.toString())),
                 const SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: () {

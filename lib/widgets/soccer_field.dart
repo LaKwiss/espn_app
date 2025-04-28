@@ -17,9 +17,7 @@ class SoccerField extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Lignes du terrain
             CustomPaint(size: Size.infinite, painter: SoccerFieldPainter()),
-            // Contenu enfant (joueurs, etc.)
             if (child != null) child!,
           ],
         ),
@@ -37,21 +35,18 @@ class SoccerFieldPainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2.0;
 
-    // Ligne médiane
     canvas.drawLine(
       Offset(0, size.height / 2),
       Offset(size.width, size.height / 2),
       paint,
     );
 
-    // Rond central
     canvas.drawCircle(
       Offset(size.width / 2, size.height / 2),
       size.height / 6,
       paint,
     );
 
-    // Surface de réparation haut
     final penaltyAreaWidth = size.width * 0.5;
     final penaltyAreaHeight = size.height * 0.2;
     canvas.drawRect(
@@ -64,7 +59,6 @@ class SoccerFieldPainter extends CustomPainter {
       paint,
     );
 
-    // Surface de réparation bas
     canvas.drawRect(
       Rect.fromLTWH(
         (size.width - penaltyAreaWidth) / 2,
@@ -75,7 +69,6 @@ class SoccerFieldPainter extends CustomPainter {
       paint,
     );
 
-    // Surface de but haut
     final goalAreaWidth = size.width * 0.25;
     final goalAreaHeight = size.height * 0.08;
     canvas.drawRect(
@@ -88,7 +81,6 @@ class SoccerFieldPainter extends CustomPainter {
       paint,
     );
 
-    // Surface de but bas
     canvas.drawRect(
       Rect.fromLTWH(
         (size.width - goalAreaWidth) / 2,
@@ -99,7 +91,6 @@ class SoccerFieldPainter extends CustomPainter {
       paint,
     );
 
-    // Point central
     final paintFill =
         Paint()
           ..color = Colors.white

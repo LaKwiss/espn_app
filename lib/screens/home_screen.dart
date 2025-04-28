@@ -5,7 +5,7 @@ import 'package:espn_app/widgets/home_screen_title.dart';
 import 'package:espn_app/widgets/match_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,13 +18,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Obtenir les traductions localisées
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: Consumer(
         builder: (context, ref, child) {
-          // Watch the provider to react to changes
           final eventsAsync = ref.watch(leagueAsyncProvider);
 
           final String fullTitle = ref.watch(selectedLeagueProvider).$1;
@@ -41,9 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 HomeScreenTitle(titleLine1: titleLine1, titleLine2: titleLine2),
 
-                // Debug info
-
-                // Detailed events display with error handling
                 eventsAsync.when(
                   data: (events) {
                     if (events.isEmpty) {
@@ -52,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.all(20),
                         child: Center(
                           child: Text(
-                            l10n.noEventsAvailable, // Utiliser la clé de localisation
+                            l10n.noEventsAvailable,
                             style: theme.textTheme.bodyLarge,
                           ),
                         ),
@@ -105,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 dev.log('Refresh result: $result');
                               },
                               child: Text(
-                                l10n.tryAgain, // Utiliser la clé de localisation
+                                l10n.tryAgain,
                                 style: theme.textTheme.labelLarge,
                               ),
                             ),

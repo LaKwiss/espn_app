@@ -2,7 +2,7 @@ import 'package:espn_app/models/athlete.dart';
 
 class SubstituteAthlete {
   final Athlete athlete;
-  bool hasEntered; // Si le joueur est entré en jeu
+  bool hasEntered;
 
   SubstituteAthlete({required this.athlete, this.hasEntered = false});
 

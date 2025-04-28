@@ -51,7 +51,6 @@ class ApiService {
     dev.log(logMessage.toString());
   }
 
-  // Updates the stats tracker if available
   void _updateStats(String statType) {
     if (_providerRef == null) return;
 
@@ -82,7 +81,6 @@ class ApiService {
     bool useCache = true,
     Duration? cacheDuration,
   }) async {
-    // Skip cache if disabled or cache service not provided
     if (!_cacheEnabled || _cacheService == null || !useCache) {
       _logRequest('GET', url, 'NETWORK', details: 'Cache disabled or skipped');
       _updateStats('network');
@@ -91,11 +89,9 @@ class ApiService {
 
     final cacheKey = url;
 
-    // Try to retrieve from cache
     final cachedEntry = _cacheService.box.get(cacheKey);
 
     if (cachedEntry != null && !cachedEntry.isExpired) {
-      // Return cached response if valid
       if (_logCacheHits) {
         final expiry = DateTime.fromMillisecondsSinceEpoch(
           cachedEntry.expiryTimestamp,
@@ -120,7 +116,6 @@ class ApiService {
       );
     }
 
-    // Cache miss or expired - fetch from network
     if (_logCacheHits) {
       if (cachedEntry != null) {
         _logRequest(
@@ -145,7 +140,6 @@ class ApiService {
     final response = await _client.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
-      // Cache successful responses
       final effectiveCacheDuration = cacheDuration ?? _defaultCacheDuration;
       final expiryTimestamp =
           DateTime.now().millisecondsSinceEpoch +
@@ -158,7 +152,6 @@ class ApiService {
         expiryTimestamp: expiryTimestamp,
       );
 
-      // Store in cache
       await _cacheService.box.put(cacheKey, cacheEntry);
 
       if (_logCacheHits) {
@@ -192,7 +185,6 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
     );
 
-    // Only cache POST responses if explicitly marked as cacheable
     if (_cacheEnabled &&
         _cacheService != null &&
         cacheable &&
@@ -209,7 +201,6 @@ class ApiService {
         expiryTimestamp: expiryTimestamp,
       );
 
-      // Use a cache key based on URL and request body to differentiate different POST requests
       final cacheKey = "${url}_${jsonEncode(body)}";
       await _cacheService.box.put(cacheKey, cacheEntry);
 
@@ -227,7 +218,6 @@ class ApiService {
     return response;
   }
 
-  // Method to invalidate specific URL in cache
   Future<void> invalidateCache(String url) async {
     if (_cacheEnabled && _cacheService != null) {
       await _cacheService.invalidate(url);
@@ -237,11 +227,9 @@ class ApiService {
     }
   }
 
-  // Method to determine if data should be cached based on content type
   bool shouldCacheResponse(http.Response response) {
     final contentType = response.headers['content-type'] ?? '';
 
-    // Cache JSON responses, images, and other static content
     return response.statusCode == 200 &&
         (contentType.contains('application/json') ||
             contentType.contains('image/') ||

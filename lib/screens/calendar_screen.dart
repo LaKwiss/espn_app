@@ -89,7 +89,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         _selectedDay,
       );
 
-      // Appliquer les filtres
       final filteredEvents =
           events.where((event) {
             if (!_showUpcoming && !event.isFinished) return false;
@@ -102,7 +101,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         _isLoadingEvents = false;
       });
     } catch (e) {
-      //causing error
       setState(() {
         _errorMessage = AppLocalizations.of(context)!.errorLoadingMatches;
         _isLoadingEvents = false;
@@ -237,7 +235,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
           const SizedBox(height: 16),
           Text(
-            l10n.errorLoadingMatches, // Utiliser la clé de localisation
+            l10n.errorLoadingMatches,
             style: textTheme.titleMedium?.copyWith(color: Colors.red[700]),
           ),
           const SizedBox(height: 8),

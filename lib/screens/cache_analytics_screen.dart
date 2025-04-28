@@ -33,7 +33,6 @@ class _CacheAnalyticsScreenState extends ConsumerState<CacheAnalyticsScreen> {
     try {
       final cacheService = HiveCacheService();
 
-      // Get all keys and their corresponding entries
       final entries = <MapEntry<dynamic, dynamic>>[];
 
       for (final key in cacheService.box.keys) {
@@ -43,11 +42,10 @@ class _CacheAnalyticsScreenState extends ConsumerState<CacheAnalyticsScreen> {
         }
       }
 
-      // Sort by expiry time
       entries.sort((a, b) {
         final aExpiry = a.value.expiryTimestamp as int;
         final bExpiry = b.value.expiryTimestamp as int;
-        return bExpiry.compareTo(aExpiry); // Most recent first
+        return bExpiry.compareTo(aExpiry);
       });
 
       setState(() {
@@ -139,10 +137,8 @@ class _CacheAnalyticsScreenState extends ConsumerState<CacheAnalyticsScreen> {
               ? const Center(child: CircularProgressIndicator())
               : Column(
                 children: [
-                  // Statistics card
                   CacheStatisticsWidget(),
 
-                  // Cache entries list
                   Expanded(
                     child:
                         _cacheEntries.isEmpty
@@ -233,7 +229,6 @@ class _CacheAnalyticsScreenState extends ConsumerState<CacheAnalyticsScreen> {
                                       },
                                     ),
                                     onTap: () {
-                                      // Show detailed view of cache entry
                                       showDialog(
                                         context: context,
                                         builder:
@@ -311,7 +306,6 @@ class _CacheAnalyticsScreenState extends ConsumerState<CacheAnalyticsScreen> {
           await hiveCacheService.clearAll();
           _loadCacheEntries();
 
-          // Show snackbar
           if (mounted) {
             ScaffoldMessenger.of(
               // ignore: use_build_context_synchronously

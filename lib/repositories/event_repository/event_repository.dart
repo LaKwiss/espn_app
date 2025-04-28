@@ -29,7 +29,6 @@ class EventRepository implements IEventRepository {
     dev.log('Fetching from URL: $url');
 
     try {
-      // Use cache for league events
       final response = await _apiService.get(
         url,
         cacheDuration: _eventsCacheDuration,
@@ -38,7 +37,6 @@ class EventRepository implements IEventRepository {
       dev.log('Response status code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        // Log response body length for debugging
         dev.log('Response body length: ${response.body.length} characters');
 
         final Map<String, dynamic> data = jsonDecode(response.body);
@@ -105,7 +103,6 @@ class EventRepository implements IEventRepository {
                 final String oddsUrl = competition['odds']['\$ref'] as String;
                 dev.log('Fetching odds from: $oddsUrl');
 
-                // Fetch odds data - cache duration depends on event status
                 final Duration oddsCacheDuration =
                     isFinished
                         ? _finishedEventCacheDuration
@@ -126,7 +123,6 @@ class EventRepository implements IEventRepository {
                   oddsResponse.body,
                 );
 
-                // Create Event object
                 return Event.fromJson(eventJson, oddsJson);
               } catch (e, stack) {
                 return _errorHandler.handleError<Event>(
@@ -239,7 +235,6 @@ class EventRepository implements IEventRepository {
               dev.log('Fetching event details from: $url');
 
               try {
-                // Fetch event data with cache
                 final eventResponse = await _apiService.get(url);
                 if (eventResponse.statusCode != 200) {
                   throw Exception(

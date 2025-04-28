@@ -126,7 +126,7 @@ class Event extends Equatable {
       name: teamData['displayName'] ?? 'Unknown',
       logo: _extractLogo(teamData, competitor['id']),
       country: teamData['location'] ?? 'Unknown',
-      flag: '', // Not directly available in data
+      flag: '',
       league: leagueData,
     );
   }
@@ -184,7 +184,6 @@ class Event extends Equatable {
   }
 
   static Future<Event> fetchEvent(String eventUrl, String oddsUrl) async {
-    // Fetch event data
     final eventResponse = await http.get(Uri.parse(eventUrl));
     if (eventResponse.statusCode != 200) {
       throw Exception('Failed to fetch event data');

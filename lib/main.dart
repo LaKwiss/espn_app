@@ -7,7 +7,7 @@ import 'package:espn_app/services/hive_cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart'; // Import generated localizations
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
@@ -53,4 +53,3 @@ class MyApp extends ConsumerWidget {
     );
   }
 }
-//TODO: Mettre à jour les tests

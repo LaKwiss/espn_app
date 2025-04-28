@@ -30,7 +30,6 @@ class SubstitutesWidget extends StatelessWidget {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
-        // Liste des remplaçants
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Wrap(
@@ -42,10 +41,8 @@ class SubstitutesWidget extends StatelessWidget {
                     .toList(),
           ),
         ),
-        // Séparateur
         if (substitutions.isNotEmpty)
           const Divider(height: 32, indent: 16, endIndent: 16),
-        // Liste des substitutions effectuées
         if (substitutions.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -86,7 +83,7 @@ class SubstitutesWidget extends StatelessWidget {
               radius: 12,
               backgroundColor: teamColor,
               child: Text(
-                player.id.toString(), // Utiliser un numéro approprié ici
+                player.id.toString(),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 10,

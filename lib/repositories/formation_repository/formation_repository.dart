@@ -122,7 +122,6 @@ class FormationRepository implements IFormationRepository {
     try {
       dev.log('Fetching player details from: $athleteRef');
 
-      // Use cache for player details
       final response = await _apiService.get(
         athleteRef,
         cacheDuration: _playerDetailsCacheDuration,

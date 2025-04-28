@@ -3,7 +3,6 @@ class Probability {
 
   Probability({required this.value});
 
-  /// Calcule la probabilité implicite à partir d'une cote décimale.
   factory Probability.fromDecimalOdds(double odds) {
     if (odds <= 0) {
       throw Exception("La cote doit être supérieure à 0");

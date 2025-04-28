@@ -62,7 +62,7 @@ class FormationVisualizer extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
-            l10n.teamFormation(teamName, formation), // Use localized format
+            l10n.teamFormation(teamName, formation),
             style: GoogleFonts.blackOpsOne(fontSize: 18, color: teamColor),
           ),
         ),

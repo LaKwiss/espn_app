@@ -15,7 +15,7 @@ class CustomAppBar extends ConsumerStatefulWidget {
   final String url;
   final Color? backgroundColor;
   final VoidCallback? onArrowButtonPressed;
-  final int iconOrientation; // 0: up, 1: right, 2: down, 3: left
+  final int iconOrientation;
 
   @override
   ConsumerState<CustomAppBar> createState() => _CustomAppBarState();
@@ -72,7 +72,6 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar>
     super.dispose();
   }
 
-  // Helper method to get the icon based on orientation
   IconData _getOrientedIcon() {
     switch (widget.iconOrientation) {
       case 0:
@@ -84,24 +83,22 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar>
       case 3:
         return Icons.keyboard_double_arrow_left;
       default:
-        return Icons.keyboard_double_arrow_down; // Default fallback
+        return Icons.keyboard_double_arrow_down;
     }
   }
 
-  // Helper method to get the appropriate rotation values based on expanded state and orientation
   double _getRotationValue() {
     if (!isExpanded) return 0;
 
-    // When expanded, rotate to the opposite direction (180 degrees)
     switch (widget.iconOrientation) {
       case 0:
-        return 0.5; // Up to Down (0.5 turns = 180 degrees)
+        return 0.5;
       case 1:
-        return 0.5; // Right to Left (0.5 turns = 180 degrees)
+        return 0.5;
       case 2:
-        return 0.5; // Down to Up (0.5 turns = 180 degrees)
+        return 0.5;
       case 3:
-        return 0.5; // Left to Right (0.5 turns = 180 degrees)
+        return 0.5;
       default:
         return 0.5;
     }
@@ -133,7 +130,6 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar>
               ),
             ),
           ),
-          // Utilisation du widget NavigationDots isolé
           title: const NavigationDots(),
           actions: [
             IconButton(
@@ -146,7 +142,6 @@ class _CustomAppBarState extends ConsumerState<CustomAppBar>
             ),
           ],
         ),
-        // Only show this if no custom function is provided
         if (widget.onArrowButtonPressed == null)
           AnimatedSize(
             duration: const Duration(milliseconds: 300),

@@ -131,7 +131,7 @@ class MatchEventRepository implements IMatchEventRepository {
           json['competitions'] == null ||
           (json['competitions'] as List).isEmpty) {
         dev.log('No competition data found');
-        return ('0', '0'); // Default IDs
+        return ('0', '0');
       }
 
       final competitions = json['competitions'] as List;
@@ -141,7 +141,7 @@ class MatchEventRepository implements IMatchEventRepository {
           competition['competitors'] == null ||
           (competition['competitors'] as List).length < 2) {
         dev.log('Insufficient competitor data');
-        return ('0', '0'); // Default IDs
+        return ('0', '0');
       }
 
       final competitors = competition['competitors'] as List;

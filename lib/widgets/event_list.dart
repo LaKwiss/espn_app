@@ -208,7 +208,7 @@ class EventsListWidget extends StatelessWidget {
         }
       }
 
-      String playerName = l10n.unknownPlayer; // Localized default
+      String playerName = l10n.unknownPlayer;
       if (event.shortText != null && event.shortText!.isNotEmpty) {
         final nameParts = event.shortText!.split(" ");
         if (nameParts.isNotEmpty) {
@@ -234,11 +234,9 @@ class EventsListWidget extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.green.withAlpha(26), // Use withAlpha
+          color: Colors.green.withAlpha(26),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Colors.green.withAlpha(51),
-          ), // Use withAlpha
+          border: Border.all(color: Colors.green.withAlpha(51)),
         ),
         child: Row(
           children: [

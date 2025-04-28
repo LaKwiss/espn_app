@@ -71,7 +71,7 @@ class SubstitutesList extends StatelessWidget {
                       fontSize: 16,
                       color: theme.colorScheme.onSurface.withValues(
                         alpha: 0.87,
-                      ), // Use theme color
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -122,7 +122,7 @@ class SubstitutesList extends StatelessWidget {
               radius: 12,
               backgroundColor: avatarBackgroundColor,
               child: Text(
-                player.jerseyNumber, // API data
+                player.jerseyNumber,
                 style: TextStyle(
                   color: avatarTextColor,
                   fontSize: 10,

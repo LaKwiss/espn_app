@@ -81,9 +81,9 @@ class PredictionSectionWidget extends StatelessWidget {
 
           FutureBuilder<List<Probability>>(
             future: Future.wait([
-              widget.event.probability.$3, // away
-              widget.event.probability.$2, // draw
-              widget.event.probability.$1, // home
+              widget.event.probability.$3,
+              widget.event.probability.$2,
+              widget.event.probability.$1,
             ]),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {

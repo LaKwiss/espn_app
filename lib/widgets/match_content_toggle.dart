@@ -122,7 +122,7 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Text(
-                      l10n.formationsTab, // Use localization key
+                      l10n.formationsTab,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.blackOpsOne(
                         fontSize: 16,
@@ -225,7 +225,6 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                   );
                 }
 
-                // Afficher les événements s'ils existent
                 return EventsListWidget(
                   events: events,
                   homeTeam: widget.homeTeam,
@@ -241,7 +240,7 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                         children: [
                           const CircularProgressIndicator(),
                           const SizedBox(height: 16),
-                          Text(l10n.loadingEvents), // Use localization key
+                          Text(l10n.loadingEvents),
                         ],
                       ),
                     ),
@@ -261,7 +260,7 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                           const SizedBox(height: 16),
                           Text(
                             l10n.errorLoadingEventsGeneric(error.toString()),
-                          ), // Use localization key
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             error.toString(),
@@ -270,7 +269,6 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: () {
-                              // Réinitialiser le provider d'événements
                               final leagueId = _extractLeagueId(
                                 widget.event.league,
                               );
@@ -281,7 +279,7 @@ class _MatchContentToggleState extends ConsumerState<MatchContentToggle> {
                               );
                               initializeMatchEvents(ref, params);
                             },
-                            child: Text(l10n.tryAgain), // Use localization key
+                            child: Text(l10n.tryAgain),
                           ),
                         ],
                       ),
